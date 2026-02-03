@@ -1,0 +1,780 @@
+{
+  "query": "SELECT id, name, unitType FROM ingredients ORDER BY name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT id, name, unitType FROM ingredients ORDER BY name;",
+  "rows": [
+    {
+      "id": "LPEaucbkK1FCgY7w6I1vd",
+      "name": "\"Nutella\"",
+      "unitType": "k"
+    },
+    {
+      "id": "exMDS9n5Dzrt4G9GEmPi-",
+      "name": "Aceto balsamico",
+      "unitType": "k"
+    },
+    {
+      "id": "P1lKaomX1bvsq77XuYyE0",
+      "name": "Aceto di alcool",
+      "unitType": "k"
+    },
+    {
+      "id": "O6XP13WcvRDujOJgmbNWR",
+      "name": "Aceto di mele",
+      "unitType": "k"
+    },
+    {
+      "id": "w6Goo2jSCBOLl1FUq2KL3",
+      "name": "Acqua",
+      "unitType": "k"
+    },
+    {
+      "id": "WLPIceY1gvMNqtIEEKVNp",
+      "name": "Aglio in polvere",
+      "unitType": "k"
+    },
+    {
+      "id": "B23PC4FO2fVaOme1qxPls",
+      "name": "Aglio pelato",
+      "unitType": "k"
+    },
+    {
+      "id": "dRCZAloUhHeMDvjVEYNGo",
+      "name": "Ali di pollo",
+      "unitType": "k"
+    },
+    {
+      "id": "UoffmGxBJVPpT_m_ywt5L",
+      "name": "Alluminio",
+      "unitType": "u"
+    },
+    {
+      "id": "0TKQbZT91FRZfSZH1_LBp",
+      "name": "Amido di mais",
+      "unitType": "k"
+    },
+    {
+      "id": "E_lg2LmUumGJoBlx6ReY_",
+      "name": "Amido pregelatinizzato",
+      "unitType": "k"
+    },
+    {
+      "id": "MU0gZ5sl4CmugEiIbArOk",
+      "name": "Arachidi",
+      "unitType": "k"
+    },
+    {
+      "id": "VFgASYBb_x7Kzs4BEJjBv",
+      "name": "Asafetida",
+      "unitType": "k"
+    },
+    {
+      "id": "qYaGozpMjcWjSnRYKWzYU",
+      "name": "Asiago",
+      "unitType": "k"
+    },
+    {
+      "id": "iP6aV9rEyPNXq6Tf-mAvU",
+      "name": "Bacon",
+      "unitType": "k"
+    },
+    {
+      "id": "AXafxyjBGYDyU7BwV4znb",
+      "name": "Batatine (sweet potato fries 9x9)",
+      "unitType": "k"
+    },
+    {
+      "id": "2mlpqaCqWu8ZpbV3DXr99",
+      "name": "Beyond vegan Nuggets",
+      "unitType": "k"
+    },
+    {
+      "id": "jhGWWE5CzwToKR8eWh0AB",
+      "name": "Bombolette gas",
+      "unitType": "u"
+    },
+    {
+      "id": "qZrIHjZIFgT4JlSTy7okZ",
+      "name": "Burro professionale",
+      "unitType": "k"
+    },
+    {
+      "id": "PmeelLah0jlESlw2Tw1xW",
+      "name": "Busta sv 20x30",
+      "unitType": "u"
+    },
+    {
+      "id": "DUZJcqzD2gdvRhTZwkwaX",
+      "name": "Busta sv 30x40",
+      "unitType": "u"
+    },
+    {
+      "id": "Eo3-KwuigsjnKAo9WE3rd",
+      "name": "Buste delivery",
+      "unitType": "u"
+    },
+    {
+      "id": "J7-r5Q-5d6x_YGKwF0Fzm",
+      "name": "CL soffice",
+      "unitType": "k"
+    },
+    {
+      "id": "NlyFJyxttv5mMlErPDPRy",
+      "name": "Cannella",
+      "unitType": "k"
+    },
+    {
+      "id": "OI2g9AyQmzUkChe7-lV91",
+      "name": "Carne",
+      "unitType": "k"
+    },
+    {
+      "id": "i95fksMR04XeWJetDo5Cb",
+      "name": "Carne grill",
+      "unitType": "k"
+    },
+    {
+      "id": "EoHknGM2IXsJHXLYZ7T-M",
+      "name": "Carote",
+      "unitType": "k"
+    },
+    {
+      "id": "OmvtsLh_qP6u4O6NQEhbD",
+      "name": "Carta burger",
+      "unitType": "u"
+    },
+    {
+      "id": "sQxufIMJaYCMt4q7VEEB8",
+      "name": "Carta forno 60x40",
+      "unitType": "u"
+    },
+    {
+      "id": "LYoyZYMhKDWi7oA9EByNs",
+      "name": "Carta paglia",
+      "unitType": "k"
+    },
+    {
+      "id": "Q60NgYIahsKyyhMqyM0vl",
+      "name": "Carta paglia tagliata",
+      "unitType": "k"
+    },
+    {
+      "id": "pSfHxd7mm9S4hn8Yqluk6",
+      "name": "Cavolo cappuccio",
+      "unitType": "k"
+    },
+    {
+      "id": "yInS7zo3edJJSRDdebEEz",
+      "name": "Cavolo viola",
+      "unitType": "k"
+    },
+    {
+      "id": "n7GuE3HWFskVoEiKBOEbC",
+      "name": "Cetrioli",
+      "unitType": "k"
+    },
+    {
+      "id": "P4w4wXW-IA4w9yrSHr9LD",
+      "name": "Cetriolini salamoia",
+      "unitType": "k"
+    },
+    {
+      "id": "hMDO8uliTt3-OrTmwW0KZ",
+      "name": "Cheddar",
+      "unitType": "k"
+    },
+    {
+      "id": "bjcVTbl3-2R7oGCJ-y4De",
+      "name": "Chile pasilla in polvere",
+      "unitType": "k"
+    },
+    {
+      "id": "ILWfxSxtV7MQX6Weayfe9",
+      "name": "Cipolla",
+      "unitType": "k"
+    },
+    {
+      "id": "ePk99FLNB79vKcrNbyzZQ",
+      "name": "Cipolla viola",
+      "unitType": "k"
+    },
+    {
+      "id": "kQtVuTbKbawEBlYVbTNWf",
+      "name": "Contenitori PLA (250ml)",
+      "unitType": "u"
+    },
+    {
+      "id": "0nIz7Gln1UGjUHTP8o5X7",
+      "name": "Contenitori PLA (80ml) (50pz)",
+      "unitType": "u"
+    },
+    {
+      "id": "RYNN4WX1SuZGGz9Jwe14W",
+      "name": "Coriandolo",
+      "unitType": "k"
+    },
+    {
+      "id": "xCDgzSspWgCcfTiItj_5I",
+      "name": "Coriandolo in polvere",
+      "unitType": "k"
+    },
+    {
+      "id": "fuA2uyk7r2FFPMPSdrkH-",
+      "name": "Coscia di pollo",
+      "unitType": "k"
+    },
+    {
+      "id": "I_2s4hfY98dAEF9xBAI7l",
+      "name": "Costole di maiale",
+      "unitType": "k"
+    },
+    {
+      "id": "HJqq-P8q91nc9QaK7wGBc",
+      "name": "Cumino",
+      "unitType": "k"
+    },
+    {
+      "id": "_tSyC5bKEKeC47iti_ZYZ",
+      "name": "Curcuma",
+      "unitType": "k"
+    },
+    {
+      "id": "8QOR2BrvjV4FWrnXBoH9Q",
+      "name": "Detersivo pavimenti",
+      "unitType": "u"
+    },
+    {
+      "id": "YPNJg60X5s2ivIxMlFOUV",
+      "name": "Diaframma (250-300g)",
+      "unitType": "k"
+    },
+    {
+      "id": "bGTGQ6Kb4_Zcg8-_cyUCo",
+      "name": "Doppio concentrato",
+      "unitType": "k"
+    },
+    {
+      "id": "zNAmgvAbaKYs3KbvbDT08",
+      "name": "Easy Snack CL",
+      "unitType": "k"
+    },
+    {
+      "id": "A3Pl0D9uqtzQqJ02WFNJD",
+      "name": "Erbette surgelate",
+      "unitType": "k"
+    },
+    {
+      "id": "xNJn8vX9r-GIo04Ian1yd",
+      "name": "Farina",
+      "unitType": "k"
+    },
+    {
+      "id": "ZTCgnkXFwwX4tYrNy1rHZ",
+      "name": "Farina PAN",
+      "unitType": "k"
+    },
+    {
+      "id": "Pc1GevVHN5m7LdoV6vbVt",
+      "name": "Farina UNIQUA Viola",
+      "unitType": "k"
+    },
+    {
+      "id": "tPurvUTMfl5h2n1A5c4Vq",
+      "name": "Farina per fritti",
+      "unitType": "k"
+    },
+    {
+      "id": "VphgGa_ws7aBsRRMHEKfc",
+      "name": "Fava tonka",
+      "unitType": "k"
+    },
+    {
+      "id": "qCJKKOMFAccJKmZc3ZGea",
+      "name": "Fiocchi di patata",
+      "unitType": "k"
+    },
+    {
+      "id": "4OZAqDPP_5p03YOLHbMSG",
+      "name": "Fiocchi di pomodoro",
+      "unitType": "k"
+    },
+    {
+      "id": "unmALFc8NM7VbjWur70ZJ",
+      "name": "Fiocchi di sale",
+      "unitType": "k"
+    },
+    {
+      "id": "BfM0cgLmN22IyidrAk5iq",
+      "name": "Fondo bruno vegano",
+      "unitType": "k"
+    },
+    {
+      "id": "dWuCRhgtnfXRqH-ThGFlZ",
+      "name": "Fumo liquido",
+      "unitType": "k"
+    },
+    {
+      "id": "6SAW6WYFO6wp5ZG5FbIO3",
+      "name": "Funghi acularia",
+      "unitType": "k"
+    },
+    {
+      "id": "hz-ONGGqXiCF1bkvQ0-TT",
+      "name": "Funghi sbrise",
+      "unitType": "k"
+    },
+    {
+      "id": "K96xgJuk21k-riLobDzmM",
+      "name": "Funghi shitake",
+      "unitType": "k"
+    },
+    {
+      "id": "Vkgsrbf5Lge520sm3xUml",
+      "name": "Galangal",
+      "unitType": "k"
+    },
+    {
+      "id": "tQkxMkUPfYr-oGET1VQzb",
+      "name": "Gorgonzola",
+      "unitType": "k"
+    },
+    {
+      "id": "FRrYSavhPvnXXMqap7kg_",
+      "name": "Guanti da cucina",
+      "unitType": "u"
+    },
+    {
+      "id": "hOPfjsN1t2lfGHtV2Mdej",
+      "name": "Insalata",
+      "unitType": "k"
+    },
+    {
+      "id": "Ftq8-h3hlfVQbfx1FKYvf",
+      "name": "Lardo",
+      "unitType": "k"
+    },
+    {
+      "id": "UjhsGMDNvCnl2fPcY2kuz",
+      "name": "Latte UHT",
+      "unitType": "k"
+    },
+    {
+      "id": "FuGZtr1Ivq9UEVdfxUF63",
+      "name": "Latte di soja",
+      "unitType": "k"
+    },
+    {
+      "id": "VFlPCePcnLbx2_5tKIaQj",
+      "name": "Lievito otentic",
+      "unitType": "k"
+    },
+    {
+      "id": "tbaXDQSlVK97HGTi0edZk",
+      "name": "Lime",
+      "unitType": "k"
+    },
+    {
+      "id": "1k184DpX54qBVYORxm4UB",
+      "name": "Limone",
+      "unitType": "k"
+    },
+    {
+      "id": "Ccazcxew5p3zFSCTrV8mB",
+      "name": "Malto diastasico",
+      "unitType": "k"
+    },
+    {
+      "id": "zgFIe9bPgtqlIB9r23Md9",
+      "name": "Margarina",
+      "unitType": "k"
+    },
+    {
+      "id": "-NR_eqJZw58OxYvzfuaoQ",
+      "name": "Mascarpone",
+      "unitType": "k"
+    },
+    {
+      "id": "Zdyi--P6mIEOY8sfdIKz9",
+      "name": "Melanzane",
+      "unitType": "k"
+    },
+    {
+      "id": "lhgXMbnfNfD6Z5xmqt_Ii",
+      "name": "Misto frutti di bosco",
+      "unitType": "k"
+    },
+    {
+      "id": "GnSAhgAWS-_Qi5GubSpR1",
+      "name": "Misto uovo",
+      "unitType": "k"
+    },
+    {
+      "id": "YtHDGxaFisdNuIyPtNY0G",
+      "name": "Mono e digliceridi",
+      "unitType": "k"
+    },
+    {
+      "id": "w8HarzwdK7Ct7L1abLMfe",
+      "name": "Nduja",
+      "unitType": "k"
+    },
+    {
+      "id": "rJmQdW8weRTOdfIEgdRhl",
+      "name": "Nigella",
+      "unitType": "k"
+    },
+    {
+      "id": "lwDcR_oSN33wGysgRA7jH",
+      "name": "Olio EVO",
+      "unitType": "k"
+    },
+    {
+      "id": "yt4r1cA9XSnRDbjHABrlc",
+      "name": "Olio di semi",
+      "unitType": "k"
+    },
+    {
+      "id": "GSXmlc3nDbsjjcSYGO2pz",
+      "name": "Olio di sesamo",
+      "unitType": "k"
+    },
+    {
+      "id": "4TSeaj4kXeTdLp2xc1Td9",
+      "name": "Onion flakes",
+      "unitType": "k"
+    },
+    {
+      "id": "0nBZtngMB_AZ1jNHOiMs4",
+      "name": "Onion rings",
+      "unitType": "k"
+    },
+    {
+      "id": "_YZbAK63fBENCgZTtJgrF",
+      "name": "Panna UHT",
+      "unitType": "k"
+    },
+    {
+      "id": "8UGnvszILjzPv-va-h9rw",
+      "name": "Panni stracci",
+      "unitType": "u"
+    },
+    {
+      "id": "ZSifdwxNkKMvesdBKRJ0x",
+      "name": "Panno microfibra",
+      "unitType": "u"
+    },
+    {
+      "id": "-eBrJDJmFHyvvmUV_T9gC",
+      "name": "Paprica affumicata",
+      "unitType": "k"
+    },
+    {
+      "id": "PLbpgh1c6WaeycGdmaf5M",
+      "name": "Paprica dolce",
+      "unitType": "k"
+    },
+    {
+      "id": "h2qqTGe51D9WrnjiI-THw",
+      "name": "Pasta di avocado",
+      "unitType": "k"
+    },
+    {
+      "id": "Hz8vWuFoVCSTjbq-pM_My",
+      "name": "Pasta di vaniglia",
+      "unitType": "k"
+    },
+    {
+      "id": "TwcG3QYcCPw9srPP1uMUM",
+      "name": "Pasta di zucca",
+      "unitType": "k"
+    },
+    {
+      "id": "ebK2HbrPxEtUjJhgQ03Na",
+      "name": "Patatine Really crunchy 6x6",
+      "unitType": "k"
+    },
+    {
+      "id": "_N0XwumKfEMajufvqRxtD",
+      "name": "Pellicola",
+      "unitType": "u"
+    },
+    {
+      "id": "Ui034rKABg7d7q6RNt7V-",
+      "name": "Pepe",
+      "unitType": "k"
+    },
+    {
+      "id": "VCngIqZQgNShQ_FOmtp57",
+      "name": "Pepe bianco",
+      "unitType": "k"
+    },
+    {
+      "id": "OCLsME-xN-9RgKpkUvd3-",
+      "name": "Pepe di sichuan",
+      "unitType": "k"
+    },
+    {
+      "id": "PwgmBVO3mTcdRtQABTGFi",
+      "name": "Peperoni",
+      "unitType": "k"
+    },
+    {
+      "id": "Z_sAy-d41QplLS2vlOj5N",
+      "name": "Pomodori secchi",
+      "unitType": "k"
+    },
+    {
+      "id": "h2NWpAJuK9wCiUFEsn6T8",
+      "name": "Pomodoro",
+      "unitType": "k"
+    },
+    {
+      "id": "-WmtKNxbHF3obD2lQS_sS",
+      "name": "Rabarbaro",
+      "unitType": "k"
+    },
+    {
+      "id": "8MGqTFeya9c3GcAyp7n0B",
+      "name": "Radice di angelica",
+      "unitType": "k"
+    },
+    {
+      "id": "69fqgEbzFfEvq0RT7fVXM",
+      "name": "Reale (denver) (250-300g)",
+      "unitType": "k"
+    },
+    {
+      "id": "H5LEr9Sp9xeIEOiALCApr",
+      "name": "Roggena",
+      "unitType": "k"
+    },
+    {
+      "id": "OunOiMNUBKVl1IqXxOfdh",
+      "name": "Rotoli Scontrini 57mm",
+      "unitType": "u"
+    },
+    {
+      "id": "n8XdjkMg44C0oWNV7dI0y",
+      "name": "Rotoli Scontrini 57mm pos",
+      "unitType": "u"
+    },
+    {
+      "id": "j5UN_xLKyWtqU2NXPo0V8",
+      "name": "Rotoli Scontrini 80mm",
+      "unitType": "u"
+    },
+    {
+      "id": "x-R26Iae2aD87bvtlwbgp",
+      "name": "Rucola",
+      "unitType": "k"
+    },
+    {
+      "id": "EaumjPIivmFGT3dE5cHPF",
+      "name": "Sacchetti antigrasso fritti",
+      "unitType": "u"
+    },
+    {
+      "id": "qP0GBvr-Tfvx8ccmvYQkL",
+      "name": "Sacchi 70x110",
+      "unitType": "u"
+    },
+    {
+      "id": "ThNA0RfYeaS3QE9A-iJtg",
+      "name": "Sacchi 90x120",
+      "unitType": "u"
+    },
+    {
+      "id": "SuOqA2HcqAe5RQOjHOenq",
+      "name": "Sale",
+      "unitType": "k"
+    },
+    {
+      "id": "DqwWsjN7BTvHStGeEZFWH",
+      "name": "Sale grosso",
+      "unitType": "k"
+    },
+    {
+      "id": "dOKnzUKJT8BHVfbaErOOr",
+      "name": "Salsa di Soja",
+      "unitType": "k"
+    },
+    {
+      "id": "Sd64YIHTYXbUpEzWNHqQd",
+      "name": "Sapone lavapiatti",
+      "unitType": "k"
+    },
+    {
+      "id": "q-pxz3GqnTQx9_JRZ0YqR",
+      "name": "Sapore carmen",
+      "unitType": "k"
+    },
+    {
+      "id": "n44-PRfikiyg3saGOZKi0",
+      "name": "Scatole fritti",
+      "unitType": "u"
+    },
+    {
+      "id": "UA4lzo44Z6VH2rDb7Z9O0",
+      "name": "Scottex (2 rotoli)",
+      "unitType": "u"
+    },
+    {
+      "id": "x5do5mlhu9S2doS12_u25",
+      "name": "Semi di fieno greco",
+      "unitType": "k"
+    },
+    {
+      "id": "GkXj1zHYTIGqryYQoYvSw",
+      "name": "Semi di papavero",
+      "unitType": "k"
+    },
+    {
+      "id": "Pm9owjv3SFys2fnqIC7KI",
+      "name": "Semi di senape gialla",
+      "unitType": "k"
+    },
+    {
+      "id": "u9koIMrudTKp8A5DmBiK-",
+      "name": "Semi di senape nera",
+      "unitType": "k"
+    },
+    {
+      "id": "sX0KY6rxgs8rzey8pFX--",
+      "name": "Senape",
+      "unitType": "k"
+    },
+    {
+      "id": "pN0SB3tv2ZqDFO_y8oDxH",
+      "name": "Senape in polvere",
+      "unitType": "k"
+    },
+    {
+      "id": "51HLLBXEICMelmEMcj1GT",
+      "name": "Shopper Bio",
+      "unitType": "u"
+    },
+    {
+      "id": "WPbHUOTz6Ibuul1lle_dQ",
+      "name": "Softgrain",
+      "unitType": "k"
+    },
+    {
+      "id": "xJXXTNVm1F2Un2wKZejIx",
+      "name": "Spalla di Maiale (senza osso)",
+      "unitType": "k"
+    },
+    {
+      "id": "bCcFD4vdWMkMsFSpWRePY",
+      "name": "Spiedini 20cm",
+      "unitType": "u"
+    },
+    {
+      "id": "JAgMW0zEKrLrp7URpo2m1",
+      "name": "Spugne",
+      "unitType": "u"
+    },
+    {
+      "id": "8B1yQ77vJv0lj5H80Lf5U",
+      "name": "Sriracha",
+      "unitType": "k"
+    },
+    {
+      "id": "lTXAQp_ho70IDTEbMfdvq",
+      "name": "Stracciatella",
+      "unitType": "k"
+    },
+    {
+      "id": "MOH6ORoElpEhkH-GALSos",
+      "name": "Sumac",
+      "unitType": "k"
+    },
+    {
+      "id": "0baArEbE31epLsaL896Kz",
+      "name": "Tartare",
+      "unitType": "k"
+    },
+    {
+      "id": "pvO4mMIKWrPK2ihyo5srP",
+      "name": "Tenders",
+      "unitType": "k"
+    },
+    {
+      "id": "HKo1g2fIm23siqoxMe2qe",
+      "name": "Thè affumicato",
+      "unitType": "k"
+    },
+    {
+      "id": "zmwS2iUhcf0ClJ-o68QSr",
+      "name": "Tovagliette",
+      "unitType": "u"
+    },
+    {
+      "id": "BETcDYTrlwSruEqI57LXO",
+      "name": "Tovaglioli (33x33)",
+      "unitType": "u"
+    },
+    {
+      "id": "LcnbDAd8Ens40P998Zevq",
+      "name": "Tovaglioli economici",
+      "unitType": "u"
+    },
+    {
+      "id": "B3HkMe07FuVPn4A1TW7k0",
+      "name": "Tovaglioli tavolo",
+      "unitType": "u"
+    },
+    {
+      "id": "ObWI3kjqkhnWSgB3Gqu3f",
+      "name": "Tuorlo d'uovo special",
+      "unitType": "k"
+    },
+    {
+      "id": "L4bHpuBjzgEpADa0wLZ77",
+      "name": "Tuorlo in polvere",
+      "unitType": "k"
+    },
+    {
+      "id": "Wi4ho2lNvr-VNqoH2lHM4",
+      "name": "UMA.MI Minced Vegana",
+      "unitType": "k"
+    },
+    {
+      "id": "AJHyMU9JKkZc01X7VHVFb",
+      "name": "Uova",
+      "unitType": "u"
+    },
+    {
+      "id": "RUGDyQUT3arU1ANxc3roh",
+      "name": "Vino bianco",
+      "unitType": "k"
+    },
+    {
+      "id": "9WQvqdGlWFZnk7yV8gQnt",
+      "name": "Xantana",
+      "unitType": "k"
+    },
+    {
+      "id": "nfsoVnu7Rmj42reiis96v",
+      "name": "Yogurt greco",
+      "unitType": "k"
+    },
+    {
+      "id": "Q5LWW8sY1AKOoWsfV_-tu",
+      "name": "Zucchero",
+      "unitType": "k"
+    },
+    {
+      "id": "b14375w27r7f7Uj6ZdM5p",
+      "name": "Zucchero a velo",
+      "unitType": "k"
+    },
+    {
+      "id": "BGtpWHKEblWCiK6F0szR5",
+      "name": "Zucchero invertito",
+      "unitType": "k"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tunitType\nLPEaucbkK1FCgY7w6I1vd\t\"Nutella\"\tk\nexMDS9n5Dzrt4G9GEmPi-\tAceto balsamico\tk\nP1lKaomX1bvsq77XuYyE0\tAceto di alcool\tk\nO6XP13WcvRDujOJgmbNWR\tAceto di mele\tk\nw6Goo2jSCBOLl1FUq2KL3\tAcqua\tk\nWLPIceY1gvMNqtIEEKVNp\tAglio in polvere\tk\nB23PC4FO2fVaOme1qxPls\tAglio pelato\tk\ndRCZAloUhHeMDvjVEYNGo\tAli di pollo\tk\nUoffmGxBJVPpT_m_ywt5L\tAlluminio\tu\n0TKQbZT91FRZfSZH1_LBp\tAmido di mais\tk\nE_lg2LmUumGJoBlx6ReY_\tAmido pregelatinizzato\tk\nMU0gZ5sl4CmugEiIbArOk\tArachidi\tk\nVFgASYBb_x7Kzs4BEJjBv\tAsafetida\tk\nqYaGozpMjcWjSnRYKWzYU\tAsiago\tk\niP6aV9rEyPNXq6Tf-mAvU\tBacon\tk\nAXafxyjBGYDyU7BwV4znb\tBatatine (sweet potato fries 9x9)\tk\n2mlpqaCqWu8ZpbV3DXr99\tBeyond vegan Nuggets\tk\njhGWWE5CzwToKR8eWh0AB\tBombolette gas\tu\nqZrIHjZIFgT4JlSTy7okZ\tBurro professionale\tk\nPmeelLah0jlESlw2Tw1xW\tBusta sv 20x30\tu\nDUZJcqzD2gdvRhTZwkwaX\tBusta sv 30x40\tu\nEo3-KwuigsjnKAo9WE3rd\tBuste delivery\tu\nJ7-r5Q-5d6x_YGKwF0Fzm\tCL soffice\tk\nNlyFJyxttv5mMlErPDPRy\tCannella\tk\nOI2g9AyQmzUkChe7-lV91\tCarne\tk\ni95fksMR04XeWJetDo5Cb\tCarne grill\tk\nEoHknGM2IXsJHXLYZ7T-M\tCarote\tk\nOmvtsLh_qP6u4O6NQEhbD\tCarta burger\tu\nsQxufIMJaYCMt4q7VEEB8\tCarta forno 60x40\tu\nLYoyZYMhKDWi7oA9EByNs\tCarta paglia\tk\nQ60NgYIahsKyyhMqyM0vl\tCarta paglia tagliata\tk\npSfHxd7mm9S4hn8Yqluk6\tCavolo cappuccio\tk\nyInS7zo3edJJSRDdebEEz\tCavolo viola\tk\nn7GuE3HWFskVoEiKBOEbC\tCetrioli\tk\nP4w4wXW-IA4w9yrSHr9LD\tCetriolini salamoia\tk\nhMDO8uliTt3-OrTmwW0KZ\tCheddar\tk\nbjcVTbl3-2R7oGCJ-y4De\tChile pasilla in polvere\tk\nILWfxSxtV7MQX6Weayfe9\tCipolla\tk\nePk99FLNB79vKcrNbyzZQ\tCipolla viola\tk\nkQtVuTbKbawEBlYVbTNWf\tContenitori PLA (250ml)\tu\n0nIz7Gln1UGjUHTP8o5X7\tContenitori PLA (80ml) (50pz)\tu\nRYNN4WX1SuZGGz9Jwe14W\tCoriandolo\tk\nxCDgzSspWgCcfTiItj_5I\tCoriandolo in polvere\tk\nfuA2uyk7r2FFPMPSdrkH-\tCoscia di pollo\tk\nI_2s4hfY98dAEF9xBAI7l\tCostole di maiale\tk\nHJqq-P8q91nc9QaK7wGBc\tCumino\tk\n_tSyC5bKEKeC47iti_ZYZ\tCurcuma\tk\n8QOR2BrvjV4FWrnXBoH9Q\tDetersivo pavimenti\tu\nYPNJg60X5s2ivIxMlFOUV\tDiaframma (250-300g)\tk\nbGTGQ6Kb4_Zcg8-_cyUCo\tDoppio concentrato\tk\nzNAmgvAbaKYs3KbvbDT08\tEasy Snack CL\tk\nA3Pl0D9uqtzQqJ02WFNJD\tErbette surgelate\tk\nxNJn8vX9r-GIo04Ian1yd\tFarina\tk\nZTCgnkXFwwX4tYrNy1rHZ\tFarina PAN\tk\nPc1GevVHN5m7LdoV6vbVt\tFarina UNIQUA Viola\tk\ntPurvUTMfl5h2n1A5c4Vq\tFarina per fritti\tk\nVphgGa_ws7aBsRRMHEKfc\tFava tonka\tk\nqCJKKOMFAccJKmZc3ZGea\tFiocchi di patata\tk\n4OZAqDPP_5p03YOLHbMSG\tFiocchi di pomodoro\tk\nunmALFc8NM7VbjWur70ZJ\tFiocchi di sale\tk\nBfM0cgLmN22IyidrAk5iq\tFondo bruno vegano\tk\ndWuCRhgtnfXRqH-ThGFlZ\tFumo liquido\tk\n6SAW6WYFO6wp5ZG5FbIO3\tFunghi acularia\tk\nhz-ONGGqXiCF1bkvQ0-TT\tFunghi sbrise\tk\nK96xgJuk21k-riLobDzmM\tFunghi shitake\tk\nVkgsrbf5Lge520sm3xUml\tGalangal\tk\ntQkxMkUPfYr-oGET1VQzb\tGorgonzola\tk\nFRrYSavhPvnXXMqap7kg_\tGuanti da cucina\tu\nhOPfjsN1t2lfGHtV2Mdej\tInsalata\tk\nFtq8-h3hlfVQbfx1FKYvf\tLardo\tk\nUjhsGMDNvCnl2fPcY2kuz\tLatte UHT\tk\nFuGZtr1Ivq9UEVdfxUF63\tLatte di soja\tk\nVFlPCePcnLbx2_5tKIaQj\tLievito otentic\tk\ntbaXDQSlVK97HGTi0edZk\tLime\tk\n1k184DpX54qBVYORxm4UB\tLimone\tk\nCcazcxew5p3zFSCTrV8mB\tMalto diastasico\tk\nzgFIe9bPgtqlIB9r23Md9\tMargarina\tk\n-NR_eqJZw58OxYvzfuaoQ\tMascarpone\tk\nZdyi--P6mIEOY8sfdIKz9\tMelanzane\tk\nlhgXMbnfNfD6Z5xmqt_Ii\tMisto frutti di bosco\tk\nGnSAhgAWS-_Qi5GubSpR1\tMisto uovo\tk\nYtHDGxaFisdNuIyPtNY0G\tMono e digliceridi\tk\nw8HarzwdK7Ct7L1abLMfe\tNduja\tk\nrJmQdW8weRTOdfIEgdRhl\tNigella\tk\nlwDcR_oSN33wGysgRA7jH\tOlio EVO\tk\nyt4r1cA9XSnRDbjHABrlc\tOlio di semi\tk\nGSXmlc3nDbsjjcSYGO2pz\tOlio di sesamo\tk\n4TSeaj4kXeTdLp2xc1Td9\tOnion flakes\tk\n0nBZtngMB_AZ1jNHOiMs4\tOnion rings\tk\n_YZbAK63fBENCgZTtJgrF\tPanna UHT\tk\n8UGnvszILjzPv-va-h9rw\tPanni stracci\tu\nZSifdwxNkKMvesdBKRJ0x\tPanno microfibra\tu\n-eBrJDJmFHyvvmUV_T9gC\tPaprica affumicata\tk\nPLbpgh1c6WaeycGdmaf5M\tPaprica dolce\tk\nh2qqTGe51D9WrnjiI-THw\tPasta di avocado\tk\nHz8vWuFoVCSTjbq-pM_My\tPasta di vaniglia\tk\nTwcG3QYcCPw9srPP1uMUM\tPasta di zucca\tk\nebK2HbrPxEtUjJhgQ03Na\tPatatine Really crunchy 6x6\tk\n_N0XwumKfEMajufvqRxtD\tPellicola\tu\nUi034rKABg7d7q6RNt7V-\tPepe\tk\nVCngIqZQgNShQ_FOmtp57\tPepe bianco\tk\nOCLsME-xN-9RgKpkUvd3-\tPepe di sichuan\tk\nPwgmBVO3mTcdRtQABTGFi\tPeperoni\tk\nZ_sAy-d41QplLS2vlOj5N\tPomodori secchi\tk\nh2NWpAJuK9wCiUFEsn6T8\tPomodoro\tk\n-WmtKNxbHF3obD2lQS_sS\tRabarbaro\tk\n8MGqTFeya9c3GcAyp7n0B\tRadice di angelica\tk\n69fqgEbzFfEvq0RT7fVXM\tReale (denver) (250-300g)\tk\nH5LEr9Sp9xeIEOiALCApr\tRoggena\tk\nOunOiMNUBKVl1IqXxOfdh\tRotoli Scontrini 57mm\tu\nn8XdjkMg44C0oWNV7dI0y\tRotoli Scontrini 57mm pos\tu\nj5UN_xLKyWtqU2NXPo0V8\tRotoli Scontrini 80mm\tu\nx-R26Iae2aD87bvtlwbgp\tRucola\tk\nEaumjPIivmFGT3dE5cHPF\tSacchetti antigrasso fritti\tu\nqP0GBvr-Tfvx8ccmvYQkL\tSacchi 70x110\tu\nThNA0RfYeaS3QE9A-iJtg\tSacchi 90x120\tu\nSuOqA2HcqAe5RQOjHOenq\tSale\tk\nDqwWsjN7BTvHStGeEZFWH\tSale grosso\tk\ndOKnzUKJT8BHVfbaErOOr\tSalsa di Soja\tk\nSd64YIHTYXbUpEzWNHqQd\tSapone lavapiatti\tk\nq-pxz3GqnTQx9_JRZ0YqR\tSapore carmen\tk\nn44-PRfikiyg3saGOZKi0\tScatole fritti\tu\nUA4lzo44Z6VH2rDb7Z9O0\tScottex (2 rotoli)\tu\nx5do5mlhu9S2doS12_u25\tSemi di fieno greco\tk\nGkXj1zHYTIGqryYQoYvSw\tSemi di papavero\tk\nPm9owjv3SFys2fnqIC7KI\tSemi di senape gialla\tk\nu9koIMrudTKp8A5DmBiK-\tSemi di senape nera\tk\nsX0KY6rxgs8rzey8pFX--\tSenape\tk\npN0SB3tv2ZqDFO_y8oDxH\tSenape in polvere\tk\n51HLLBXEICMelmEMcj1GT\tShopper Bio\tu\nWPbHUOTz6Ibuul1lle_dQ\tSoftgrain\tk\nxJXXTNVm1F2Un2wKZejIx\tSpalla di Maiale (senza osso)\tk\nbCcFD4vdWMkMsFSpWRePY\tSpiedini 20cm\tu\nJAgMW0zEKrLrp7URpo2m1\tSpugne\tu\n8B1yQ77vJv0lj5H80Lf5U\tSriracha\tk\nlTXAQp_ho70IDTEbMfdvq\tStracciatella\tk\nMOH6ORoElpEhkH-GALSos\tSumac\tk\n0baArEbE31epLsaL896Kz\tTartare\tk\npvO4mMIKWrPK2ihyo5srP\tTenders\tk\nHKo1g2fIm23siqoxMe2qe\tThè affumicato\tk\nzmwS2iUhcf0ClJ-o68QSr\tTovagliette\tu\nBETcDYTrlwSruEqI57LXO\tTovaglioli (33x33)\tu\nLcnbDAd8Ens40P998Zevq\tTovaglioli economici\tu\nB3HkMe07FuVPn4A1TW7k0\tTovaglioli tavolo\tu\nObWI3kjqkhnWSgB3Gqu3f\tTuorlo d'uovo special\tk\nL4bHpuBjzgEpADa0wLZ77\tTuorlo in polvere\tk\nWi4ho2lNvr-VNqoH2lHM4\tUMA.MI Minced Vegana\tk\nAJHyMU9JKkZc01X7VHVFb\tUova\tu\nRUGDyQUT3arU1ANxc3roh\tVino bianco\tk\n9WQvqdGlWFZnk7yV8gQnt\tXantana\tk\nnfsoVnu7Rmj42reiis96v\tYogurt greco\tk\nQ5LWW8sY1AKOoWsfV_-tu\tZucchero\tk\nb14375w27r7f7Uj6ZdM5p\tZucchero a velo\tk\nBGtpWHKEblWCiK6F0szR5\tZucchero invertito\tk\n",
+  "stderr": "",
+  "execution_time_ms": 141
+}

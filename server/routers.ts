@@ -367,7 +367,7 @@ const finalRecipesRouter = router({
             return {
               ...comp,
               name: ingredient?.name || 'Sconosciuto',
-              unit: ingredient?.unitType === 'u' ? 'Unità' : 'Kg',
+              unit: comp.unit || (ingredient?.unitType === 'u' ? 'unità' : 'kg'),
               pricePerUnit: ingredient?.pricePerKgOrUnit || 0,
             };
           } else if (comp.type === 'semi_finished') {
@@ -375,8 +375,16 @@ const finalRecipesRouter = router({
             return {
               ...comp,
               name: semi?.name || 'Sconosciuto',
-              unit: 'Kg',
+              unit: comp.unit || 'kg',
               pricePerUnit: semi?.finalPricePerKg || 0,
+            };
+          } else if (comp.type === 'operation') {
+            // Le operazioni non hanno ID, usano componentName
+            return {
+              ...comp,
+              name: comp.componentName || 'Operazione',
+              unit: comp.unit || 'unità',
+              pricePerUnit: 0,
             };
           }
           return comp;

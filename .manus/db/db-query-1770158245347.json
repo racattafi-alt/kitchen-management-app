@@ -1,0 +1,163 @@
+{
+  "query": "SELECT JSON_PRETTY(components) as components_json FROM final_recipes WHERE code = 'CARNE_TENDERS' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT JSON_PRETTY(components) as components_json FROM final_recipes WHERE code = 'CARNE_TENDERS' LIMIT 1;",
+  "rows": [
+    {
+      "components_json": "["
+    },
+    {
+      "components_json": "  {"
+    },
+    {
+      "components_json": "    \"componentId\": \"pvO4mMIKWrPK2ihyo5srP\","
+    },
+    {
+      "components_json": "    \"quantity\": 528.2982983511811,"
+    },
+    {
+      "components_json": "    \"type\": \"INGREDIENT\","
+    },
+    {
+      "components_json": "    \"unit\": \"k\","
+    },
+    {
+      "components_json": "    \"wastePercentage\": 0"
+    },
+    {
+      "components_json": "  },"
+    },
+    {
+      "components_json": "  {"
+    },
+    {
+      "components_json": "    \"componentId\": \"UjhsGMDNvCnl2fPcY2kuz\","
+    },
+    {
+      "components_json": "    \"quantity\": 79.24474475267715,"
+    },
+    {
+      "components_json": "    \"type\": \"INGREDIENT\","
+    },
+    {
+      "components_json": "    \"unit\": \"k\","
+    },
+    {
+      "components_json": "    \"wastePercentage\": 0"
+    },
+    {
+      "components_json": "  },"
+    },
+    {
+      "components_json": "  {"
+    },
+    {
+      "components_json": "    \"componentId\": \"nfsoVnu7Rmj42reiis96v\","
+    },
+    {
+      "components_json": "    \"quantity\": 79.24474475267715,"
+    },
+    {
+      "components_json": "    \"type\": \"INGREDIENT\","
+    },
+    {
+      "components_json": "    \"unit\": \"k\","
+    },
+    {
+      "components_json": "    \"wastePercentage\": 0"
+    },
+    {
+      "components_json": "  },"
+    },
+    {
+      "components_json": "  {"
+    },
+    {
+      "components_json": "    \"componentId\": \"xNJn8vX9r-GIo04Ian1yd\","
+    },
+    {
+      "components_json": "    \"quantity\": 211.31931934047242,"
+    },
+    {
+      "components_json": "    \"type\": \"INGREDIENT\","
+    },
+    {
+      "components_json": "    \"unit\": \"k\","
+    },
+    {
+      "components_json": "    \"wastePercentage\": 0"
+    },
+    {
+      "components_json": "  },"
+    },
+    {
+      "components_json": "  {"
+    },
+    {
+      "components_json": "    \"componentId\": \"0TKQbZT91FRZfSZH1_LBp\","
+    },
+    {
+      "components_json": "    \"quantity\": 105.65965967023621,"
+    },
+    {
+      "components_json": "    \"type\": \"INGREDIENT\","
+    },
+    {
+      "components_json": "    \"unit\": \"k\","
+    },
+    {
+      "components_json": "    \"wastePercentage\": 0"
+    },
+    {
+      "components_json": "  },"
+    },
+    {
+      "components_json": "  {"
+    },
+    {
+      "components_json": "    \"componentId\": \"AJHyMU9JKkZc01X7VHVFb\","
+    },
+    {
+      "components_json": "    \"quantity\": 0.3169789790107086,"
+    },
+    {
+      "components_json": "    \"type\": \"INGREDIENT\","
+    },
+    {
+      "components_json": "    \"unit\": \"k\","
+    },
+    {
+      "components_json": "    \"wastePercentage\": 0"
+    },
+    {
+      "components_json": "  },"
+    },
+    {
+      "components_json": "  {"
+    },
+    {
+      "components_json": "    \"componentId\": \"YoSpoWKsB0wnF8XEh4M-0\","
+    },
+    {
+      "components_json": "    \"quantity\": 16.641396398062202,"
+    },
+    {
+      "components_json": "    \"type\": \"SEMI_FINISHED\","
+    },
+    {
+      "components_json": "    \"unit\": \"k\","
+    },
+    {
+      "components_json": "    \"wastePercentage\": 0"
+    },
+    {
+      "components_json": "  }"
+    },
+    {
+      "components_json": "]"
+    }
+  ],
+  "messages": [],
+  "stdout": "components_json\n[\n  {\n    \"componentId\": \"pvO4mMIKWrPK2ihyo5srP\",\n    \"quantity\": 528.2982983511811,\n    \"type\": \"INGREDIENT\",\n    \"unit\": \"k\",\n    \"wastePercentage\": 0\n  },\n  {\n    \"componentId\": \"UjhsGMDNvCnl2fPcY2kuz\",\n    \"quantity\": 79.24474475267715,\n    \"type\": \"INGREDIENT\",\n    \"unit\": \"k\",\n    \"wastePercentage\": 0\n  },\n  {\n    \"componentId\": \"nfsoVnu7Rmj42reiis96v\",\n    \"quantity\": 79.24474475267715,\n    \"type\": \"INGREDIENT\",\n    \"unit\": \"k\",\n    \"wastePercentage\": 0\n  },\n  {\n    \"componentId\": \"xNJn8vX9r-GIo04Ian1yd\",\n    \"quantity\": 211.31931934047242,\n    \"type\": \"INGREDIENT\",\n    \"unit\": \"k\",\n    \"wastePercentage\": 0\n  },\n  {\n    \"componentId\": \"0TKQbZT91FRZfSZH1_LBp\",\n    \"quantity\": 105.65965967023621,\n    \"type\": \"INGREDIENT\",\n    \"unit\": \"k\",\n    \"wastePercentage\": 0\n  },\n  {\n    \"componentId\": \"AJHyMU9JKkZc01X7VHVFb\",\n    \"quantity\": 0.3169789790107086,\n    \"type\": \"INGREDIENT\",\n    \"unit\": \"k\",\n    \"wastePercentage\": 0\n  },\n  {\n    \"componentId\": \"YoSpoWKsB0wnF8XEh4M-0\",\n    \"quantity\": 16.641396398062202,\n    \"type\": \"SEMI_FINISHED\",\n    \"unit\": \"k\",\n    \"wastePercentage\": 0\n  }\n]\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}

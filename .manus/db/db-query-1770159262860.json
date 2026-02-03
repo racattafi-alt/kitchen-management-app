@@ -1,0 +1,13 @@
+{
+  "query": "SELECT SUBSTRING(components, 1, 500) as components_preview FROM final_recipes WHERE code = 'CARNE_TENDERS' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT SUBSTRING(components, 1, 500) as components_preview FROM final_recipes WHERE code = 'CARNE_TENDERS' LIMIT 1;",
+  "rows": [
+    {
+      "components_preview": "\"[{\\\"type\\\":\\\"ingredient\\\",\\\"componentId\\\":\\\"pvO4mMIKWrPK2ihyo5srP\\\",\\\"quantity\\\":10,\\\"unit\\\":\\\"kg\\\"},{\\\"type\\\":\\\"ingredient\\\",\\\"componentId\\\":\\\"UjhsGMDNvCnl2fPcY2kuz\\\",\\\"quantity\\\":1.5,\\\"unit\\\":\\\"kg\\\"},{\\\"type\\\":\\\"ingredient\\\",\\\"componentId\\\":\\\"nfsoVnu7Rmj42reiis96v\\\",\\\"quantity\\\":1.5,\\\"unit\\\":\\\"kg\\\"},{\\\"type\\\":\\\"ingredient\\\",\\\"componentId\\\":\\\"xNJn8vX9r-GIo04Ian1yd\\\",\\\"quantity\\\":4,\\\"unit\\\":\\\"kg\\\"},{\\\"type\\\":\\\"ingredient\\\",\\\"componentId\\\":\\\"0TKQbZT91FRZfSZH1_LBp\\\",\\\"quantity\\\":2,\\\"unit\\\":\\\"kg\\\""
+    }
+  ],
+  "messages": [],
+  "stdout": "components_preview\n\"[{\\\"type\\\":\\\"ingredient\\\",\\\"componentId\\\":\\\"pvO4mMIKWrPK2ihyo5srP\\\",\\\"quantity\\\":10,\\\"unit\\\":\\\"kg\\\"},{\\\"type\\\":\\\"ingredient\\\",\\\"componentId\\\":\\\"UjhsGMDNvCnl2fPcY2kuz\\\",\\\"quantity\\\":1.5,\\\"unit\\\":\\\"kg\\\"},{\\\"type\\\":\\\"ingredient\\\",\\\"componentId\\\":\\\"nfsoVnu7Rmj42reiis96v\\\",\\\"quantity\\\":1.5,\\\"unit\\\":\\\"kg\\\"},{\\\"type\\\":\\\"ingredient\\\",\\\"componentId\\\":\\\"xNJn8vX9r-GIo04Ian1yd\\\",\\\"quantity\\\":4,\\\"unit\\\":\\\"kg\\\"},{\\\"type\\\":\\\"ingredient\\\",\\\"componentId\\\":\\\"0TKQbZT91FRZfSZH1_LBp\\\",\\\"quantity\\\":2,\\\"unit\\\":\\\"kg\\\"\n",
+  "stderr": "",
+  "execution_time_ms": 70
+}

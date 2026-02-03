@@ -367,3 +367,18 @@
 - [ ] Correggere visualizzazione nomi componenti (attualmente mostrano ID)
 - [ ] Verificare struttura JSON componenti nel database
 - [ ] Testare tutte le funzionalità ricette nel browser
+
+## CORREZIONE COMPLETA VISUALIZZAZIONE RICETTE (IN CORSO)
+- [ ] Correggere categorie ricette (attualmente tutte mostrano categoria sbagliata)
+- [x] Analizzare struttura JSON componenti nel database
+- [x] Creare JSON corretto con ChatGPT (22 ricette, 219 componenti)
+- [x] Importare dati JSON nel database (22 ricette aggiornate)
+- [x] Aggiornare query backend getDetails per gestire nuova struttura
+- [ ] DEBUG: Verificare perché componentsWithDetails è vuoto nel frontend
+- [ ] Mostrare nomi ingredienti corretti invece di "Sconosciuto"
+- [ ] Mostrare quantità leggibili (es. "10 kg" invece di ID)
+- [ ] Correggere tipo componente (ingrediente/semilavorato/operazione)
+- [ ] Mostrare prezzi unitari per ogni componente
+- [ ] Aggiungere tooltip spiegazione resa produzione
+- [ ] Implementare dialog modifica ricetta
+- [ ] Testare tutte le correzioni nel browser
