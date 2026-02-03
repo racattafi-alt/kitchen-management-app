@@ -256,55 +256,78 @@ const productionRouter = router({
   generateShoppingList: protectedProcedure
     .input(z.object({ weekId: z.string() }))
     .query(async ({ input }) => {
-      // Ottieni le produzioni della settimana
-      const productions = await db.getWeeklyProductions();
-      const weekProduction = productions.find((p: any) => p.id === input.weekId);
+      // Ottieni tutte le produzioni della settimana
+      const weeklyProductions = await db.getWeeklyProductions();
+      const weekProductions = weeklyProductions.filter((p: any) => p.weekId === input.weekId || p.id === input.weekId);
       
-      if (!weekProduction) {
+      if (!weekProductions || weekProductions.length === 0) {
         return [];
       }
 
-      // Ottieni la ricetta finale
-      const recipe = await db.getFinalRecipeById(weekProduction.recipeFinalId);
-      if (!recipe || !recipe.components) {
-        return [];
+      // Prepara le produzioni per l'aggregazione
+      const plannedProductions = [];
+      
+      for (const production of weekProductions) {
+        const recipe = await db.getFinalRecipeById(production.recipeFinalId);
+        if (!recipe || !recipe.components) continue;
+
+        const components = typeof recipe.components === 'string' 
+          ? JSON.parse(recipe.components) 
+          : recipe.components;
+
+        // Converti i componenti nel formato richiesto da aggregateProductionRequirements
+        const formattedComponents = components.map((comp: any) => ({
+          type: comp.ingredientId ? "INGREDIENT" : "SEMI_FINISHED",
+          componentId: comp.ingredientId || comp.semiFinishedId,
+          quantity: Number(comp.quantity || 0),
+          unit: comp.unitType || "k",
+          wastePercentage: Number(comp.wastePercentage || 0) / 100,
+        }));
+
+        plannedProductions.push({
+          recipeFinalId: production.recipeFinalId,
+          desiredQuantity: Number(production.desiredQuantity || 1),
+          components: formattedComponents,
+          yieldPercentage: Number(recipe.yieldPercentage || 1),
+        });
       }
 
-      // Espandi i componenti e aggrega per ingrediente
-      const components = typeof recipe.components === 'string' 
-        ? JSON.parse(recipe.components) 
-        : recipe.components;
+      // Usa la funzione di aggregazione ricorsiva
+      const { aggregateProductionRequirements } = await import("./calculations");
+      const requirementsMap = await aggregateProductionRequirements(plannedProductions);
 
-      const ingredientMap = new Map();
-
-      for (const component of components) {
-        const ingredient = await db.getIngredientById(component.ingredientId);
+      // Converti la mappa in array e arricchisci con dati ingredienti
+      const shoppingList = [];
+      const entries = Array.from(requirementsMap.entries());
+      
+      for (const entry of entries) {
+        const ingredientId = entry[0];
+        const quantityInKg = entry[1];
+        const ingredient = await db.getIngredientById(ingredientId);
         if (!ingredient) continue;
 
-        const quantityNeeded = Number(component.quantity || 0) * Number(weekProduction.desiredQuantity || 1);
-        const pricePerUnit = Number(ingredient.pricePerKgOrUnit || 0);
-        const totalCost = quantityNeeded * pricePerUnit;
+        const pricePerKg = Number(ingredient.pricePerKgOrUnit || 0);
+        const totalCost = quantityInKg * pricePerKg;
 
-        const key = ingredient.id;
-        if (ingredientMap.has(key)) {
-          const existing = ingredientMap.get(key);
-          existing.quantityNeeded += quantityNeeded;
-          existing.totalCost += totalCost;
-        } else {
-          ingredientMap.set(key, {
-            id: ingredient.id,
-            ingredientName: ingredient.name,
-            category: ingredient.category,
-            supplier: ingredient.supplier,
-            quantityNeeded,
-            unitType: ingredient.unitType,
-            pricePerUnit,
-            totalCost,
-          });
-        }
+        shoppingList.push({
+          id: ingredient.id,
+          ingredientName: ingredient.name,
+          category: ingredient.category,
+          supplier: ingredient.supplier,
+          quantityNeeded: quantityInKg,
+          unitType: ingredient.unitType,
+          pricePerUnit: pricePerKg,
+          totalCost,
+        });
       }
 
-      return Array.from(ingredientMap.values());
+      // Ordina per fornitore e poi per nome
+      return shoppingList.sort((a, b) => {
+        if (a.supplier !== b.supplier) {
+          return a.supplier.localeCompare(b.supplier);
+        }
+        return a.ingredientName.localeCompare(b.ingredientName);
+      });
     }),
 
   aggregateRequirements: protectedProcedure

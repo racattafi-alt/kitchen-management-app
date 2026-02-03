@@ -119,3 +119,10 @@
 - [x] Aggiungere ordinamento per categoria
 - [x] Aggiungere ordinamento per fornitore
 - [x] Implementare UI per selezione ordinamento
+
+## Correzione Lista Acquisti Backend
+- [x] Collegare aggregateProductionRequirements a generateShoppingList
+- [x] Implementare espansione ricorsiva semilavorati nella lista acquisti
+- [x] Supportare aggregazione multi-ricetta per settimana
+- [x] Applicare percentuali di scarto nei calcoli
+- [x] Testare con dati reali (ricette con semilavorati nested) - 3 test passati
