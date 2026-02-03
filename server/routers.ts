@@ -249,6 +249,64 @@ const productionRouter = router({
       });
     }),
 
+  listWeekly: protectedProcedure.query(async () => {
+    return db.getWeeklyProductions();
+  }),
+
+  generateShoppingList: protectedProcedure
+    .input(z.object({ weekId: z.string() }))
+    .query(async ({ input }) => {
+      // Ottieni le produzioni della settimana
+      const productions = await db.getWeeklyProductions();
+      const weekProduction = productions.find((p: any) => p.id === input.weekId);
+      
+      if (!weekProduction) {
+        return [];
+      }
+
+      // Ottieni la ricetta finale
+      const recipe = await db.getFinalRecipeById(weekProduction.recipeFinalId);
+      if (!recipe || !recipe.components) {
+        return [];
+      }
+
+      // Espandi i componenti e aggrega per ingrediente
+      const components = typeof recipe.components === 'string' 
+        ? JSON.parse(recipe.components) 
+        : recipe.components;
+
+      const ingredientMap = new Map();
+
+      for (const component of components) {
+        const ingredient = await db.getIngredientById(component.ingredientId);
+        if (!ingredient) continue;
+
+        const quantityNeeded = Number(component.quantity || 0) * Number(weekProduction.desiredQuantity || 1);
+        const pricePerUnit = Number(ingredient.pricePerKgOrUnit || 0);
+        const totalCost = quantityNeeded * pricePerUnit;
+
+        const key = ingredient.id;
+        if (ingredientMap.has(key)) {
+          const existing = ingredientMap.get(key);
+          existing.quantityNeeded += quantityNeeded;
+          existing.totalCost += totalCost;
+        } else {
+          ingredientMap.set(key, {
+            id: ingredient.id,
+            ingredientName: ingredient.name,
+            category: ingredient.category,
+            supplier: ingredient.supplier,
+            quantityNeeded,
+            unitType: ingredient.unitType,
+            pricePerUnit,
+            totalCost,
+          });
+        }
+      }
+
+      return Array.from(ingredientMap.values());
+    }),
+
   aggregateRequirements: protectedProcedure
     .input(
       z.object({

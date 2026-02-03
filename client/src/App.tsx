@@ -5,6 +5,8 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import Recipes from "./pages/Recipes";
+import ShoppingList from "./pages/ShoppingList";
 import Dashboard from "./pages/Dashboard";
 import Ingredients from "./pages/Ingredients";
 import SemiFinished from "./pages/SemiFinished";
@@ -21,7 +23,9 @@ function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Home} />
+      <Route path={"/recipes"} component={Recipes} />
       <Route path={"/dashboard"} component={Dashboard} />
+      <Route path={"/404"} component={NotFound} />
       <Route path={"/ingredients"} component={Ingredients} />
       <Route path={"/semi-finished"} component={SemiFinished} />
       <Route path={"/final-recipes"} component={FinalRecipes} />
@@ -31,6 +35,7 @@ function Router() {
       <Route path={"/waste"} component={Waste} />
       <Route path={"/haccp"} component={HACCP} />
       <Route path={"/storage"} component={Storage} />
+      <Route path={"/shopping-list"} component={ShoppingList} />
       <Route path={"/assistant"} component={Assistant} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />

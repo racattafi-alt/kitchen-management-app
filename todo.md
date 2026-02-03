@@ -80,3 +80,22 @@
 - [x] Caricare ingredienti nel database
 - [x] Caricare ricette nel database
 - [x] Verificare dati importati correttamente
+
+## Priorità Immediate (Token Limitati)
+- [ ] Completare importazione ricette mancanti dal wireframe
+- [x] Implementare visualizzazione database ricette (semilavorati + finali)
+- [x] Implementare lista acquisti funzionante con logica semilavorati
+- [x] Testare funzionalità prioritarie
+
+## Implementazione Backend Lista Acquisti
+- [x] Aggiunta procedura listWeekly al productionRouter
+- [x] Aggiunta procedura generateShoppingList con logica aggregazione
+- [x] Collegamento route ShoppingList in App.tsx
+- [x] Test procedure backend
+
+## Prossimi Task per ChatGPT
+- [ ] Componente RecipeDetailView per visualizzare dettagli completi ricetta
+- [ ] Componente IngredientForm per CRUD ingredienti
+- [ ] Componente ProductionCalendar per pianificazione visuale
+- [ ] Hook useRecipeCostCalculator per calcoli in tempo reale
+- [ ] Test E2E per flusso completo lista acquisti
