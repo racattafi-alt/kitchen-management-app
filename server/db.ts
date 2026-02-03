@@ -134,7 +134,26 @@ export async function createIngredient(data: Omit<Ingredient, "createdAt" | "upd
 export async function getIngredients() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(ingredients).where(eq(ingredients.isActive, true));
+  const results = await db
+    .select({
+      id: ingredients.id,
+      name: ingredients.name,
+      supplierId: ingredients.supplierId,
+      supplierName: suppliers.name,
+      category: ingredients.category,
+      unitType: ingredients.unitType,
+      packageQuantity: ingredients.packageQuantity,
+      packagePrice: ingredients.packagePrice,
+      pricePerKgOrUnit: ingredients.pricePerKgOrUnit,
+      minOrderQuantity: ingredients.minOrderQuantity,
+      isActive: ingredients.isActive,
+      createdAt: ingredients.createdAt,
+      updatedAt: ingredients.updatedAt,
+    })
+    .from(ingredients)
+    .leftJoin(suppliers, eq(ingredients.supplierId, suppliers.id))
+    .where(eq(ingredients.isActive, true));
+  return results;
 }
 
 export async function getIngredientById(id: string) {

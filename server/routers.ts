@@ -91,17 +91,17 @@ const suppliersRouter = router({
     let skipped = 0;
 
     for (const ingredient of allIngredients) {
-      if (!ingredient.supplier) {
+      if (!ingredient.supplierName) {
         skipped++;
         continue;
       }
 
-      const supplierId = supplierMap.get(ingredient.supplier);
+      const supplierId = supplierMap.get(ingredient.supplierName || "");
       if (supplierId) {
         await db.updateIngredient(ingredient.id, { supplierId });
         updated++;
       } else {
-        console.warn(`Fornitore non trovato per ingrediente ${ingredient.name}: ${ingredient.supplier}`);
+        console.warn(`Fornitore non trovato per ingrediente ${ingredient.name}: ${ingredient.supplierName}`);
         skipped++;
       }
     }
@@ -121,7 +121,7 @@ const suppliersRouter = router({
 
     // Estrai fornitori unici dagli ingredienti
     const ingredients = await db.getIngredients();
-    const uniqueSuppliers = Array.from(new Set(ingredients.map(i => i.supplier).filter(Boolean)));
+    const uniqueSuppliers = Array.from(new Set(ingredients.map(i => i.supplierName).filter(Boolean)));
 
     // Inserisci i fornitori nella tabella suppliers
     const created = [];
@@ -199,9 +199,14 @@ const ingredientsRouter = router({
       z.object({
         id: z.string(),
         data: z.object({
+          name: z.string().optional(),
+          supplier: z.string().optional(),
+          category: z.enum(["Additivi", "Carni", "Farine", "Latticini", "Verdura", "Spezie", "Altro"]).optional(),
+          unitType: z.enum(["u", "k"]).optional(),
           packagePrice: z.number().optional(),
           packageQuantity: z.number().optional(),
-          name: z.string().optional(),
+          brand: z.string().optional(),
+          notes: z.string().optional(),
         }),
       })
     )
@@ -220,8 +225,13 @@ const ingredientsRouter = router({
         pricePerKgOrUnit: pricePerKgOrUnit.toString(),
       };
       if (input.data.name) updateData.name = input.data.name;
+      if (input.data.supplier) updateData.supplierId = input.data.supplier;
+      if (input.data.category) updateData.category = input.data.category;
+      if (input.data.unitType) updateData.unitType = input.data.unitType;
       if (input.data.packagePrice) updateData.packagePrice = input.data.packagePrice.toString();
       if (input.data.packageQuantity) updateData.packageQuantity = input.data.packageQuantity.toString();
+      if (input.data.brand !== undefined) updateData.brand = input.data.brand || null;
+      if (input.data.notes !== undefined) updateData.notes = input.data.notes || null;
       return db.updateIngredient(input.id, updateData);
     }),
 
@@ -587,7 +597,7 @@ const productionRouter = router({
           itemName: ingredient.name,
           itemType: 'INGREDIENT' as const,
           category: ingredient.category,
-          supplier: ingredient.supplier || 'Non specificato',
+          supplier: ingredient.supplierName || 'Non specificato',
           quantityNeeded: finalQuantity,
           quantityToOrder: 0, // Valore iniziale 0, editabile dall'utente
           unitType: ingredient.unitType,

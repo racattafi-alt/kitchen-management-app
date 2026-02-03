@@ -44,6 +44,7 @@ export default function Ingredients() {
 
   const utils = trpc.useUtils();
   const { data: ingredientsRaw, isLoading } = trpc.ingredients.list.useQuery();
+  const { data: suppliers } = trpc.suppliers.list.useQuery();
   
   const ingredients = ingredientsRaw
     ?.filter((ingredient: any) => {
@@ -122,7 +123,7 @@ export default function Ingredients() {
     setEditingIngredient(ingredient);
     setEditFormData({
       name: ingredient.name,
-      supplier: ingredient.supplier,
+      supplier: ingredient.supplierId || "",
       category: ingredient.category,
       unitType: ingredient.unitType,
       packageQuantity: ingredient.packageQuantity,
@@ -291,12 +292,21 @@ export default function Ingredients() {
                 </div>
                 <div>
                   <Label htmlFor="edit-supplier">Fornitore</Label>
-                  <Input
-                    id="edit-supplier"
+                  <Select
                     value={editFormData.supplier}
-                    onChange={(e) => setEditFormData({ ...editFormData, supplier: e.target.value })}
-                    required
-                  />
+                    onValueChange={(value: string) => setEditFormData({ ...editFormData, supplier: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleziona fornitore" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {suppliers?.map((supplier: any) => (
+                        <SelectItem key={supplier.id} value={supplier.id}>
+                          {supplier.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label htmlFor="edit-category">Categoria</Label>
@@ -476,7 +486,7 @@ export default function Ingredients() {
                           {ingredient.category}
                         </span>
                       </TableCell>
-                      <TableCell>{ingredient.supplier}</TableCell>
+                      <TableCell>{ingredient.supplierName || 'Non specificato'}</TableCell>
                       <TableCell>{ingredient.unitType === "k" ? "kg" : "pz"}</TableCell>
                       {canViewPrices && (
                         <TableCell className="font-semibold text-emerald-600">

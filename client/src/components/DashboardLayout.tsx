@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Package, Utensils, ChefHat, BarChart3, Calendar, DollarSign, AlertTriangle, Shield, FolderOpen, Bot, ShoppingCart } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Package, Utensils, ChefHat, BarChart3, Calendar, DollarSign, AlertTriangle, Shield, FolderOpen, Bot, ShoppingCart, Building2 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -30,6 +30,7 @@ import { Button } from "./ui/button";
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: Package, label: "Ingredienti", path: "/ingredients" },
+  { icon: Building2, label: "Fornitori", path: "/suppliers" },
   { icon: Utensils, label: "Semilavorati", path: "/semi-finished" },
   { icon: ChefHat, label: "Ricette Finali", path: "/final-recipes" },
   { icon: BarChart3, label: "Food Matrix", path: "/food-matrix" },
