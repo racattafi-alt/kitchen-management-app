@@ -1,0 +1,20 @@
+{
+  "query": "SELECT code, name, components FROM final_recipes WHERE code IN ('CARNE_PULLED_PORK', 'SALSA_MEMPHIS');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT code, name, components FROM final_recipes WHERE code IN ('CARNE_PULLED_PORK', 'SALSA_MEMPHIS');",
+  "rows": [
+    {
+      "code": "CARNE_PULLED_PORK",
+      "name": "Carne Pulled Pork",
+      "components": "[]"
+    },
+    {
+      "code": "SALSA_MEMPHIS",
+      "name": "Salsa Memphis",
+      "components": "[{\"componentId\": \"sX0KY6rxgs8rzey8pFX--\", \"quantity\": 20, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"BGtpWHKEblWCiK6F0szR5\", \"quantity\": 50, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"BfM0cgLmN22IyidrAk5iq\", \"quantity\": 30, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"9WQvqdGlWFZnk7yV8gQnt\", \"quantity\": 0.25, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"E_lg2LmUumGJoBlx6ReY_\", \"quantity\": 0.25, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}]"
+    }
+  ],
+  "messages": [],
+  "stdout": "code\tname\tcomponents\nCARNE_PULLED_PORK\tCarne Pulled Pork\t[]\nSALSA_MEMPHIS\tSalsa Memphis\t[{\"componentId\": \"sX0KY6rxgs8rzey8pFX--\", \"quantity\": 20, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"BGtpWHKEblWCiK6F0szR5\", \"quantity\": 50, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"BfM0cgLmN22IyidrAk5iq\", \"quantity\": 30, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"9WQvqdGlWFZnk7yV8gQnt\", \"quantity\": 0.25, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"E_lg2LmUumGJoBlx6ReY_\", \"quantity\": 0.25, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}]\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

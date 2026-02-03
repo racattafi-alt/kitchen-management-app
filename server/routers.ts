@@ -310,11 +310,11 @@ const productionRouter = router({
 
         // Converti i componenti nel formato richiesto da aggregateProductionRequirements
         const formattedComponents = components.map((comp: any) => ({
-          type: (comp.ingredientId ? "INGREDIENT" : "SEMI_FINISHED") as "INGREDIENT" | "SEMI_FINISHED",
-          componentId: comp.ingredientId || comp.semiFinishedId,
+          type: comp.type as "INGREDIENT" | "SEMI_FINISHED",
+          componentId: comp.componentId,
           quantity: Number(comp.quantity || 0),
-          unit: comp.unitType || "k",
-          wastePercentage: Number(comp.wastePercentage || 0) / 100,
+          unit: comp.unit || "k",
+          wastePercentage: Number(comp.wastePercentage || 0),
         }));
 
         console.log(`[generateShoppingList] Ricetta ${recipe.name}: ${formattedComponents.length} componenti`);
@@ -323,7 +323,7 @@ const productionRouter = router({
           recipeFinalId: production.recipeFinalId,
           desiredQuantity: Number(production.desiredQuantity || 1),
           components: formattedComponents,
-          yieldPercentage: Number(recipe.yieldPercentage || 100) / 100,
+          yieldPercentage: Number(recipe.yieldPercentage || 1),
         });
       }
 

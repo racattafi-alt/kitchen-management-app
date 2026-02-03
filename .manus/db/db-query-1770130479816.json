@@ -1,0 +1,22 @@
+{
+  "query": "SELECT id, name, code, components FROM final_recipes WHERE id IN ('wxNYAyIW1CtLBRXUIfJXX', '3RY7r6ujhRES0KwmjHbb9');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT id, name, code, components FROM final_recipes WHERE id IN ('wxNYAyIW1CtLBRXUIfJXX', '3RY7r6ujhRES0KwmjHbb9');",
+  "rows": [
+    {
+      "id": "wxNYAyIW1CtLBRXUIfJXX",
+      "name": "Carne Pulled Pork",
+      "code": "CARNE_PULLED_PORK",
+      "components": "[]"
+    },
+    {
+      "id": "3RY7r6ujhRES0KwmjHbb9",
+      "name": "Salsa Memphis",
+      "code": "SALSA_MEMPHIS",
+      "components": "[{\"componentId\": \"sX0KY6rxgs8rzey8pFX--\", \"quantity\": 20, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"BGtpWHKEblWCiK6F0szR5\", \"quantity\": 50, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"BfM0cgLmN22IyidrAk5iq\", \"quantity\": 30, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"9WQvqdGlWFZnk7yV8gQnt\", \"quantity\": 0.25, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"E_lg2LmUumGJoBlx6ReY_\", \"quantity\": 0.25, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}]"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcode\tcomponents\nwxNYAyIW1CtLBRXUIfJXX\tCarne Pulled Pork\tCARNE_PULLED_PORK\t[]\n3RY7r6ujhRES0KwmjHbb9\tSalsa Memphis\tSALSA_MEMPHIS\t[{\"componentId\": \"sX0KY6rxgs8rzey8pFX--\", \"quantity\": 20, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"BGtpWHKEblWCiK6F0szR5\", \"quantity\": 50, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"BfM0cgLmN22IyidrAk5iq\", \"quantity\": 30, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"9WQvqdGlWFZnk7yV8gQnt\", \"quantity\": 0.25, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"E_lg2LmUumGJoBlx6ReY_\", \"quantity\": 0.25, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}]\n",
+  "stderr": "",
+  "execution_time_ms": 160
+}

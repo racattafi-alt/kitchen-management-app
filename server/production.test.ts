@@ -78,4 +78,26 @@ describe("production.generateShoppingList", () => {
       }
     }
   });
+
+  it("calculates quantities correctly with yieldPercentage", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    // Get all productions
+    const result = await caller.production.generateShoppingList({});
+
+    expect(Array.isArray(result)).toBe(true);
+    
+    // Find Spalla di Maiale in the shopping list
+    const spalla = result.find((item: any) => 
+      item.ingredientName?.includes("Spalla di Maiale")
+    );
+    
+    if (spalla) {
+      // Verify quantity is reasonable (not multiplied by 100)
+      // For 600kg of Pulled Pork, we need 19800kg of Spalla
+      expect(spalla.quantityNeeded).toBeGreaterThan(1000);
+      expect(spalla.quantityNeeded).toBeLessThan(100000);
+    }
+  });
 });

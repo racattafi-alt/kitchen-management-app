@@ -174,3 +174,20 @@
 - [x] Verificare che tutte le ricette abbiano componenti popolati (21/32 con componenti)
 - [x] Correggere aggregazione automatica per settimana (raggruppare produzioni stessa settimana)
 - [x] Testare lista acquisti con produzioni multiple nella stessa settimana - Test passati 3/3
+
+## DEBUG LISTA ACQUISTI VUOTA
+- [x] Verificare se ci sono produzioni nel database
+- [x] Verificare se le produzioni hanno recipeFinalId valido
+- [x] Verificare se le ricette hanno componenti popolati
+- [x] Testare manualmente la procedura generateShoppingList
+- [x] Correggere logica backend se necessario
+- [x] Verificare risultati con dati reali
+
+## CORREZIONI FINALI LISTA ACQUISTI
+- [x] Identificato problema: ricette senza componenti + mapping errato campi
+- [x] Corretto mapping componentId nel backend (era ingredientId/semiFinishedId)
+- [x] Creato script import_final_recipes_improved.py con matching case-insensitive
+- [x] Reimportati componenti per 22 ricette (inclusa CARNE_PULLED_PORK)
+- [x] Corretto bug yieldPercentage (rimossa divisione per 100)
+- [x] Verificato calcolo corretto: 600 kg Pulled Pork = 19.800 kg Spalla di Maiale ✓
+- [x] Lista acquisti funzionante con aggregazione corretta e costi precisi
