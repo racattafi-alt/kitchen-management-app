@@ -236,17 +236,20 @@
 
 ## IMPLEMENTAZIONE SCHEDE RICETTA
 - [x] Leggere requisiti da kitchen-management.md
-- [ ] Creare pagina Ricette con:
-  - [ ] Barra ricerca filtrante in alto
-  - [ ] Lista completa ordinata di banner ricette
-  - [ ] Click banner → apertura scheda dettaglio
-- [ ] Implementare scheda ricetta dettaglio con:
-  - [ ] Nome ricetta e categoria
-  - [ ] Lista ingredienti con proporzioni
-  - [ ] Moltiplicatore standard (sempre visualizzato)
-  - [ ] Procedura standard
-  - [ ] Placeholder per diagramma di flusso (da aggiungere dopo)
+- [x] Creare pagina Ricette con:
+  - [x] Barra ricerca filtrante in alto
+  - [x] Lista completa ordinata di banner ricette per categoria
+  - [x] Click banner → apertura scheda dettaglio (modal)
+- [x] Implementare scheda ricetta dettaglio con:
+  - [x] Nome ricetta e codice
+  - [x] Lista ingredienti con proporzioni e quantità base
+  - [x] Moltiplicatore standard (sempre visualizzato con input)
+  - [x] Tabs: Ingredienti, Procedura, Info
+  - [x] Pulsanti: Modifica, Stampa
+  - [ ] Placeholder per diagramma di flusso (da aggiungere dopo file utente)
+- [ ] BUG: Correggere nomi ingredienti che mostrano "Sconosciuto"
 - [ ] Implementare funzionalità Crea Ricetta/Semilavorato
 - [ ] Implementare funzionalità Modifica Ricetta
+- [ ] Implementare tab Procedura con testo procedimento
 - [ ] Implementare funzionalità Testa Modifiche (simulazione impatto prezzi su piatti)
 - [ ] Implementare funzionalità Stampa Ricetta con quantità e procedura

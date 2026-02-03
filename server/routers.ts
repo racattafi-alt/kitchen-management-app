@@ -197,6 +197,43 @@ const finalRecipesRouter = router({
     .query(async ({ input }) => {
       return db.getFinalRecipeById(input.id);
     }),
+
+  getDetails: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input }) => {
+      const recipe = await db.getFinalRecipeById(input.id);
+      if (!recipe) return null;
+
+      // Espandi i componenti con dettagli ingredienti/semilavorati
+      const components = Array.isArray(recipe.components) ? recipe.components : [];
+      const componentsWithDetails = await Promise.all(
+        components.map(async (comp: any) => {
+          if (comp.type === 'ingredient') {
+            const ingredient = await db.getIngredientById(comp.componentId);
+            return {
+              ...comp,
+              name: ingredient?.name || 'Sconosciuto',
+              unit: ingredient?.unitType === 'u' ? 'Unità' : 'Kg',
+              pricePerUnit: ingredient?.pricePerKgOrUnit || 0,
+            };
+          } else if (comp.type === 'semi_finished') {
+            const semi = await db.getSemiFinishedById(comp.componentId);
+            return {
+              ...comp,
+              name: semi?.name || 'Sconosciuto',
+              unit: 'Kg',
+              pricePerUnit: semi?.finalPricePerKg || 0,
+            };
+          }
+          return comp;
+        })
+      );
+
+      return {
+        ...recipe,
+        componentsWithDetails,
+      };
+    }),
 });
 
 // ============ PROCEDURE FOOD MATRIX ============
