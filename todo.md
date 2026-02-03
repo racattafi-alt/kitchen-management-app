@@ -113,3 +113,9 @@
 - [x] Aggiungere filtro per categoria
 - [x] Aggiungere ricerca per nome
 - [x] Testare funzionalità
+
+## Ordinamento Pagina Ingredienti
+- [x] Aggiungere ordinamento per nome (A-Z, Z-A)
+- [x] Aggiungere ordinamento per categoria
+- [x] Aggiungere ordinamento per fornitore
+- [x] Implementare UI per selezione ordinamento

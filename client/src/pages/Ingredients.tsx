@@ -17,6 +17,8 @@ export default function Ingredients() {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"name" | "category" | "supplier">("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [formData, setFormData] = useState({
     name: "",
     supplier: "",
@@ -31,11 +33,23 @@ export default function Ingredients() {
   const utils = trpc.useUtils();
   const { data: ingredientsRaw, isLoading } = trpc.ingredients.list.useQuery();
   
-  const ingredients = ingredientsRaw?.filter((ingredient: any) => {
-    const matchesSearch = ingredient.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || ingredient.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const ingredients = ingredientsRaw
+    ?.filter((ingredient: any) => {
+      const matchesSearch = ingredient.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = selectedCategory === "all" || ingredient.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    })
+    ?.sort((a: any, b: any) => {
+      let compareA = a[sortBy];
+      let compareB = b[sortBy];
+      
+      if (typeof compareA === 'string') compareA = compareA.toLowerCase();
+      if (typeof compareB === 'string') compareB = compareB.toLowerCase();
+      
+      if (compareA < compareB) return sortOrder === "asc" ? -1 : 1;
+      if (compareA > compareB) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
   const createMutation = trpc.ingredients.create.useMutation({
     onSuccess: () => {
       utils.ingredients.list.invalidate();
@@ -215,7 +229,7 @@ export default function Ingredients() {
             <CardTitle>Filtri e Ricerca</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-4">
               <div>
                 <Label>Cerca per nome</Label>
                 <Input
@@ -239,6 +253,31 @@ export default function Ingredients() {
                     <SelectItem value="Verdura">Verdura</SelectItem>
                     <SelectItem value="Spezie">Spezie</SelectItem>
                     <SelectItem value="Altro">Altro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Ordina per</Label>
+                <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">Nome</SelectItem>
+                    <SelectItem value="category">Categoria</SelectItem>
+                    <SelectItem value="supplier">Fornitore</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Ordine</Label>
+                <Select value={sortOrder} onValueChange={(value: any) => setSortOrder(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="asc">Crescente (A-Z)</SelectItem>
+                    <SelectItem value="desc">Decrescente (Z-A)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
