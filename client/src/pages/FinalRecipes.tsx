@@ -9,18 +9,58 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
-import { ChefHat, Plus, Eye } from "lucide-react";
+import { ChefHat, Plus, Eye, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function FinalRecipes() {
   const { data: recipes, isLoading } = trpc.finalRecipes.list.useQuery();
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState<any>(null);
   
   const { data: recipeDetails } = trpc.finalRecipes.getDetails.useQuery(
     { id: selectedRecipeId! },
     { enabled: !!selectedRecipeId }
   );
+
+  const utils = trpc.useUtils();
+  const updateMutation = trpc.finalRecipes.update.useMutation({
+    onSuccess: () => {
+      toast.success("Ricetta aggiornata con successo");
+      utils.finalRecipes.list.invalidate();
+      utils.finalRecipes.getDetails.invalidate();
+      setIsEditOpen(false);
+      setSelectedRecipeId(null);
+    },
+    onError: (error) => {
+      toast.error("Errore nell'aggiornamento: " + error.message);
+    },
+  });
+
+  const handleEdit = (recipe: any) => {
+    setEditFormData({
+      id: recipe.id,
+      category: recipe.category,
+      yieldPercentage: parseFloat(recipe.yieldPercentage || "100"),
+      serviceWastePercentage: parseFloat(recipe.serviceWastePercentage || "0"),
+    });
+    setIsEditOpen(true);
+    setSelectedRecipeId(null);
+  };
+
+  const handleUpdateSubmit = () => {
+    if (!editFormData) return;
+    updateMutation.mutate({
+      id: editFormData.id,
+      category: editFormData.category,
+      yieldPercentage: editFormData.yieldPercentage,
+      serviceWastePercentage: editFormData.serviceWastePercentage,
+    });
+  };
 
   return (
     <DashboardLayout>
@@ -62,14 +102,24 @@ export default function FinalRecipes() {
                         )}
                       </p>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedRecipeId(item.id)}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Dettagli
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedRecipeId(item.id)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Dettagli
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(item)}
+                      >
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Modifica
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -194,6 +244,86 @@ export default function FinalRecipes() {
                   )}
                 </div>
               )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Modifica Ricetta */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Modifica Ricetta</DialogTitle>
+            <DialogDescription>
+              Modifica categoria, resa produzione e scarto al servizio
+            </DialogDescription>
+          </DialogHeader>
+          {editFormData && (
+            <div className="space-y-6">
+              {/* Categoria */}
+              <div className="space-y-2">
+                <Label htmlFor="category">Categoria</Label>
+                <Select
+                  value={editFormData.category}
+                  onValueChange={(value) => setEditFormData({ ...editFormData, category: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleziona categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pane">Pane</SelectItem>
+                    <SelectItem value="Carne">Carne</SelectItem>
+                    <SelectItem value="Salse">Salse</SelectItem>
+                    <SelectItem value="Verdure">Verdure</SelectItem>
+                    <SelectItem value="Formaggi">Formaggi</SelectItem>
+                    <SelectItem value="Altro">Altro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Resa Produzione */}
+              <div className="space-y-2">
+                <Label htmlFor="yieldPercentage">Resa Produzione (%)</Label>
+                <Input
+                  id="yieldPercentage"
+                  type="number"
+                  step="0.01"
+                  value={editFormData.yieldPercentage}
+                  onChange={(e) => setEditFormData({ ...editFormData, yieldPercentage: parseFloat(e.target.value) })}
+                />
+                <p className="text-sm text-slate-500">
+                  Percentuale di prodotto finito ottenuto rispetto alle materie prime utilizzate (es. 100% = nessuna perdita, 80% = 20% di perdita in cottura/lavorazione)
+                </p>
+              </div>
+
+              {/* Scarto al Servizio */}
+              <div className="space-y-2">
+                <Label htmlFor="serviceWastePercentage">Scarto al Servizio (%)</Label>
+                <Input
+                  id="serviceWastePercentage"
+                  type="number"
+                  step="0.01"
+                  value={editFormData.serviceWastePercentage}
+                  onChange={(e) => setEditFormData({ ...editFormData, serviceWastePercentage: parseFloat(e.target.value) })}
+                />
+                <p className="text-sm text-slate-500">
+                  Percentuale di prodotto che viene scartato durante il servizio (es. ritagli, porzioni non servibili, ecc.)
+                </p>
+              </div>
+
+              {/* Pulsanti */}
+              <div className="flex justify-end gap-3 pt-4">
+                <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+                  Annulla
+                </Button>
+                <Button
+                  onClick={handleUpdateSubmit}
+                  disabled={updateMutation.isPending}
+                  className="bg-orange-600 hover:bg-orange-700"
+                >
+                  {updateMutation.isPending ? "Salvataggio..." : "Salva Modifiche"}
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>

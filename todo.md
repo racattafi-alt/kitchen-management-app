@@ -397,3 +397,12 @@
   * Campi quantità modificabili
   * Campo scarto modificabile con tooltip spiegazione
 - [ ] Testare tutte le correzioni nel browser
+
+## DIALOG MODIFICA RICETTA (COMPLETATO)
+- [x] Implementare backend procedure update ricetta (categoria, resa, scarto)
+- [x] Creare dialog modifica con form completo
+- [x] Campo categoria con select dropdown (Carne, Pane, Salse, Verdure, Formaggi, Altro)
+- [x] Campo resa modificabile con tooltip spiegazione
+- [x] Campo scarto al servizio modificabile con tooltip
+- [x] Pulsante Salva Modifiche con validazione
+- [x] Testare modifica ricetta e verificare aggiornamento

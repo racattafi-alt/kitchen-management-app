@@ -352,6 +352,26 @@ const finalRecipesRouter = router({
       return db.getFinalRecipeById(input.id);
     }),
 
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        category: z.enum(["Pane", "Carne", "Salse", "Verdure", "Formaggi", "Altro"]).optional(),
+        yieldPercentage: z.number().optional(),
+        serviceWastePercentage: z.number().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      return db.updateFinalRecipe(input.id, {
+        category: input.category,
+        yieldPercentage: input.yieldPercentage?.toString() as any,
+        serviceWastePercentage: input.serviceWastePercentage?.toString() as any,
+      });
+    }),
+
   getDetails: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
