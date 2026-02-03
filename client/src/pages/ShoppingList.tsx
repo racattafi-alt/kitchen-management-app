@@ -9,6 +9,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ShoppingCart, Download, Filter, Search, Calendar } from "lucide-react";
 import { toast } from "sonner";
 
+// Funzione per calcolare il lunedì della settimana (in UTC)
+function getMondayOfWeek(date: Date): string {
+  const d = new Date(date);
+  // Usa UTC per evitare problemi di timezone
+  const day = d.getUTCDay(); // 0 = Domenica, 1 = Lunedì, ..., 6 = Sabato
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setUTCDate(d.getUTCDate() + diff);
+  return d.toISOString().split('T')[0];
+}
+
 export default function ShoppingList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
@@ -17,9 +27,9 @@ export default function ShoppingList() {
   // Carica tutte le produzioni
   const { data: allProductions } = trpc.production.list.useQuery({});
   
-  // Raggruppa produzioni per settimana
+  // Raggruppa produzioni per settimana (usando il lunedì come chiave)
   const weekGroups = allProductions?.reduce((groups: Record<string, any[]>, prod: any) => {
-    const weekKey = new Date(prod.weekStartDate).toISOString().split('T')[0];
+    const weekKey = getMondayOfWeek(new Date(prod.weekStartDate));
     if (!groups[weekKey]) groups[weekKey] = [];
     groups[weekKey].push(prod);
     return groups;

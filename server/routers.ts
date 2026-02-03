@@ -283,10 +283,25 @@ const productionRouter = router({
     generateShoppingList: publicProcedure
     .input(z.object({ weekId: z.string().optional() }))
     .query(async ({ input }) => {
+      // Funzione per calcolare il lunedì della settimana (in UTC)
+      const getMondayOfWeek = (date: Date): string => {
+        const d = new Date(date);
+        // Usa UTC per evitare problemi di timezone
+        const day = d.getUTCDay(); // 0 = Domenica, 1 = Lunedì, ..., 6 = Sabato
+        const diff = day === 0 ? -6 : 1 - day;
+        d.setUTCDate(d.getUTCDate() + diff);
+        return d.toISOString().split('T')[0];
+      };
+
       // Ottieni tutte le produzioni della settimana (o tutte se weekId non specificato)
       const weeklyProductions = await db.getWeeklyProductions();
       const weekProductions = input.weekId 
-        ? weeklyProductions.filter((p: any) => p.weekId === input.weekId || p.id === input.weekId)
+        ? weeklyProductions.filter((p: any) => {
+            // weekId è il lunedì della settimana (es. "2026-02-02")
+            // Calcoliamo il lunedì della settimana di questa produzione
+            const prodMondayKey = getMondayOfWeek(new Date(p.weekStartDate));
+            return prodMondayKey === input.weekId || p.id === input.weekId;
+          })
         : weeklyProductions;
       
       if (!weekProductions || weekProductions.length === 0) {

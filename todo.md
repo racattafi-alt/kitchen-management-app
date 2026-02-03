@@ -225,3 +225,28 @@
 - [x] Aggiornato frontend per mostrare colonna "Tipo" (Ingrediente/Semilavorato)
 - [x] Testato: lista acquisti per ricette finali mostra semilavorati (Spezie Pulled, Spezie tenders)
 - [ ] TODO futuro: Aggiungere UI per pianificare produzioni di semilavorati
+
+## CORREZIONE FILTRO SETTIMANE LISTA ACQUISTI
+- [x] Verificare perché il filtro settimane non funziona (mostra ingredienti solo con "Tutte le Settimane")
+- [x] Correggere il calcolo della data del lunedì della settimana (deve essere "02 feb" non "03 feb")
+- [x] Testare il filtro con settimane specifiche
+- [x] Implementato getMondayOfWeek con UTC per evitare problemi timezone
+- [x] Corretto filtro backend per confrontare date UTC
+- [x] Verificato: filtro "02 feb" mostra correttamente ingredienti per quella settimana
+
+## IMPLEMENTAZIONE SCHEDE RICETTA
+- [x] Leggere requisiti da kitchen-management.md
+- [ ] Creare pagina Ricette con:
+  - [ ] Barra ricerca filtrante in alto
+  - [ ] Lista completa ordinata di banner ricette
+  - [ ] Click banner → apertura scheda dettaglio
+- [ ] Implementare scheda ricetta dettaglio con:
+  - [ ] Nome ricetta e categoria
+  - [ ] Lista ingredienti con proporzioni
+  - [ ] Moltiplicatore standard (sempre visualizzato)
+  - [ ] Procedura standard
+  - [ ] Placeholder per diagramma di flusso (da aggiungere dopo)
+- [ ] Implementare funzionalità Crea Ricetta/Semilavorato
+- [ ] Implementare funzionalità Modifica Ricetta
+- [ ] Implementare funzionalità Testa Modifiche (simulazione impatto prezzi su piatti)
+- [ ] Implementare funzionalità Stampa Ricetta con quantità e procedura
