@@ -191,3 +191,14 @@
 - [x] Corretto bug yieldPercentage (rimossa divisione per 100)
 - [x] Verificato calcolo corretto: 600 kg Pulled Pork = 19.800 kg Spalla di Maiale ✓
 - [x] Lista acquisti funzionante con aggregazione corretta e costi precisi
+
+## CORREZIONE RESA RICETTE
+- [x] Analizzare dati Excel per capire la resa corretta di CARNE_PULLED_PORK
+- [x] Verificare se la quantità nel file Excel è per 1 kg o per un batch specifico
+- [x] Identificare l'errore nel calcolo della resa
+- [x] Correggere la logica di calcolo nel backend
+- [x] Testare con dati reali e verificare risultati
+- [x] Creato script normalize_recipe_quantities.py per normalizzare quantità
+- [x] Normalizzate 21 ricette su 22 (batch size da foglio PREZZO_FINALE)
+- [x] Verificato calcolo corretto: 600 kg Pulled Pork = 734 kg Spalla (non 19.800 kg)
+- [x] Test passati 4/4

@@ -94,10 +94,11 @@ describe("production.generateShoppingList", () => {
     );
     
     if (spalla) {
-      // Verify quantity is reasonable (not multiplied by 100)
-      // For 600kg of Pulled Pork, we need 19800kg of Spalla
-      expect(spalla.quantityNeeded).toBeGreaterThan(1000);
-      expect(spalla.quantityNeeded).toBeLessThan(100000);
+      // Verify quantity is reasonable (normalized per kg)
+      // For 600kg of Pulled Pork, we need ~734kg of Spalla
+      // (600 / 26.96 batch size * 33kg per batch = 734kg)
+      expect(spalla.quantityNeeded).toBeGreaterThan(700);
+      expect(spalla.quantityNeeded).toBeLessThan(800);
     }
   });
 });
