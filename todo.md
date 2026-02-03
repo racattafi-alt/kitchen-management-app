@@ -126,3 +126,10 @@
 - [x] Supportare aggregazione multi-ricetta per settimana
 - [x] Applicare percentuali di scarto nei calcoli
 - [x] Testare con dati reali (ricette con semilavorati nested) - 3 test passati
+
+## Pagina Ricette e Pianificazione
+- [x] Verificare collegamento frontend-backend per pianificazione produzioni
+- [x] Correggere procedure tRPC mancanti o non allineate
+- [x] Implementare pagina Ricette con schede individuali dettagliate
+- [x] Implementare dialog per creare nuova produzione
+- [x] Testare flusso completo: crea produzione → genera lista acquisti - 3 test passati
