@@ -344,3 +344,10 @@
 - [ ] Correggere procedura update ingredienti per includere packageSize
 - [ ] Verificare tutti i percorsi database dopo modifiche schema
 - [ ] Testare modifica ingredienti con tutti i campi
+
+## CORREZIONE ORDINA PER FORNITORE (COMPLETATA)
+- [x] Riprodurre errore "Ordina per fornitore" non funziona
+- [x] Diagnosticare problema nel backend o frontend
+- [x] Verificare che funzionalità funziona correttamente
+- [x] Verificare che 10 caselle vuote siano presenti nel PDF
+- [x] Testare generazione PDF e invio WhatsApp
