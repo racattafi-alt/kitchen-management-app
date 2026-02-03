@@ -3,6 +3,9 @@ import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,
   users,
+  suppliers,
+  Supplier,
+  InsertSupplier,
   ingredients,
   semiFinishedRecipes,
   finalRecipes,
@@ -391,4 +394,33 @@ export async function getCloudStorageFiles(filters?: { documentType?: string; re
     query = query.where(eq(cloudStorage.relatedEntityId, filters.relatedEntityId));
   }
   return query;
+}
+
+// ============ SUPPLIERS (FORNITORI) ============
+
+export async function getSuppliers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(suppliers);
+}
+
+export async function createSupplier(data: Omit<Supplier, "createdAt" | "updatedAt">) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(suppliers).values(data as any);
+  return data;
+}
+
+export async function updateSupplier(id: string, data: Partial<Supplier>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(suppliers).set(data as any).where(eq(suppliers.id, id));
+  return { id, ...data };
+}
+
+export async function deleteSupplier(id: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(suppliers).where(eq(suppliers.id, id));
+  return { id };
 }

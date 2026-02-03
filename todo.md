@@ -286,3 +286,18 @@
 - [ ] TODO: Modificare lista acquisti per arrotondare quantità ordine a multipli confezione
 - [ ] TODO: Mostrare confezione minima nella colonna della tabella lista acquisti
 - [ ] TODO: Testare calcolo arrotondamento con esempi reali
+
+## DATABASE FORNITORI E CORREZIONE BUG MODIFICA FORNITORE
+- [x] Creare tabella suppliers nello schema database con campi: id, name, contact, email, phone, address, notes
+- [x] Eseguire db:push per applicare schema al database
+- [x] Implementare backend CRUD fornitori (create, list, update, delete)
+- [x] Aggiungere suppliersRouter all'appRouter
+- [x] Creare procedura migrateFromIngredients per migrare fornitori esistenti
+- [ ] TODO: Aggiornare schema ingredienti: sostituire campo supplier (text) con supplierId (foreign key)
+- [ ] TODO: Aggiornare schema semi_finished_recipes con supplierId
+- [ ] TODO: Creare pagina Fornitori con tabella e CRUD UI completo
+- [ ] TODO: Aggiungere link Fornitori al menu di navigazione
+- [ ] TODO: Aggiornare dialog modifica ingrediente: select obbligatorio fornitori invece di input libero
+- [ ] TODO: Aggiornare dialog creazione ingrediente con select fornitori
+- [ ] TODO: Eseguire migrazione fornitori da ingredienti
+- [ ] TODO: Testare flusso completo: crea fornitore → assegna a ingrediente → modifica fornitore

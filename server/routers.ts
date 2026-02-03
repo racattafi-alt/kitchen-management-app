@@ -12,6 +12,105 @@ import {
   calculatePromotionCost,
 } from "./calculations";
 
+// ============ PROCEDURE FORNITORI ============
+const suppliersRouter = router({
+  list: protectedProcedure.query(async () => {
+    return db.getSuppliers();
+  }),
+
+  create: protectedProcedure
+    .input(
+      z.object({
+        name: z.string(),
+        contact: z.string().optional(),
+        email: z.string().email().optional(),
+        phone: z.string().optional(),
+        address: z.string().optional(),
+        notes: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      return db.createSupplier({
+        id: nanoid(),
+        name: input.name,
+        contact: input.contact || null,
+        email: input.email || null,
+        phone: input.phone || null,
+        address: input.address || null,
+        notes: input.notes || null,
+      });
+    }),
+
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        data: z.object({
+          name: z.string().optional(),
+          contact: z.string().optional(),
+          email: z.string().email().optional(),
+          phone: z.string().optional(),
+          address: z.string().optional(),
+          notes: z.string().optional(),
+        }),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      return db.updateSupplier(input.id, input.data);
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      return db.deleteSupplier(input.id);
+    }),
+
+  migrateFromIngredients: protectedProcedure.mutation(async ({ ctx }) => {
+    if (ctx.user?.role !== "admin") {
+      throw new Error("Unauthorized: only admin can migrate suppliers");
+    }
+
+    // Estrai fornitori unici dagli ingredienti
+    const ingredients = await db.getIngredients();
+    const uniqueSuppliers = Array.from(new Set(ingredients.map(i => i.supplier).filter(Boolean)));
+
+    // Inserisci i fornitori nella tabella suppliers
+    const created = [];
+    for (const supplierName of uniqueSuppliers) {
+      try {
+        const supplier = await db.createSupplier({
+          id: nanoid(),
+          name: supplierName,
+          contact: null,
+          email: null,
+          phone: null,
+          address: null,
+          notes: null,
+        });
+        created.push(supplier);
+      } catch (error) {
+        // Ignora duplicati
+        console.warn(`Fornitore ${supplierName} già esistente`);
+      }
+    }
+
+    return {
+      success: true,
+      created: created.length,
+      total: uniqueSuppliers.length,
+    };
+  }),
+});
+
 // ============ PROCEDURE INGREDIENTI ============
 const ingredientsRouter = router({
   list: protectedProcedure.query(async () => {
@@ -758,6 +857,7 @@ export const appRouter = router({
     }),
   }),
 
+  suppliers: suppliersRouter,
   ingredients: ingredientsRouter,
   semiFinished: semiFinishedRouter,
   finalRecipes: finalRecipesRouter,
