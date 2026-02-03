@@ -289,6 +289,13 @@ export async function getOperations() {
   return db.select().from(operations);
 }
 
+export async function getOperationByName(name: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const results = await db.select().from(operations).where(eq(operations.name, name));
+  return results[0] || null;
+}
+
 // ============ PRODUZIONI SETTIMANALI ============
 
 export async function createWeeklyProduction(data: Omit<WeeklyProduction, "createdAt" | "updatedAt">) {

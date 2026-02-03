@@ -413,12 +413,14 @@ const finalRecipesRouter = router({
               pricePerUnit: semi?.finalPricePerKg || 0,
             };
           } else if (comp.type === 'operation') {
-            // Le operazioni non hanno ID, usano componentName
+            // Recupera dettagli operation dalla tabella
+            const operation = await db.getOperationByName(comp.componentName);
             return {
               ...comp,
-              name: comp.componentName || 'Operazione',
-              unit: comp.unit || 'unità',
-              pricePerUnit: 0,
+              name: operation?.name || comp.componentName || 'Operazione',
+              unit: comp.unit || 'ore',
+              pricePerUnit: operation?.hourlyRate ? parseFloat(operation.hourlyRate) : 0,
+              costType: operation?.costType || 'LAVORO',
             };
           }
           return comp;

@@ -412,10 +412,11 @@
 - [x] Creare tabella operations nel database con costi orari/unitari
 - [x] Importare dati operations nel database (11 operazioni: 10 macchinari + 1 lavoro)
 - [x] Aggiornare schema ricette per distinguere operations da semilavorati
+- [x] Aggiornare backend per recuperare dettagli operations dalla tabella
+- [x] Aggiungere funzione getOperationByName nel db.ts
 - [ ] Implementare sezione gestione componenti nel dialog modifica:
   * Barra ricerca per aggiungere ingredienti/semilavorati/operations
   * Pulsante elimina per ogni componente
   * Input quantità modificabili
   * Ricalcolo automatico costo totale
-- [ ] Aggiornare backend per gestire operations separate
 - [ ] Testare modifica completa ricetta e verifica aggiornamento database
