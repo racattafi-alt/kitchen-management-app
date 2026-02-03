@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ShoppingCart, Download, Filter, Search, Calendar } from "lucide-react";
+import { ShoppingCart, Download, Filter, Search, Calendar, MessageCircle, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 // Funzione per calcolare il lunedì della settimana (in UTC)
@@ -63,6 +63,69 @@ export default function ShoppingList() {
     return sum + (qty * item.pricePerUnit);
   }, 0) || 0;
 
+  // Genera ordine per fornitore con PDF e WhatsApp
+  const generateSupplierOrderMutation = trpc.production.generateSupplierOrderPDF.useMutation();
+  
+  const handleSupplierOrder = async () => {
+    const orderedItems = filteredList?.filter((item: any) => (orderQuantities[item.id] || 0) > 0);
+    if (!orderedItems || orderedItems.length === 0) {
+      toast.error("Nessun articolo da ordinare");
+      return;
+    }
+
+    try {
+      toast.loading("Generazione PDF in corso...");
+      
+      const result = await generateSupplierOrderMutation.mutateAsync({
+        shoppingList: orderedItems.map((item: any) => ({
+          itemName: item.itemName,
+          supplier: item.supplier,
+          quantityToOrder: orderQuantities[item.id] || 0,
+          unitType: item.unitType,
+          pricePerUnit: item.pricePerUnit,
+          totalCost: (orderQuantities[item.id] || 0) * item.pricePerUnit,
+        })),
+      });
+
+      // Scarica PDF
+      const pdfBlob = new Blob(
+        [Uint8Array.from(atob(result.pdf), c => c.charCodeAt(0))],
+        { type: 'application/pdf' }
+      );
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      const a = document.createElement('a');
+      a.href = pdfUrl;
+      a.download = `ordine_fornitori_${new Date().toISOString().split('T')[0]}.pdf`;
+      a.click();
+
+      // Prepara messaggio WhatsApp
+      const orderSummary = result.supplierOrders
+        .map((order: any) => 
+          `*${order.supplierName}*\n` +
+          order.items.map((item: any) => 
+            `- ${item.itemName}: ${item.quantityToOrder.toFixed(2)} ${item.unitType === 'k' ? 'kg' : 'pz'}`
+          ).join('\n') +
+          `\n_Totale: €${order.totalCost.toFixed(2)}_`
+        )
+        .join('\n\n');
+
+      const totalCost = result.supplierOrders.reduce((sum: number, order: any) => sum + order.totalCost, 0);
+      const whatsappMessage = encodeURIComponent(
+        `🛒 *ORDINE FORNITORI*\n\n${orderSummary}\n\n*TOTALE GENERALE: €${totalCost.toFixed(2)}*`
+      );
+      const whatsappUrl = `https://wa.me/393274750599?text=${whatsappMessage}`;
+      
+      // Apri WhatsApp
+      window.open(whatsappUrl, '_blank');
+      
+      toast.dismiss();
+      toast.success("PDF generato e WhatsApp aperto!");
+    } catch (error: any) {
+      toast.dismiss();
+      toast.error(error.message || "Errore durante la generazione dell'ordine");
+    }
+  };
+
   // Esporta lista ordini
   const handleExport = () => {
     const orderedItems = filteredList?.filter((item: any) => (orderQuantities[item.id] || 0) > 0);
@@ -104,10 +167,16 @@ export default function ShoppingList() {
               Gestisci ordini per tutti gli articoli ordinabili
             </p>
           </div>
-          <Button onClick={handleExport} disabled={totalOrderCost === 0}>
-            <Download className="mr-2 h-4 w-4" />
-            Esporta Ordini
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleSupplierOrder} disabled={totalOrderCost === 0} variant="default">
+              <MessageCircle className="mr-2 h-4 w-4" />
+              Ordine per Fornitore
+            </Button>
+            <Button onClick={handleExport} disabled={totalOrderCost === 0} variant="outline">
+              <Download className="mr-2 h-4 w-4" />
+              Esporta CSV
+            </Button>
+          </div>
         </div>
 
         {/* Filtri */}

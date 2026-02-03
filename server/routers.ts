@@ -655,6 +655,52 @@ const productionRouter = router({
         semiFinished: Object.fromEntries(semiFinished),
       };
     }),
+
+  generateSupplierOrderPDF: protectedProcedure
+    .input(
+      z.object({
+        shoppingList: z.array(
+          z.object({
+            itemName: z.string(),
+            supplier: z.string(),
+            quantityToOrder: z.number(),
+            unitType: z.string(),
+            pricePerUnit: z.number(),
+            totalCost: z.number(),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { generateOrderPDF } = await import("./generateOrderPDF");
+      
+      // Raggruppa per fornitore
+      const supplierMap = new Map<string, any[]>();
+      for (const item of input.shoppingList) {
+        if (item.quantityToOrder > 0) {
+          if (!supplierMap.has(item.supplier)) {
+            supplierMap.set(item.supplier, []);
+          }
+          supplierMap.get(item.supplier)!.push(item);
+        }
+      }
+
+      // Prepara ordini per fornitore
+      const supplierOrders = Array.from(supplierMap.entries()).map(([supplierName, items]) => ({
+        supplierName,
+        items,
+        totalCost: items.reduce((sum, item) => sum + item.totalCost, 0),
+      }));
+
+      // Genera PDF
+      const pdfBuffer = await generateOrderPDF(supplierOrders);
+      
+      // Converti in base64 per il frontend
+      return {
+        pdf: pdfBuffer.toString('base64'),
+        supplierOrders,
+      };
+    }),
 });
 
 // ============ PROCEDURE MENU ============

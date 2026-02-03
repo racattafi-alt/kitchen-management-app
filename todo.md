@@ -314,3 +314,10 @@
 - [x] Testare modifica ingrediente con selezione fornitore
 - [ ] Popolare campo minOrderQuantity da Excel
 - [ ] Implementare arrotondamento automatico nella lista acquisti
+
+## FUNZIONALITÀ ORDINE PER FORNITORE (COMPLETATA)
+- [x] Creare backend per generare PDF ordini raggruppati per fornitore
+- [x] Implementare pulsante "Ordine per Fornitore" nella pagina Lista Acquisti
+- [x] Generare PDF con riassunto completo ordini per fornitore
+- [x] Implementare invio ordine via WhatsApp al numero +393274750599
+- [x] Testare generazione PDF e invio WhatsApp
