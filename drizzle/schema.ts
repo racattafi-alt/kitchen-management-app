@@ -160,7 +160,9 @@ export type InsertOperation = typeof operations.$inferInsert;
 export const weeklyProductions = mysqlTable("weekly_productions", {
   id: varchar("id", { length: 36 }).primaryKey(),
   weekStartDate: datetime("weekStartDate").notNull(),
-  recipeFinalId: varchar("recipeFinalId", { length: 36 }).notNull(),
+  productionType: mysqlEnum("productionType", ["FINAL_RECIPE", "SEMI_FINISHED"]).default("FINAL_RECIPE").notNull(),
+  recipeFinalId: varchar("recipeFinalId", { length: 36 }),
+  semiFinishedId: varchar("semiFinishedId", { length: 36 }),
   desiredQuantity: decimal("desiredQuantity", { precision: 10, scale: 3 }).notNull(),
   unitType: mysqlEnum("unitType", ["u", "k"]).notNull(),
   currentStock: decimal("currentStock", { precision: 10, scale: 3 }).default("0"),

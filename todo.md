@@ -215,3 +215,13 @@
 - [x] Aggiornata struttura 10 semilavorati da ingredientId a componentId
 - [x] Implementato arrotondamento Math.ceil() per ingredienti unitari
 - [x] Verificato espansione spezie: Pepe, Sale, Coriandolo, Cumino, Paprica, ecc.
+
+## CORREZIONE LOGICA SEMILAVORATI NELLA LISTA ACQUISTI
+- [x] Rimuovere espansione ricorsiva semilavorati in aggregateProductionRequirements
+- [x] Mostrare semilavorati come item da acquistare (non espansi)
+- [x] Calcolare quantità e costo dei semilavorati necessari
+- [x] Aggiunto campo productionType e semiFinishedId allo schema weekly_productions
+- [x] Aggiornato backend per gestire produzioni di semilavorati
+- [x] Aggiornato frontend per mostrare colonna "Tipo" (Ingrediente/Semilavorato)
+- [x] Testato: lista acquisti per ricette finali mostra semilavorati (Spezie Pulled, Spezie tenders)
+- [ ] TODO futuro: Aggiungere UI per pianificare produzioni di semilavorati

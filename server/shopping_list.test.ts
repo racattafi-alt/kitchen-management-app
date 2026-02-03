@@ -20,13 +20,14 @@ describe("Shopping List - Nesting Ricorsivo", () => {
       },
     ];
 
-    const requirements = await aggregateProductionRequirements(productions);
+    const { ingredients, semiFinished } = await aggregateProductionRequirements(productions);
     
     // 10 kg * 0.5 kg/kg = 5 kg di ingredient-1
-    expect(requirements.get("ingredient-1")).toBe(5);
+    expect(ingredients.get("ingredient-1")).toBe(5);
+    expect(semiFinished.size).toBe(0);
   });
 
-  it("dovrebbe espandere ricorsivamente i semilavorati", async () => {
+  it("NON dovrebbe espandere ricorsivamente i semilavorati (li mostra come item da acquistare)", async () => {
     // Questo test richiede dati reali nel database
     // Per ora verifica solo che la funzione non lanci errori
     const productions = [
@@ -46,8 +47,11 @@ describe("Shopping List - Nesting Ricorsivo", () => {
       },
     ];
 
-    const requirements = await aggregateProductionRequirements(productions);
-    expect(requirements).toBeInstanceOf(Map);
+    const { ingredients, semiFinished } = await aggregateProductionRequirements(productions);
+    // Semilavorati NON vengono espansi, quindi dovrebbero apparire in semiFinished
+    // Quantità = desiredQuantity / yieldPercentage = 1 / 0.9 = 1.11 kg
+    expect(semiFinished.get("semi-1")).toBeCloseTo(1.11, 2);
+    expect(ingredients.size).toBe(0);
   });
 
   it("dovrebbe aggregare ingredienti da multiple ricette", async () => {
@@ -82,9 +86,10 @@ describe("Shopping List - Nesting Ricorsivo", () => {
       },
     ];
 
-    const requirements = await aggregateProductionRequirements(productions);
+    const { ingredients, semiFinished } = await aggregateProductionRequirements(productions);
     
     // (5 * 0.2) + (3 * 0.3) = 1 + 0.9 = 1.9 kg
-    expect(requirements.get("ingredient-common")).toBe(1.9);
+    expect(ingredients.get("ingredient-common")).toBe(1.9);
+    expect(semiFinished.size).toBe(0);
   });
 });

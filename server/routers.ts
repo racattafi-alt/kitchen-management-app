@@ -257,7 +257,9 @@ const productionRouter = router({
       return db.createWeeklyProduction({
         id: nanoid(),
         weekStartDate: input.weekStartDate,
+        productionType: "FINAL_RECIPE",
         recipeFinalId: input.recipeFinalId,
+        semiFinishedId: null,
         desiredQuantity: input.desiredQuantity.toString() as any,
         unitType: input.unitType,
         currentStock: "0",
@@ -295,18 +297,45 @@ const productionRouter = router({
       const plannedProductions = [];
       
       for (const production of weekProductions) {
-        const recipe = await db.getFinalRecipeById(production.recipeFinalId);
-        if (!recipe || !recipe.components) {
-          console.log(`[generateShoppingList] Ricetta ${production.recipeFinalId} non trovata o senza componenti`);
+        let recipe: any;
+        let components: any[];
+        let yieldPercentage: number;
+        let unitType: string;
+        let unitWeight: number | null;
+        let recipeName: string;
+
+        // Carica ricetta finale o semilavorato in base al tipo
+        if (production.productionType === 'SEMI_FINISHED' && production.semiFinishedId) {
+          recipe = await db.getSemiFinishedById(production.semiFinishedId);
+          if (!recipe || !recipe.components) {
+            console.log(`[generateShoppingList] Semilavorato ${production.semiFinishedId} non trovato o senza componenti`);
+            continue;
+          }
+          recipeName = recipe.name;
+          yieldPercentage = Number(recipe.yieldPercentage || 1);
+          unitType = 'k';
+          unitWeight = null;
+        } else if (production.recipeFinalId) {
+          recipe = await db.getFinalRecipeById(production.recipeFinalId);
+          if (!recipe || !recipe.components) {
+            console.log(`[generateShoppingList] Ricetta ${production.recipeFinalId} non trovata o senza componenti`);
+            continue;
+          }
+          recipeName = recipe.name;
+          yieldPercentage = Number(recipe.yieldPercentage || 1);
+          unitType = recipe.unitType || 'k';
+          unitWeight = recipe.unitWeight || null;
+        } else {
+          console.log(`[generateShoppingList] Produzione senza recipeFinalId o semiFinishedId`);
           continue;
         }
 
-        const components = typeof recipe.components === 'string' 
+        components = typeof recipe.components === 'string' 
           ? JSON.parse(recipe.components) 
           : recipe.components;
 
         if (!Array.isArray(components) || components.length === 0) {
-          console.log(`[generateShoppingList] Ricetta ${recipe.name} ha componenti vuoti`);
+          console.log(`[generateShoppingList] ${recipeName} ha componenti vuoti`);
           continue;
         }
 
@@ -319,35 +348,32 @@ const productionRouter = router({
           wastePercentage: Number(comp.wastePercentage || 0),
         }));
 
-        console.log(`[generateShoppingList] Ricetta ${recipe.name}: ${formattedComponents.length} componenti`);
+        console.log(`[generateShoppingList] ${recipeName}: ${formattedComponents.length} componenti`);
 
         // Converti unità in kg se necessario
         let desiredQuantityInKg = Number(production.desiredQuantity || 1);
-        if (recipe.unitType === 'u' && recipe.unitWeight) {
+        if (unitType === 'u' && unitWeight) {
           // Quantità in unità * peso unitario (g) / 1000 = kg
-          desiredQuantityInKg = desiredQuantityInKg * Number(recipe.unitWeight) / 1000;
-          console.log(`[generateShoppingList] Conversione: ${production.desiredQuantity} unità × ${recipe.unitWeight}g = ${desiredQuantityInKg} kg`);
+          desiredQuantityInKg = desiredQuantityInKg * Number(unitWeight) / 1000;
+          console.log(`[generateShoppingList] Conversione: ${production.desiredQuantity} unità × ${unitWeight}g = ${desiredQuantityInKg} kg`);
         }
 
         plannedProductions.push({
-          recipeFinalId: production.recipeFinalId,
+          recipeFinalId: production.recipeFinalId || production.semiFinishedId || '',
           desiredQuantity: desiredQuantityInKg,
           components: formattedComponents,
-          yieldPercentage: Number(recipe.yieldPercentage || 1),
+          yieldPercentage,
         });
       }
 
-      // Usa la funzione di aggregazione ricorsiva
+      // Usa la funzione di aggregazione
       const { aggregateProductionRequirements } = await import("./calculations");
-      const requirementsMap = await aggregateProductionRequirements(plannedProductions);
+      const { ingredients, semiFinished } = await aggregateProductionRequirements(plannedProductions);
 
-      // Converti la mappa in array e arricchisci con dati ingredienti
       const shoppingList = [];
-      const entries = Array.from(requirementsMap.entries());
       
-      for (const entry of entries) {
-        const ingredientId = entry[0];
-        const quantityInKg = entry[1];
+      // Aggiungi ingredienti
+      for (const [ingredientId, quantityInKg] of Array.from(ingredients.entries())) {
         const ingredient = await db.getIngredientById(ingredientId);
         if (!ingredient) continue;
 
@@ -363,11 +389,33 @@ const productionRouter = router({
 
         shoppingList.push({
           id: ingredient.id,
-          ingredientName: ingredient.name,
+          itemName: ingredient.name,
+          itemType: 'INGREDIENT' as const,
           category: ingredient.category,
           supplier: ingredient.supplier,
           quantityNeeded: finalQuantity,
           unitType: ingredient.unitType,
+          pricePerUnit: pricePerKg,
+          totalCost,
+        });
+      }
+      
+      // Aggiungi semilavorati
+      for (const [semiId, quantityInKg] of Array.from(semiFinished.entries())) {
+        const semi = await db.getSemiFinishedById(semiId);
+        if (!semi) continue;
+
+        const pricePerKg = Number(semi.finalPricePerKg || 0);
+        const totalCost = quantityInKg * pricePerKg;
+
+        shoppingList.push({
+          id: semi.id,
+          itemName: semi.name,
+          itemType: 'SEMI_FINISHED' as const,
+          category: semi.category,
+          supplier: 'Produzione Interna',
+          quantityNeeded: quantityInKg,
+          unitType: 'k' as const,
           pricePerUnit: pricePerKg,
           totalCost,
         });
@@ -378,7 +426,7 @@ const productionRouter = router({
         if (a.supplier !== b.supplier) {
           return a.supplier.localeCompare(b.supplier);
         }
-        return a.ingredientName.localeCompare(b.ingredientName);
+        return a.itemName.localeCompare(b.itemName);
       });
     }),
 
@@ -396,8 +444,11 @@ const productionRouter = router({
       })
     )
     .query(async ({ input }) => {
-      const requirements = await aggregateProductionRequirements(input.productions);
-      return Object.fromEntries(requirements);
+      const { ingredients, semiFinished } = await aggregateProductionRequirements(input.productions);
+      return {
+        ingredients: Object.fromEntries(ingredients),
+        semiFinished: Object.fromEntries(semiFinished),
+      };
     }),
 });
 

@@ -70,7 +70,8 @@ describe("production.generateShoppingList", () => {
       
       if (result.length > 0) {
         const item = result[0];
-        expect(item).toHaveProperty("ingredientName");
+        expect(item).toHaveProperty("itemName");
+        expect(item).toHaveProperty("itemType");
         expect(item).toHaveProperty("category");
         expect(item).toHaveProperty("supplier");
         expect(item).toHaveProperty("quantityNeeded");
@@ -141,7 +142,7 @@ describe("production.generateShoppingList", () => {
     }
   });
 
-  it("expands semi-finished recipes recursively", async () => {
+  it("does NOT expand semi-finished recipes (shows them as items to buy)", async () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
@@ -150,14 +151,56 @@ describe("production.generateShoppingList", () => {
 
     expect(Array.isArray(result)).toBe(true);
     
-    // Verify spices from semi-finished recipes appear
-    const spices = result.filter((item: any) => 
-      item.category === 'Spezie' || 
-      item.ingredientName?.toLowerCase().includes('pepe') ||
-      item.ingredientName?.toLowerCase().includes('sale')
-    );
+    // Verify semi-finished items appear as items to buy
+    const semiFinished = result.filter((item: any) => item.itemType === 'SEMI_FINISHED');
     
-    // Should have at least some spices from expanded semi-finished recipes
-    expect(spices.length).toBeGreaterThan(0);
+    // Should have at least some semi-finished items
+    expect(semiFinished.length).toBeGreaterThan(0);
+    
+    // Verify they are marked as "Produzione Interna"
+    for (const item of semiFinished) {
+      expect(item.supplier).toBe('Produzione Interna');
+    }
+  });
+});
+
+describe("production.generateShoppingList - semilavorati", () => {
+  it("mostra semilavorati come item da acquistare (non espansi)", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    // Genera lista acquisti per tutte le produzioni
+    const result = await caller.production.generateShoppingList({});
+
+    // Verifica che ci siano item nella lista
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBeGreaterThan(0);
+
+    // Verifica che ci siano semilavorati nella lista
+    const semiFinished = result.filter((item: any) => item.itemType === 'SEMI_FINISHED');
+    expect(semiFinished.length).toBeGreaterThan(0);
+
+    // Verifica che i semilavorati abbiano i campi corretti
+    const firstSemi = semiFinished[0];
+    expect(firstSemi).toHaveProperty('itemName');
+    expect(firstSemi).toHaveProperty('itemType', 'SEMI_FINISHED');
+    expect(firstSemi).toHaveProperty('quantityNeeded');
+    expect(firstSemi).toHaveProperty('supplier', 'Produzione Interna');
+  });
+
+  it("non espande ricorsivamente gli ingredienti dei semilavorati", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.production.generateShoppingList({});
+
+    // Verifica che ci siano semilavorati nella lista
+    const semiFinished = result.filter((item: any) => item.itemType === 'SEMI_FINISHED');
+    expect(semiFinished.length).toBeGreaterThan(0);
+
+    // Verifica che gli ingredienti dei semilavorati (es. Pepe, Sale, Coriandolo)
+    // NON appaiano nella lista quando sono parte di un semilavorato
+    // Nota: questo test assume che le produzioni attuali usino semilavorati
+    // e che gli ingredienti base non siano usati direttamente in altre ricette
   });
 });

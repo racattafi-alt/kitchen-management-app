@@ -96,43 +96,43 @@ interface PlannedProduction {
 }
 
 /**
- * Aggregazione ricorsiva dei fabbisogni di materie prime (Livello 0)
+ * Aggregazione dei fabbisogni di ingredienti e semilavorati
  * @param productions Array di produzioni pianificate
- * @returns Mappa {ingredientId: quantityNeeded}
+ * @returns Oggetto con mappe {ingredients, semiFinished}
  */
 export async function aggregateProductionRequirements(
   productions: PlannedProduction[]
-): Promise<Map<string, number>> {
-  const requirements = new Map<string, number>();
+): Promise<{
+  ingredients: Map<string, number>;
+  semiFinished: Map<string, number>;
+}> {
+  const ingredients = new Map<string, number>();
+  const semiFinished = new Map<string, number>();
 
-  async function extractLevel0Components(
+  function extractComponents(
     components: RecipeComponent[],
     multiplier: number
-  ): Promise<void> {
+  ): void {
     for (const component of components) {
       const quantityNeeded = (component.quantity / 1000) * multiplier;
 
       if (component.type === "INGREDIENT") {
-        const currentQty = requirements.get(component.componentId) || 0;
-        requirements.set(component.componentId, currentQty + quantityNeeded);
+        const currentQty = ingredients.get(component.componentId) || 0;
+        ingredients.set(component.componentId, currentQty + quantityNeeded);
       } else if (component.type === "SEMI_FINISHED") {
-        const semiFinished = await getSemiFinishedById(component.componentId);
-        if (semiFinished) {
-          const semiComponents = (semiFinished.components as any) || [];
-          const semiYield = semiFinished.yieldPercentage as unknown as number;
-          const effectiveMultiplier = quantityNeeded / semiYield;
-          await extractLevel0Components(semiComponents, effectiveMultiplier);
-        }
+        // NON espandere i semilavorati, trattali come item da acquistare
+        const currentQty = semiFinished.get(component.componentId) || 0;
+        semiFinished.set(component.componentId, currentQty + quantityNeeded);
       }
     }
   }
 
   for (const production of productions) {
     const effectiveMultiplier = production.desiredQuantity / production.yieldPercentage;
-    await extractLevel0Components(production.components, effectiveMultiplier);
+    extractComponents(production.components, effectiveMultiplier);
   }
 
-  return requirements;
+  return { ingredients, semiFinished };
 }
 
 /**

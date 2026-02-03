@@ -34,7 +34,7 @@ export default function ShoppingList() {
   );
 
   const filteredList = shoppingList?.filter((item: any) =>
-    item.ingredientName.toLowerCase().includes(searchQuery.toLowerCase()) &&
+    item.itemName.toLowerCase().includes(searchQuery.toLowerCase()) &&
     (!selectedSupplier || item.supplier === selectedSupplier)
   );
 
@@ -49,10 +49,11 @@ export default function ShoppingList() {
     }
 
     const csvContent = [
-      ["Ingrediente", "Categoria", "Fornitore", "Quantità", "Unità", "Prezzo Unitario", "Costo Totale"].join(","),
+      ["Item", "Tipo", "Categoria", "Fornitore", "Quantità", "Unità", "Prezzo Unitario", "Costo Totale"].join(","),
       ...filteredList.map((item: any) =>
         [
-          item.ingredientName,
+          item.itemName,
+          item.itemType === 'INGREDIENT' ? 'Ingrediente' : 'Semilavorato',
           item.category,
           item.supplier,
           Number(item.quantityNeeded || 0).toFixed(3),
@@ -201,7 +202,8 @@ export default function ShoppingList() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Ingrediente</TableHead>
+                    <TableHead>Item</TableHead>
+                    <TableHead>Tipo</TableHead>
                     <TableHead>Categoria</TableHead>
                     <TableHead>Fornitore</TableHead>
                     <TableHead className="text-right">Quantità</TableHead>
@@ -213,7 +215,12 @@ export default function ShoppingList() {
                 <TableBody>
                   {filteredList.map((item: any, index: number) => (
                     <TableRow key={index}>
-                      <TableCell className="font-medium">{item.ingredientName}</TableCell>
+                      <TableCell className="font-medium">{item.itemName}</TableCell>
+                      <TableCell>
+                        <Badge variant={item.itemType === 'INGREDIENT' ? 'default' : 'secondary'}>
+                          {item.itemType === 'INGREDIENT' ? 'Ingrediente' : 'Semilavorato'}
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline">{item.category}</Badge>
                       </TableCell>
