@@ -133,3 +133,7 @@
 - [x] Implementare pagina Ricette con schede individuali dettagliate
 - [x] Implementare dialog per creare nuova produzione
 - [x] Testare flusso completo: crea produzione → genera lista acquisti - 3 test passati
+
+## Shopping List - Accessibilità
+- [x] Aggiungere link Shopping List al menu di navigazione
+- [x] Verificare che la pagina sia accessibile dal menu
