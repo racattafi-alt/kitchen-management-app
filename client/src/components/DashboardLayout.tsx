@@ -21,15 +21,24 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Package, Utensils, ChefHat, BarChart3, Calendar, DollarSign, AlertTriangle, Shield, FolderOpen, Bot } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Page 1", path: "/" },
-  { icon: Users, label: "Page 2", path: "/some-path" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+  { icon: Package, label: "Ingredienti", path: "/ingredients" },
+  { icon: Utensils, label: "Semilavorati", path: "/semi-finished" },
+  { icon: ChefHat, label: "Ricette Finali", path: "/final-recipes" },
+  { icon: BarChart3, label: "Food Matrix", path: "/food-matrix" },
+  { icon: Calendar, label: "Produzione", path: "/production" },
+  { icon: DollarSign, label: "Menu", path: "/menu" },
+  { icon: AlertTriangle, label: "Scarti", path: "/waste" },
+  { icon: Shield, label: "HACCP", path: "/haccp" },
+  { icon: FolderOpen, label: "Archivio", path: "/storage" },
+  { icon: Bot, label: "Assistente", path: "/assistant" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
