@@ -15,11 +15,23 @@ import { toast } from "sonner";
 export default function Ingredients() {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingIngredient, setEditingIngredient] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"name" | "category" | "supplier">("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [formData, setFormData] = useState({
+    name: "",
+    supplier: "",
+    category: "Altro" as const,
+    unitType: "k" as const,
+    packageQuantity: 0,
+    packagePrice: 0,
+    brand: "",
+    notes: "",
+  });
+  const [editFormData, setEditFormData] = useState({
     name: "",
     supplier: "",
     category: "Altro" as const,
@@ -62,6 +74,18 @@ export default function Ingredients() {
     },
   });
 
+  const updateMutation = trpc.ingredients.update.useMutation({
+    onSuccess: () => {
+      utils.ingredients.list.invalidate();
+      setIsEditOpen(false);
+      setEditingIngredient(null);
+      toast.success("Ingrediente aggiornato con successo");
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
   const deleteMutation = trpc.ingredients.delete.useMutation({
     onSuccess: () => {
       utils.ingredients.list.invalidate();
@@ -92,6 +116,30 @@ export default function Ingredients() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createMutation.mutate(formData);
+  };
+
+  const handleEdit = (ingredient: any) => {
+    setEditingIngredient(ingredient);
+    setEditFormData({
+      name: ingredient.name,
+      supplier: ingredient.supplier,
+      category: ingredient.category,
+      unitType: ingredient.unitType,
+      packageQuantity: ingredient.packageQuantity,
+      packagePrice: ingredient.packagePrice,
+      brand: ingredient.brand || "",
+      notes: ingredient.notes || "",
+    });
+    setIsEditOpen(true);
+  };
+
+  const handleUpdateSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingIngredient) return;
+    updateMutation.mutate({
+      id: editingIngredient.id,
+      data: editFormData,
+    });
   };
 
   return (
@@ -224,6 +272,118 @@ export default function Ingredients() {
           )}
         </div>
 
+        {/* Dialog Modifica Ingrediente */}
+        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Modifica Ingrediente</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleUpdateSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-name">Nome</Label>
+                  <Input
+                    id="edit-name"
+                    value={editFormData.name}
+                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-supplier">Fornitore</Label>
+                  <Input
+                    id="edit-supplier"
+                    value={editFormData.supplier}
+                    onChange={(e) => setEditFormData({ ...editFormData, supplier: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-category">Categoria</Label>
+                  <Select
+                    value={editFormData.category}
+                    onValueChange={(value: any) => setEditFormData({ ...editFormData, category: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Additivi">Additivi</SelectItem>
+                      <SelectItem value="Carni">Carni</SelectItem>
+                      <SelectItem value="Farine">Farine</SelectItem>
+                      <SelectItem value="Latticini">Latticini</SelectItem>
+                      <SelectItem value="Verdura">Verdura</SelectItem>
+                      <SelectItem value="Spezie">Spezie</SelectItem>
+                      <SelectItem value="Altro">Altro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="edit-unitType">Unità di Misura</Label>
+                  <Select
+                    value={editFormData.unitType}
+                    onValueChange={(value: any) => setEditFormData({ ...editFormData, unitType: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="k">Chilogrammi (kg)</SelectItem>
+                      <SelectItem value="u">Unità (pz)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="edit-packageQuantity">Quantità Confezione</Label>
+                  <Input
+                    id="edit-packageQuantity"
+                    type="number"
+                    step="0.001"
+                    value={editFormData.packageQuantity}
+                    onChange={(e) => setEditFormData({ ...editFormData, packageQuantity: parseFloat(e.target.value) })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-packagePrice">Prezzo Confezione (€)</Label>
+                  <Input
+                    id="edit-packagePrice"
+                    type="number"
+                    step="0.01"
+                    value={editFormData.packagePrice}
+                    onChange={(e) => setEditFormData({ ...editFormData, packagePrice: parseFloat(e.target.value) })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-brand">Marca (opzionale)</Label>
+                  <Input
+                    id="edit-brand"
+                    value={editFormData.brand}
+                    onChange={(e) => setEditFormData({ ...editFormData, brand: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-notes">Note (opzionale)</Label>
+                  <Input
+                    id="edit-notes"
+                    value={editFormData.notes}
+                    onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>
+                  Annulla
+                </Button>
+                <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">
+                  Salva Modifiche
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+
         <Card className="mb-4">
           <CardHeader>
             <CardTitle>Filtri e Ricerca</CardTitle>
@@ -326,7 +486,11 @@ export default function Ingredients() {
                       {canEdit && (
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEdit(ingredient)}
+                            >
                               <Pencil className="h-4 w-4" />
                             </Button>
                             {canDelete && (

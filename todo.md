@@ -272,3 +272,17 @@
 - [x] Testare con settimane diverse e verificare calcoli corretti
 - [x] Test passati 24/24
 - [ ] TODO futuro: Salvare quantità da ordinare nel backend (attualmente solo localStorage)
+
+## CONFEZIONE MINIMA ORDINABILE E FIX MODIFICA INGREDIENTI
+- [x] Correggere problema modifica ingredienti (pulsante Pencil non aveva onClick)
+- [x] Aggiunto stato editingIngredient e isEditOpen
+- [x] Aggiunto mutation updateMutation per salvare modifiche
+- [x] Aggiunto handler handleEdit per popolare form modifica
+- [x] Aggiunto dialog modifica ingrediente con form completo
+- [x] Testato: dialog si apre correttamente con dati ingrediente
+- [x] Verificato che esiste campo minOrderQuantity nello schema ingredienti
+- [ ] TODO: Verificare se minOrderQuantity è popolato nel database
+- [ ] TODO: Importare dati confezione minima dal file Excel se mancanti
+- [ ] TODO: Modificare lista acquisti per arrotondare quantità ordine a multipli confezione
+- [ ] TODO: Mostrare confezione minima nella colonna della tabella lista acquisti
+- [ ] TODO: Testare calcolo arrotondamento con esempi reali
