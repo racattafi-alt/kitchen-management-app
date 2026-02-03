@@ -358,8 +358,22 @@ const finalRecipesRouter = router({
       const recipe = await db.getFinalRecipeById(input.id);
       if (!recipe) return null;
 
+      // Parse JSON se necessario
+      let parsedComponents = recipe.components;
+      if (typeof recipe.components === 'string') {
+        try {
+          parsedComponents = JSON.parse(recipe.components);
+        } catch (e) {
+          console.error('[getDetails] JSON parse error:', e);
+          parsedComponents = [];
+        }
+      }
+
+      console.log('[getDetails] Recipe:', recipe.name);
+      console.log('[getDetails] Parsed components length:', Array.isArray(parsedComponents) ? parsedComponents.length : 'N/A');
+
       // Espandi i componenti con dettagli ingredienti/semilavorati
-      const components = Array.isArray(recipe.components) ? recipe.components : [];
+      const components = Array.isArray(parsedComponents) ? parsedComponents : [];
       const componentsWithDetails = await Promise.all(
         components.map(async (comp: any) => {
           if (comp.type === 'ingredient') {

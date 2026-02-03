@@ -382,3 +382,18 @@
 - [ ] Aggiungere tooltip spiegazione resa produzione
 - [ ] Implementare dialog modifica ricetta
 - [ ] Testare tutte le correzioni nel browser
+
+## CORREZIONE VISUALIZZAZIONE RICETTE (IN CORSO)
+- [x] Debug parsing JSON componenti (risolto con JSON.parse manuale)
+- [x] Correggere categorie ricette (Carne, Pane, Salse, Verdure)
+- [x] Mostrare nomi ingredienti corretti (Tenders, Latte UHT, Farina)
+- [x] Mostrare quantità leggibili (10 kg, 1.5 kg, 6 unità)
+- [x] Mostrare tipo componente corretto (badge Ingrediente/Semilavorato)
+- [ ] Aggiungere prezzi unitari nella tabella componenti
+- [ ] Implementare dialog modifica ricetta completo con:
+  * Campo categoria modificabile
+  * Campo resa modificabile con tooltip spiegazione
+  * Barra ricerca ingredienti/semilavorati per aggiungere componenti
+  * Campi quantità modificabili
+  * Campo scarto modificabile con tooltip spiegazione
+- [ ] Testare tutte le correzioni nel browser

@@ -1,0 +1,170 @@
+{
+  "query": "\nUPDATE final_recipes SET category = 'Carne' WHERE code LIKE 'CARNE_%';\nUPDATE final_recipes SET category = 'Salse' WHERE code LIKE 'SALSA_%';\nUPDATE final_recipes SET category = 'Verdure' WHERE code LIKE 'VERDURE_%';\nUPDATE final_recipes SET category = 'Formaggi' WHERE code LIKE 'FORMAGGIO_%';\nSELECT code, name, category FROM final_recipes ORDER BY category, code;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute \nUPDATE final_recipes SET category = 'Carne' WHERE code LIKE 'CARNE_%';\nUPDATE final_recipes SET category = 'Salse' WHERE code LIKE 'SALSA_%';\nUPDATE final_recipes SET category = 'Verdure' WHERE code LIKE 'VERDURE_%';\nUPDATE final_recipes SET category = 'Formaggi' WHERE code LIKE 'FORMAGGIO_%';\nSELECT code, name, category FROM final_recipes ORDER BY category, code;\n",
+  "rows": [
+    {
+      "code": "PANE_BRIOCHE_5_0",
+      "name": "Pane Brioche 5 0",
+      "category": "Pane"
+    },
+    {
+      "code": "PANE_BUN",
+      "name": "Pane Bun",
+      "category": "Pane"
+    },
+    {
+      "code": "PANE_SEMI_5_0",
+      "name": "Pane Semi 5 0",
+      "category": "Pane"
+    },
+    {
+      "code": "PANE_WILD",
+      "name": "Pane Wild",
+      "category": "Pane"
+    },
+    {
+      "code": "CARNE_PULLED_PORK",
+      "name": "Carne Pulled Pork",
+      "category": "Carne"
+    },
+    {
+      "code": "CARNE_RIBS",
+      "name": "Carne Ribs",
+      "category": "Carne"
+    },
+    {
+      "code": "CARNE_SOVRACOSCE",
+      "name": "Carne Sovracosce",
+      "category": "Carne"
+    },
+    {
+      "code": "CARNE_TENDERS",
+      "name": "Carne Tenders",
+      "category": "Carne"
+    },
+    {
+      "code": "SALSA_AVOCADO",
+      "name": "Salsa Avocado",
+      "category": "Salse"
+    },
+    {
+      "code": "SALSA_CAJUN",
+      "name": "Salsa Cajun",
+      "category": "Salse"
+    },
+    {
+      "code": "SALSA_CHEDDAR",
+      "name": "Salsa Cheddar",
+      "category": "Salse"
+    },
+    {
+      "code": "SALSA_KETCHUP",
+      "name": "Salsa Ketchup",
+      "category": "Salse"
+    },
+    {
+      "code": "SALSA_MAYO",
+      "name": "Salsa Mayo",
+      "category": "Salse"
+    },
+    {
+      "code": "SALSA_MEMPHIS",
+      "name": "Salsa Memphis",
+      "category": "Salse"
+    },
+    {
+      "code": "SALSA_NDUJA",
+      "name": "Salsa Nduja",
+      "category": "Salse"
+    },
+    {
+      "code": "SALSA_NUTTY",
+      "name": "Salsa Nutty",
+      "category": "Salse"
+    },
+    {
+      "code": "SALSA_SENAPE_DIJON",
+      "name": "Salsa Senape Dijon",
+      "category": "Salse"
+    },
+    {
+      "code": "SALSA_TFS",
+      "name": "Salsa Tfs",
+      "category": "Salse"
+    },
+    {
+      "code": "SALSA_TZATZIKI",
+      "name": "Salsa Tzatziki",
+      "category": "Salse"
+    },
+    {
+      "code": "VERDURE_AGLIO_ARROSTO",
+      "name": "Verdure Aglio Arrosto",
+      "category": "Verdure"
+    },
+    {
+      "code": "VERDURE_CIPCARA",
+      "name": "Verdure Cipcara",
+      "category": "Verdure"
+    },
+    {
+      "code": "VERDURE_COLESLAW",
+      "name": "Verdure Coleslaw",
+      "category": "Verdure"
+    },
+    {
+      "code": "SL_BBQ",
+      "name": "Sl Bbq",
+      "category": "Altro"
+    },
+    {
+      "code": "SL_BBQRIBS",
+      "name": "Sl Bbqribs",
+      "category": "Altro"
+    },
+    {
+      "code": "SL_KETCHUP",
+      "name": "Sl Ketchup",
+      "category": "Altro"
+    },
+    {
+      "code": "SL_MEMPHIS",
+      "name": "Sl Memphis",
+      "category": "Altro"
+    },
+    {
+      "code": "SL_SBACON",
+      "name": "Sl Sbacon",
+      "category": "Altro"
+    },
+    {
+      "code": "SL_SENAPE",
+      "name": "Sl Senape",
+      "category": "Altro"
+    },
+    {
+      "code": "SL_SPULLED",
+      "name": "Sl Spulled",
+      "category": "Altro"
+    },
+    {
+      "code": "SL_SRIBS",
+      "name": "Sl Sribs",
+      "category": "Altro"
+    },
+    {
+      "code": "SL_SSOVRACOSCE",
+      "name": "Sl Ssovracosce",
+      "category": "Altro"
+    },
+    {
+      "code": "SL_STENDERS",
+      "name": "Sl Stenders",
+      "category": "Altro"
+    }
+  ],
+  "messages": [],
+  "stdout": "code\tname\tcategory\nPANE_BRIOCHE_5_0\tPane Brioche 5 0\tPane\nPANE_BUN\tPane Bun\tPane\nPANE_SEMI_5_0\tPane Semi 5 0\tPane\nPANE_WILD\tPane Wild\tPane\nCARNE_PULLED_PORK\tCarne Pulled Pork\tCarne\nCARNE_RIBS\tCarne Ribs\tCarne\nCARNE_SOVRACOSCE\tCarne Sovracosce\tCarne\nCARNE_TENDERS\tCarne Tenders\tCarne\nSALSA_AVOCADO\tSalsa Avocado\tSalse\nSALSA_CAJUN\tSalsa Cajun\tSalse\nSALSA_CHEDDAR\tSalsa Cheddar\tSalse\nSALSA_KETCHUP\tSalsa Ketchup\tSalse\nSALSA_MAYO\tSalsa Mayo\tSalse\nSALSA_MEMPHIS\tSalsa Memphis\tSalse\nSALSA_NDUJA\tSalsa Nduja\tSalse\nSALSA_NUTTY\tSalsa Nutty\tSalse\nSALSA_SENAPE_DIJON\tSalsa Senape Dijon\tSalse\nSALSA_TFS\tSalsa Tfs\tSalse\nSALSA_TZATZIKI\tSalsa Tzatziki\tSalse\nVERDURE_AGLIO_ARROSTO\tVerdure Aglio Arrosto\tVerdure\nVERDURE_CIPCARA\tVerdure Cipcara\tVerdure\nVERDURE_COLESLAW\tVerdure Coleslaw\tVerdure\nSL_BBQ\tSl Bbq\tAltro\nSL_BBQRIBS\tSl Bbqribs\tAltro\nSL_KETCHUP\tSl Ketchup\tAltro\nSL_MEMPHIS\tSl Memphis\tAltro\nSL_SBACON\tSl Sbacon\tAltro\nSL_SENAPE\tSl Senape\tAltro\nSL_SPULLED\tSl Spulled\tAltro\nSL_SRIBS\tSl Sribs\tAltro\nSL_SSOVRACOSCE\tSl Ssovracosce\tAltro\nSL_STENDERS\tSl Stenders\tAltro\n",
+  "stderr": "",
+  "execution_time_ms": 143
+}
