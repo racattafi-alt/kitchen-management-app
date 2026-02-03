@@ -351,3 +351,11 @@
 - [x] Verificare che funzionalità funziona correttamente
 - [x] Verificare che 10 caselle vuote siano presenti nel PDF
 - [x] Testare generazione PDF e invio WhatsApp
+
+## ARTICOLI EXTRA NELL'APP LISTA ACQUISTI (COMPLETATA)
+- [x] Aggiungere sezione "Articoli Extra" con 10 campi input nell'app Lista Acquisti
+- [x] Ogni campo deve avere: nome articolo, fornitore, quantità, unità, prezzo
+- [x] Includere articoli extra nel PDF generato
+- [x] Includere articoli extra nel messaggio WhatsApp
+- [x] Salvare articoli extra in localStorage per persistenza
+- [x] Testare generazione PDF e WhatsApp con articoli extra

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +24,22 @@ export default function ShoppingList() {
   const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
   const [selectedWeekGroup, setSelectedWeekGroup] = useState<string | null>(null);
   const [orderQuantities, setOrderQuantities] = useState<Record<string, number>>({});
+  const [extraItems, setExtraItems] = useState<Array<{
+    name: string;
+    supplier: string;
+    quantity: number;
+    unit: string;
+    price: number;
+  }>>(() => {
+    const saved = localStorage.getItem('extraItems');
+    if (saved) return JSON.parse(saved);
+    return Array.from({ length: 10 }, () => ({ name: '', supplier: '', quantity: 0, unit: 'kg', price: 0 }));
+  });
+
+  // Salva articoli extra in localStorage
+  useEffect(() => {
+    localStorage.setItem('extraItems', JSON.stringify(extraItems));
+  }, [extraItems]);
 
   // Carica tutte le produzioni
   const { data: allProductions } = trpc.production.list.useQuery({});
@@ -85,7 +101,9 @@ export default function ShoppingList() {
   
   const handleSupplierOrder = async () => {
     const orderedItems = filteredList?.filter((item: any) => (orderQuantities[item.id] || 0) > 0);
-    if (!orderedItems || orderedItems.length === 0) {
+    const validExtraItems = extraItems.filter(item => item.name && item.quantity > 0);
+    
+    if ((!orderedItems || orderedItems.length === 0) && validExtraItems.length === 0) {
       toast.error("Nessun articolo da ordinare");
       return;
     }
@@ -93,8 +111,9 @@ export default function ShoppingList() {
     try {
       toast.loading("Generazione PDF in corso...");
       
-      const result = await generateSupplierOrderMutation.mutateAsync({
-        shoppingList: orderedItems.map((item: any) => ({
+      // Combina articoli ordinati + articoli extra
+      const allItems = [
+        ...(orderedItems?.map((item: any) => ({
           id: item.id,
           itemName: item.itemName,
           itemType: item.itemType || 'INGREDIENT',
@@ -103,7 +122,21 @@ export default function ShoppingList() {
           unitType: item.unitType,
           pricePerUnit: item.pricePerUnit,
           totalCost: (orderQuantities[item.id] || 0) * item.pricePerUnit,
-        })),
+        })) || []),
+        ...validExtraItems.map((item, index) => ({
+          id: `extra-${index}`,
+          itemName: item.name,
+          itemType: 'EXTRA',
+          supplier: item.supplier,
+          quantityToOrder: item.quantity,
+          unitType: item.unit === 'kg' ? 'k' : 'u',
+          pricePerUnit: item.price,
+          totalCost: item.quantity * item.price,
+        }))
+      ];
+
+      const result = await generateSupplierOrderMutation.mutateAsync({
+        shoppingList: allItems,
         weekId: undefined,
       });
 
@@ -415,6 +448,78 @@ export default function ShoppingList() {
                 </Table>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Articoli Extra */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Articoli Extra (non presenti nella lista)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {extraItems.map((item, index) => (
+                <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-2 items-center">
+                  <Input
+                    placeholder="Nome articolo"
+                    value={item.name}
+                    onChange={(e) => {
+                      const newItems = [...extraItems];
+                      newItems[index] = { ...newItems[index], name: e.target.value };
+                      setExtraItems(newItems);
+                    }}
+                  />
+                  <Input
+                    placeholder="Fornitore"
+                    value={item.supplier}
+                    onChange={(e) => {
+                      const newItems = [...extraItems];
+                      newItems[index] = { ...newItems[index], supplier: e.target.value };
+                      setExtraItems(newItems);
+                    }}
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Quantità"
+                    value={item.quantity || ''}
+                    onChange={(e) => {
+                      const newItems = [...extraItems];
+                      newItems[index] = { ...newItems[index], quantity: parseFloat(e.target.value) || 0 };
+                      setExtraItems(newItems);
+                    }}
+                  />
+                  <Input
+                    placeholder="Unità"
+                    value={item.unit}
+                    onChange={(e) => {
+                      const newItems = [...extraItems];
+                      newItems[index] = { ...newItems[index], unit: e.target.value };
+                      setExtraItems(newItems);
+                    }}
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Prezzo €"
+                    value={item.price || ''}
+                    onChange={(e) => {
+                      const newItems = [...extraItems];
+                      newItems[index] = { ...newItems[index], price: parseFloat(e.target.value) || 0 };
+                      setExtraItems(newItems);
+                    }}
+                  />
+                  <div className="text-right font-semibold">
+                    {item.quantity > 0 && item.price > 0 ? (
+                      <span className="text-primary">€ {(item.quantity * item.price).toFixed(2)}</span>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
