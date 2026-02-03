@@ -99,3 +99,9 @@
 - [ ] Componente ProductionCalendar per pianificazione visuale
 - [ ] Hook useRecipeCostCalculator per calcoli in tempo reale
 - [ ] Test E2E per flusso completo lista acquisti
+
+## Importazione Ricette Finali da Excel
+- [x] Analizzare foglio REC_FINALE del file MENUUNION2026.xlsx
+- [x] Aggiornare script import_data.py per importare ricette finali
+- [x] Eseguire importazione ricette finali
+- [x] Verificare dati importati nel database (32 ricette totali)
