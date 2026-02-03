@@ -33,7 +33,7 @@ export default function Ingredients() {
   });
   const [editFormData, setEditFormData] = useState({
     name: "",
-    supplier: "",
+    supplierId: "",
     category: "Altro" as const,
     unitType: "k" as const,
     packageQuantity: 0,
@@ -123,11 +123,11 @@ export default function Ingredients() {
     setEditingIngredient(ingredient);
     setEditFormData({
       name: ingredient.name,
-      supplier: ingredient.supplierId || "",
+      supplierId: ingredient.supplierId || "",
       category: ingredient.category,
       unitType: ingredient.unitType,
-      packageQuantity: ingredient.packageQuantity,
-      packagePrice: ingredient.packagePrice,
+      packageQuantity: parseFloat(ingredient.packageQuantity) || 0,
+      packagePrice: parseFloat(ingredient.packagePrice) || 0,
       brand: ingredient.brand || "",
       notes: ingredient.notes || "",
     });
@@ -139,7 +139,11 @@ export default function Ingredients() {
     if (!editingIngredient) return;
     updateMutation.mutate({
       id: editingIngredient.id,
-      data: editFormData,
+      data: {
+        ...editFormData,
+        packageQuantity: parseFloat(editFormData.packageQuantity as any) || 0,
+        packagePrice: parseFloat(editFormData.packagePrice as any) || 0,
+      },
     });
   };
 
@@ -293,8 +297,8 @@ export default function Ingredients() {
                 <div>
                   <Label htmlFor="edit-supplier">Fornitore</Label>
                   <Select
-                    value={editFormData.supplier}
-                    onValueChange={(value: string) => setEditFormData({ ...editFormData, supplier: value })}
+                    value={editFormData.supplierId}
+                    onValueChange={(value: string) => setEditFormData({ ...editFormData, supplierId: value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Seleziona fornitore" />

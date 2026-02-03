@@ -338,3 +338,9 @@
 - [x] Implementare auto-arrotondamento quantità in lista acquisti
 - [x] Creare UI per visualizzare storico ordini
 - [x] Testare tutte le funzionalità
+
+## CORREZIONE ERRORE MODIFICA INGREDIENTI
+- [ ] Riprodurre e identificare errore modifica ingredienti
+- [ ] Correggere procedura update ingredienti per includere packageSize
+- [ ] Verificare tutti i percorsi database dopo modifiche schema
+- [ ] Testare modifica ingredienti con tutti i campi

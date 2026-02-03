@@ -201,11 +201,12 @@ const ingredientsRouter = router({
         id: z.string(),
         data: z.object({
           name: z.string().optional(),
-          supplier: z.string().optional(),
+          supplierId: z.string().optional(),
           category: z.enum(["Additivi", "Carni", "Farine", "Latticini", "Verdura", "Spezie", "Altro"]).optional(),
           unitType: z.enum(["u", "k"]).optional(),
           packagePrice: z.number().optional(),
           packageQuantity: z.number().optional(),
+          packageSize: z.number().optional(),
           brand: z.string().optional(),
           notes: z.string().optional(),
         }),
@@ -226,11 +227,12 @@ const ingredientsRouter = router({
         pricePerKgOrUnit: pricePerKgOrUnit.toString(),
       };
       if (input.data.name) updateData.name = input.data.name;
-      if (input.data.supplier) updateData.supplierId = input.data.supplier;
+      if (input.data.supplierId) updateData.supplierId = input.data.supplierId;
       if (input.data.category) updateData.category = input.data.category;
       if (input.data.unitType) updateData.unitType = input.data.unitType;
-      if (input.data.packagePrice) updateData.packagePrice = input.data.packagePrice.toString();
-      if (input.data.packageQuantity) updateData.packageQuantity = input.data.packageQuantity.toString();
+      if (input.data.packagePrice !== undefined) updateData.packagePrice = input.data.packagePrice.toString();
+      if (input.data.packageQuantity !== undefined) updateData.packageQuantity = input.data.packageQuantity.toString();
+      if (input.data.packageSize !== undefined) updateData.packageSize = input.data.packageSize.toString();
       if (input.data.brand !== undefined) updateData.brand = input.data.brand || null;
       if (input.data.notes !== undefined) updateData.notes = input.data.notes || null;
       return db.updateIngredient(input.id, updateData);
