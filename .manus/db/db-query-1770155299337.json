@@ -1,0 +1,9 @@
+{
+  "query": "\nUPDATE ingredients SET unitType = 'k', minOrderQuantity = 25 WHERE name = 'Farina per fritti';\nUPDATE ingredients SET unitType = 'k', minOrderQuantity = 25 WHERE name = 'Farina UNIQUA Viola';\nUPDATE ingredients SET unitType = 'k', minOrderQuantity = 10 WHERE name = 'Easy Snack CL';\nUPDATE ingredients SET unitType = 'k', minOrderQuantity = 10 WHERE name = 'Fiocchi di patata';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute \nUPDATE ingredients SET unitType = 'k', minOrderQuantity = 25 WHERE name = 'Farina per fritti';\nUPDATE ingredients SET unitType = 'k', minOrderQuantity = 25 WHERE name = 'Farina UNIQUA Viola';\nUPDATE ingredients SET unitType = 'k', minOrderQuantity = 10 WHERE name = 'Easy Snack CL';\nUPDATE ingredients SET unitType = 'k', minOrderQuantity = 10 WHERE name = 'Fiocchi di patata';\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 91
+}

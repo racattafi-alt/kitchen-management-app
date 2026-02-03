@@ -1,0 +1,360 @@
+{
+  "query": "SELECT id, name, unitType, minOrderQuantity, category FROM ingredients ORDER BY name LIMIT 50;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT id, name, unitType, minOrderQuantity, category FROM ingredients ORDER BY name LIMIT 50;",
+  "rows": [
+    {
+      "id": "LPEaucbkK1FCgY7w6I1vd",
+      "name": "\"Nutella\"",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "exMDS9n5Dzrt4G9GEmPi-",
+      "name": "Aceto balsamico",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "P1lKaomX1bvsq77XuYyE0",
+      "name": "Aceto di alcool",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "O6XP13WcvRDujOJgmbNWR",
+      "name": "Aceto di mele",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "w6Goo2jSCBOLl1FUq2KL3",
+      "name": "Acqua",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "WLPIceY1gvMNqtIEEKVNp",
+      "name": "Aglio in polvere",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Spezie"
+    },
+    {
+      "id": "B23PC4FO2fVaOme1qxPls",
+      "name": "Aglio pelato",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "dRCZAloUhHeMDvjVEYNGo",
+      "name": "Ali di pollo",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Carni"
+    },
+    {
+      "id": "UoffmGxBJVPpT_m_ywt5L",
+      "name": "Alluminio",
+      "unitType": "u",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "0TKQbZT91FRZfSZH1_LBp",
+      "name": "Amido di mais",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "E_lg2LmUumGJoBlx6ReY_",
+      "name": "Amido pregelatinizzato",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "MU0gZ5sl4CmugEiIbArOk",
+      "name": "Arachidi",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "VFgASYBb_x7Kzs4BEJjBv",
+      "name": "Asafetida",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Spezie"
+    },
+    {
+      "id": "qYaGozpMjcWjSnRYKWzYU",
+      "name": "Asiago",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Latticini"
+    },
+    {
+      "id": "iP6aV9rEyPNXq6Tf-mAvU",
+      "name": "Bacon",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Carni"
+    },
+    {
+      "id": "AXafxyjBGYDyU7BwV4znb",
+      "name": "Batatine (sweet potato fries 9x9)",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "2mlpqaCqWu8ZpbV3DXr99",
+      "name": "Beyond vegan Nuggets",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "jhGWWE5CzwToKR8eWh0AB",
+      "name": "Bombolette gas",
+      "unitType": "u",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "qZrIHjZIFgT4JlSTy7okZ",
+      "name": "Burro professionale",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "PmeelLah0jlESlw2Tw1xW",
+      "name": "Busta sv 20x30",
+      "unitType": "u",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "DUZJcqzD2gdvRhTZwkwaX",
+      "name": "Busta sv 30x40",
+      "unitType": "u",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "Eo3-KwuigsjnKAo9WE3rd",
+      "name": "Buste delivery",
+      "unitType": "u",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "J7-r5Q-5d6x_YGKwF0Fzm",
+      "name": "CL soffice",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Additivi"
+    },
+    {
+      "id": "NlyFJyxttv5mMlErPDPRy",
+      "name": "Cannella",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Spezie"
+    },
+    {
+      "id": "OI2g9AyQmzUkChe7-lV91",
+      "name": "Carne",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Carni"
+    },
+    {
+      "id": "i95fksMR04XeWJetDo5Cb",
+      "name": "Carne grill",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Carni"
+    },
+    {
+      "id": "EoHknGM2IXsJHXLYZ7T-M",
+      "name": "Carote",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "OmvtsLh_qP6u4O6NQEhbD",
+      "name": "Carta burger",
+      "unitType": "u",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "sQxufIMJaYCMt4q7VEEB8",
+      "name": "Carta forno 60x40",
+      "unitType": "u",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "LYoyZYMhKDWi7oA9EByNs",
+      "name": "Carta paglia",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "Q60NgYIahsKyyhMqyM0vl",
+      "name": "Carta paglia tagliata",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "pSfHxd7mm9S4hn8Yqluk6",
+      "name": "Cavolo cappuccio",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "yInS7zo3edJJSRDdebEEz",
+      "name": "Cavolo viola",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "n7GuE3HWFskVoEiKBOEbC",
+      "name": "Cetrioli",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "P4w4wXW-IA4w9yrSHr9LD",
+      "name": "Cetriolini salamoia",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "hMDO8uliTt3-OrTmwW0KZ",
+      "name": "Cheddar",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Latticini"
+    },
+    {
+      "id": "bjcVTbl3-2R7oGCJ-y4De",
+      "name": "Chile pasilla in polvere",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Spezie"
+    },
+    {
+      "id": "ILWfxSxtV7MQX6Weayfe9",
+      "name": "Cipolla",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "ePk99FLNB79vKcrNbyzZQ",
+      "name": "Cipolla viola",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "kQtVuTbKbawEBlYVbTNWf",
+      "name": "Contenitori PLA (250ml)",
+      "unitType": "u",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "0nIz7Gln1UGjUHTP8o5X7",
+      "name": "Contenitori PLA (80ml) (50pz)",
+      "unitType": "u",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "RYNN4WX1SuZGGz9Jwe14W",
+      "name": "Coriandolo",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "xCDgzSspWgCcfTiItj_5I",
+      "name": "Coriandolo in polvere",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Spezie"
+    },
+    {
+      "id": "fuA2uyk7r2FFPMPSdrkH-",
+      "name": "Coscia di pollo",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Carni"
+    },
+    {
+      "id": "I_2s4hfY98dAEF9xBAI7l",
+      "name": "Costole di maiale",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Carni"
+    },
+    {
+      "id": "HJqq-P8q91nc9QaK7wGBc",
+      "name": "Cumino",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Spezie"
+    },
+    {
+      "id": "_tSyC5bKEKeC47iti_ZYZ",
+      "name": "Curcuma",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Spezie"
+    },
+    {
+      "id": "8QOR2BrvjV4FWrnXBoH9Q",
+      "name": "Detersivo pavimenti",
+      "unitType": "u",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    },
+    {
+      "id": "YPNJg60X5s2ivIxMlFOUV",
+      "name": "Diaframma (250-300g)",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Carni"
+    },
+    {
+      "id": "bGTGQ6Kb4_Zcg8-_cyUCo",
+      "name": "Doppio concentrato",
+      "unitType": "k",
+      "minOrderQuantity": "NULL",
+      "category": "Altro"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tunitType\tminOrderQuantity\tcategory\nLPEaucbkK1FCgY7w6I1vd\t\"Nutella\"\tk\tNULL\tAltro\nexMDS9n5Dzrt4G9GEmPi-\tAceto balsamico\tk\tNULL\tAltro\nP1lKaomX1bvsq77XuYyE0\tAceto di alcool\tk\tNULL\tAltro\nO6XP13WcvRDujOJgmbNWR\tAceto di mele\tk\tNULL\tAltro\nw6Goo2jSCBOLl1FUq2KL3\tAcqua\tk\tNULL\tAltro\nWLPIceY1gvMNqtIEEKVNp\tAglio in polvere\tk\tNULL\tSpezie\nB23PC4FO2fVaOme1qxPls\tAglio pelato\tk\tNULL\tAltro\ndRCZAloUhHeMDvjVEYNGo\tAli di pollo\tk\tNULL\tCarni\nUoffmGxBJVPpT_m_ywt5L\tAlluminio\tu\tNULL\tAltro\n0TKQbZT91FRZfSZH1_LBp\tAmido di mais\tk\tNULL\tAltro\nE_lg2LmUumGJoBlx6ReY_\tAmido pregelatinizzato\tk\tNULL\tAltro\nMU0gZ5sl4CmugEiIbArOk\tArachidi\tk\tNULL\tAltro\nVFgASYBb_x7Kzs4BEJjBv\tAsafetida\tk\tNULL\tSpezie\nqYaGozpMjcWjSnRYKWzYU\tAsiago\tk\tNULL\tLatticini\niP6aV9rEyPNXq6Tf-mAvU\tBacon\tk\tNULL\tCarni\nAXafxyjBGYDyU7BwV4znb\tBatatine (sweet potato fries 9x9)\tk\tNULL\tAltro\n2mlpqaCqWu8ZpbV3DXr99\tBeyond vegan Nuggets\tk\tNULL\tAltro\njhGWWE5CzwToKR8eWh0AB\tBombolette gas\tu\tNULL\tAltro\nqZrIHjZIFgT4JlSTy7okZ\tBurro professionale\tk\tNULL\tAltro\nPmeelLah0jlESlw2Tw1xW\tBusta sv 20x30\tu\tNULL\tAltro\nDUZJcqzD2gdvRhTZwkwaX\tBusta sv 30x40\tu\tNULL\tAltro\nEo3-KwuigsjnKAo9WE3rd\tBuste delivery\tu\tNULL\tAltro\nJ7-r5Q-5d6x_YGKwF0Fzm\tCL soffice\tk\tNULL\tAdditivi\nNlyFJyxttv5mMlErPDPRy\tCannella\tk\tNULL\tSpezie\nOI2g9AyQmzUkChe7-lV91\tCarne\tk\tNULL\tCarni\ni95fksMR04XeWJetDo5Cb\tCarne grill\tk\tNULL\tCarni\nEoHknGM2IXsJHXLYZ7T-M\tCarote\tk\tNULL\tAltro\nOmvtsLh_qP6u4O6NQEhbD\tCarta burger\tu\tNULL\tAltro\nsQxufIMJaYCMt4q7VEEB8\tCarta forno 60x40\tu\tNULL\tAltro\nLYoyZYMhKDWi7oA9EByNs\tCarta paglia\tk\tNULL\tAltro\nQ60NgYIahsKyyhMqyM0vl\tCarta paglia tagliata\tk\tNULL\tAltro\npSfHxd7mm9S4hn8Yqluk6\tCavolo cappuccio\tk\tNULL\tAltro\nyInS7zo3edJJSRDdebEEz\tCavolo viola\tk\tNULL\tAltro\nn7GuE3HWFskVoEiKBOEbC\tCetrioli\tk\tNULL\tAltro\nP4w4wXW-IA4w9yrSHr9LD\tCetriolini salamoia\tk\tNULL\tAltro\nhMDO8uliTt3-OrTmwW0KZ\tCheddar\tk\tNULL\tLatticini\nbjcVTbl3-2R7oGCJ-y4De\tChile pasilla in polvere\tk\tNULL\tSpezie\nILWfxSxtV7MQX6Weayfe9\tCipolla\tk\tNULL\tAltro\nePk99FLNB79vKcrNbyzZQ\tCipolla viola\tk\tNULL\tAltro\nkQtVuTbKbawEBlYVbTNWf\tContenitori PLA (250ml)\tu\tNULL\tAltro\n0nIz7Gln1UGjUHTP8o5X7\tContenitori PLA (80ml) (50pz)\tu\tNULL\tAltro\nRYNN4WX1SuZGGz9Jwe14W\tCoriandolo\tk\tNULL\tAltro\nxCDgzSspWgCcfTiItj_5I\tCoriandolo in polvere\tk\tNULL\tSpezie\nfuA2uyk7r2FFPMPSdrkH-\tCoscia di pollo\tk\tNULL\tCarni\nI_2s4hfY98dAEF9xBAI7l\tCostole di maiale\tk\tNULL\tCarni\nHJqq-P8q91nc9QaK7wGBc\tCumino\tk\tNULL\tSpezie\n_tSyC5bKEKeC47iti_ZYZ\tCurcuma\tk\tNULL\tSpezie\n8QOR2BrvjV4FWrnXBoH9Q\tDetersivo pavimenti\tu\tNULL\tAltro\nYPNJg60X5s2ivIxMlFOUV\tDiaframma (250-300g)\tk\tNULL\tCarni\nbGTGQ6Kb4_Zcg8-_cyUCo\tDoppio concentrato\tk\tNULL\tAltro\n",
+  "stderr": "",
+  "execution_time_ms": 101
+}

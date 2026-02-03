@@ -321,3 +321,11 @@
 - [x] Generare PDF con riassunto completo ordini per fornitore
 - [x] Implementare invio ordine via WhatsApp al numero +393274750599
 - [x] Testare generazione PDF e invio WhatsApp
+
+## REVISIONE UNITÀ DI MISURA INGREDIENTI (COMPLETATA)
+- [x] Analizzare tutti gli ingredienti per identificare unità errate
+- [x] Correggere farine e prodotti in polvere (da unitari a kg)
+- [x] Verificare e correggere liquidi (kg/litri)
+- [x] Verificare prodotti confezionati (unitari vs peso)
+- [x] Aggiornare minOrderQuantity basato su confezioni standard
+- [x] Testare correzioni e verificare impatto su ricette
