@@ -132,11 +132,11 @@ export default function Production() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {/* Data Settimana */}
+                {/* Data Lunedì Settimana */}
                 <div className="space-y-2">
                   <Label htmlFor="weekStartDate">
                     <Calendar className="inline h-4 w-4 mr-1" />
-                    Data Inizio Settimana
+                    Lunedì Settimana
                   </Label>
                   <Input
                     id="weekStartDate"
@@ -144,6 +144,7 @@ export default function Production() {
                     value={formData.weekStartDate}
                     onChange={(e) => setFormData({ ...formData, weekStartDate: e.target.value })}
                     required
+                    title="Seleziona il lunedì della settimana di produzione"
                   />
                 </div>
 

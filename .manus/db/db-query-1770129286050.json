@@ -1,0 +1,22 @@
+{
+  "query": "SELECT id, name, code, components FROM final_recipes WHERE name LIKE '%Pulled Pork%' OR code LIKE '%PULLED%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT id, name, code, components FROM final_recipes WHERE name LIKE '%Pulled Pork%' OR code LIKE '%PULLED%';",
+  "rows": [
+    {
+      "id": "m0mrJLE4qW_YTDXutrn5b",
+      "name": "Sl Spulled",
+      "code": "SL_SPULLED",
+      "components": "[]"
+    },
+    {
+      "id": "wxNYAyIW1CtLBRXUIfJXX",
+      "name": "Carne Pulled Pork",
+      "code": "CARNE_PULLED_PORK",
+      "components": "[]"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcode\tcomponents\nm0mrJLE4qW_YTDXutrn5b\tSl Spulled\tSL_SPULLED\t[]\nwxNYAyIW1CtLBRXUIfJXX\tCarne Pulled Pork\tCARNE_PULLED_PORK\t[]\n",
+  "stderr": "",
+  "execution_time_ms": 68
+}

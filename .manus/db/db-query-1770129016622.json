@@ -1,0 +1,21 @@
+{
+  "query": "SELECT * FROM weekly_productions LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT * FROM weekly_productions LIMIT 5;",
+  "rows": [
+    {
+      "id": "6LeaHSjbQBaWgDOMj8Qlv",
+      "weekStartDate": "2026-02-03 00:00:00",
+      "recipeFinalId": "wxNYAyIW1CtLBRXUIfJXX",
+      "desiredQuantity": "100.000",
+      "unitType": "k",
+      "currentStock": "0.000",
+      "status": "PLANNED",
+      "createdAt": "2026-02-03 14:26:55",
+      "updatedAt": "2026-02-03 14:26:55"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tweekStartDate\trecipeFinalId\tdesiredQuantity\tunitType\tcurrentStock\tstatus\tcreatedAt\tupdatedAt\n6LeaHSjbQBaWgDOMj8Qlv\t2026-02-03 00:00:00\twxNYAyIW1CtLBRXUIfJXX\t100.000\tk\t0.000\tPLANNED\t2026-02-03 14:26:55\t2026-02-03 14:26:55\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

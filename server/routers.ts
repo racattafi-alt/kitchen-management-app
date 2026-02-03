@@ -222,7 +222,21 @@ const productionRouter = router({
   list: protectedProcedure
     .input(z.object({ weekStartDate: z.date().optional() }))
     .query(async ({ input }) => {
-      return db.getWeeklyProductions(input.weekStartDate);
+      const productions = await db.getWeeklyProductions(input.weekStartDate);
+      
+      // Arricchisci con nomi ricette
+      const enrichedProductions = await Promise.all(
+        productions.map(async (prod: any) => {
+          const recipe = await db.getFinalRecipeById(prod.recipeFinalId);
+          return {
+            ...prod,
+            recipeName: recipe?.name || "Ricetta non trovata",
+            recipeCode: recipe?.code || "",
+          };
+        })
+      );
+      
+      return enrichedProductions;
     }),
 
   create: protectedProcedure
@@ -280,26 +294,36 @@ const productionRouter = router({
       
       for (const production of weekProductions) {
         const recipe = await db.getFinalRecipeById(production.recipeFinalId);
-        if (!recipe || !recipe.components) continue;
+        if (!recipe || !recipe.components) {
+          console.log(`[generateShoppingList] Ricetta ${production.recipeFinalId} non trovata o senza componenti`);
+          continue;
+        }
 
         const components = typeof recipe.components === 'string' 
           ? JSON.parse(recipe.components) 
           : recipe.components;
 
+        if (!Array.isArray(components) || components.length === 0) {
+          console.log(`[generateShoppingList] Ricetta ${recipe.name} ha componenti vuoti`);
+          continue;
+        }
+
         // Converti i componenti nel formato richiesto da aggregateProductionRequirements
         const formattedComponents = components.map((comp: any) => ({
-          type: comp.ingredientId ? "INGREDIENT" : "SEMI_FINISHED",
+          type: (comp.ingredientId ? "INGREDIENT" : "SEMI_FINISHED") as "INGREDIENT" | "SEMI_FINISHED",
           componentId: comp.ingredientId || comp.semiFinishedId,
           quantity: Number(comp.quantity || 0),
           unit: comp.unitType || "k",
           wastePercentage: Number(comp.wastePercentage || 0) / 100,
         }));
 
+        console.log(`[generateShoppingList] Ricetta ${recipe.name}: ${formattedComponents.length} componenti`);
+
         plannedProductions.push({
           recipeFinalId: production.recipeFinalId,
           desiredQuantity: Number(production.desiredQuantity || 1),
           components: formattedComponents,
-          yieldPercentage: Number(recipe.yieldPercentage || 1),
+          yieldPercentage: Number(recipe.yieldPercentage || 100) / 100,
         });
       }
 

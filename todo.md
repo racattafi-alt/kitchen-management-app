@@ -153,3 +153,18 @@
 - [x] Sostituire dialog con form inline nella pagina Produzioni
 - [x] Implementare autocomplete predittivo per selezione ricette
 - [ ] Testare flusso completo: crea → modifica → elimina produzione
+
+## Correzioni Urgenti Lista Acquisti e UX
+- [x] Diagnosticare perché lista acquisti non mostra ingredienti (logica backend)
+- [x] Verificare che generateShoppingList riceva correttamente le produzioni
+- [x] Aggiungere logging per debug
+- [x] Testare aggregazione ingredienti con dati reali - PROBLEMA: ricette senza componenti
+- [x] Mostrare nomi ricette leggibili invece di codici nella tabella produzioni
+- [x] Implementare join con final_recipes per recuperare nomi
+- [x] Semplificare form settimana: solo data lunedì (non range)
+- [x] Testare flusso completo con dati reali - PROBLEMA: ricette senza componenti
+
+## Problema Critico Identificato
+- [ ] Reimportare ricette con componenti corretti dal file Excel
+- [ ] Verificare che tutte le 32 ricette abbiano componenti popolati
+- [ ] Testare lista acquisti con ricette complete
