@@ -53,7 +53,8 @@ export type InsertSupplier = typeof suppliers.$inferInsert;
 export const ingredients = mysqlTable("ingredients", {
   id: varchar("id", { length: 36 }).primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
-  supplier: varchar("supplier", { length: 255 }).notNull(),
+  supplierId: varchar("supplierId", { length: 36 }),
+  supplier: varchar("supplier", { length: 255 }),
   category: mysqlEnum("category", [
     "Additivi",
     "Carni",

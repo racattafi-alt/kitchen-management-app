@@ -74,6 +74,46 @@ const suppliersRouter = router({
       return db.deleteSupplier(input.id);
     }),
 
+  linkIngredientsToSuppliers: protectedProcedure.mutation(async ({ ctx }) => {
+    if (ctx.user?.role !== "admin") {
+      throw new Error("Unauthorized: only admin can link ingredients");
+    }
+
+    // Carica tutti i fornitori e ingredienti
+    const allSuppliers = await db.getSuppliers();
+    const allIngredients = await db.getIngredients();
+
+    // Crea mappa nome fornitore -> ID
+    const supplierMap = new Map(allSuppliers.map(s => [s.name, s.id]));
+
+    // Aggiorna ogni ingrediente con supplierId
+    let updated = 0;
+    let skipped = 0;
+
+    for (const ingredient of allIngredients) {
+      if (!ingredient.supplier) {
+        skipped++;
+        continue;
+      }
+
+      const supplierId = supplierMap.get(ingredient.supplier);
+      if (supplierId) {
+        await db.updateIngredient(ingredient.id, { supplierId });
+        updated++;
+      } else {
+        console.warn(`Fornitore non trovato per ingrediente ${ingredient.name}: ${ingredient.supplier}`);
+        skipped++;
+      }
+    }
+
+    return {
+      success: true,
+      updated,
+      skipped,
+      total: allIngredients.length,
+    };
+  }),
+
   migrateFromIngredients: protectedProcedure.mutation(async ({ ctx }) => {
     if (ctx.user?.role !== "admin") {
       throw new Error("Unauthorized: only admin can migrate suppliers");
@@ -86,6 +126,7 @@ const suppliersRouter = router({
     // Inserisci i fornitori nella tabella suppliers
     const created = [];
     for (const supplierName of uniqueSuppliers) {
+      if (!supplierName) continue;
       try {
         const supplier = await db.createSupplier({
           id: nanoid(),
@@ -139,6 +180,7 @@ const ingredientsRouter = router({
       return db.createIngredient({
         id: nanoid(),
         name: input.name,
+        supplierId: null,
         supplier: input.supplier,
         category: input.category,
         unitType: input.unitType,
@@ -545,7 +587,7 @@ const productionRouter = router({
           itemName: ingredient.name,
           itemType: 'INGREDIENT' as const,
           category: ingredient.category,
-          supplier: ingredient.supplier,
+          supplier: ingredient.supplier || 'Non specificato',
           quantityNeeded: finalQuantity,
           quantityToOrder: 0, // Valore iniziale 0, editabile dall'utente
           unitType: ingredient.unitType,

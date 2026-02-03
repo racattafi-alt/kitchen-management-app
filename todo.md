@@ -301,3 +301,16 @@
 - [ ] TODO: Aggiornare dialog creazione ingrediente con select fornitori
 - [ ] TODO: Eseguire migrazione fornitori da ingredienti
 - [ ] TODO: Testare flusso completo: crea fornitore → assegna a ingrediente → modifica fornitore
+
+## MIGRAZIONE DATABASE FORNITORI (IN CORSO)
+- [x] Creare tabella suppliers con schema completo
+- [x] Implementare backend CRUD per fornitori (create/list/update/delete)
+- [x] Creare procedura migrazione da ingredienti (13 fornitori estratti)
+- [x] Aggiornare schema ingredients: cambiato supplier (text) → supplierId (foreign key nullable)
+- [ ] Creare script migrazione per popolare supplierId in ingredients
+- [ ] Aggiornare tutto il codice backend che usa ingredient.supplier per usare supplierId + join
+- [ ] Aggiornare Ingredients.tsx: campo supplier da text input a required Select dropdown
+- [ ] Creare pagina Fornitori UI per gestione CRUD
+- [ ] Testare modifica ingrediente con selezione fornitore
+- [ ] Popolare campo minOrderQuantity da Excel
+- [ ] Implementare arrotondamento automatico nella lista acquisti
