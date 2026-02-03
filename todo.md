@@ -73,3 +73,10 @@
 - Propagazione automatica prezzi da Livello 0 a Livello 2
 - Distinzione scarti produzione vs scarti servizio
 - Conformità HACCP e tracciabilità completa
+
+## Importazione Dati da Excel
+- [x] Analizzare struttura file MENUUNION2026.xlsx
+- [x] Creare script di importazione dati
+- [x] Caricare ingredienti nel database
+- [x] Caricare ricette nel database
+- [x] Verificare dati importati correttamente
