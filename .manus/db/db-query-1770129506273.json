@@ -1,0 +1,14 @@
+{
+  "query": "SELECT COUNT(*) as total, SUM(CASE WHEN components IS NOT NULL AND components != '[]' AND components != '' THEN 1 ELSE 0 END) as with_components FROM final_recipes;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT COUNT(*) as total, SUM(CASE WHEN components IS NOT NULL AND components != '[]' AND components != '' THEN 1 ELSE 0 END) as with_components FROM final_recipes;",
+  "rows": [
+    {
+      "total": "32",
+      "with_components": "32"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\twith_components\n32\t32\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

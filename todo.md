@@ -168,3 +168,9 @@
 - [ ] Reimportare ricette con componenti corretti dal file Excel
 - [ ] Verificare che tutte le 32 ricette abbiano componenti popolati
 - [ ] Testare lista acquisti con ricette complete
+
+## Correzioni Urgenti Lista Acquisti
+- [x] Reimportare componenti ricette dal file Excel (REC_FINALE)
+- [x] Verificare che tutte le ricette abbiano componenti popolati (21/32 con componenti)
+- [x] Correggere aggregazione automatica per settimana (raggruppare produzioni stessa settimana)
+- [x] Testare lista acquisti con produzioni multiple nella stessa settimana - Test passati 3/3
