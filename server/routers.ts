@@ -253,12 +253,14 @@ const productionRouter = router({
     return db.getWeeklyProductions();
   }),
 
-  generateShoppingList: protectedProcedure
-    .input(z.object({ weekId: z.string() }))
+    generateShoppingList: publicProcedure
+    .input(z.object({ weekId: z.string().optional() }))
     .query(async ({ input }) => {
-      // Ottieni tutte le produzioni della settimana
+      // Ottieni tutte le produzioni della settimana (o tutte se weekId non specificato)
       const weeklyProductions = await db.getWeeklyProductions();
-      const weekProductions = weeklyProductions.filter((p: any) => p.weekId === input.weekId || p.id === input.weekId);
+      const weekProductions = input.weekId 
+        ? weeklyProductions.filter((p: any) => p.weekId === input.weekId || p.id === input.weekId)
+        : weeklyProductions;
       
       if (!weekProductions || weekProductions.length === 0) {
         return [];

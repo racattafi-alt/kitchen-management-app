@@ -1,0 +1,28 @@
+{
+  "query": "SELECT id, name, code, LEFT(components, 500) as components_preview FROM final_recipes LIMIT 3;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT id, name, code, LEFT(components, 500) as components_preview FROM final_recipes LIMIT 3;",
+  "rows": [
+    {
+      "id": "1ZXiXNLTLpF861aOZM_RS",
+      "name": "Carne Tenders",
+      "code": "CARNE_TENDERS",
+      "components_preview": "[{\"ingredientId\": \"1wLPbEwW6k1LHRA3ANfhO\", \"ingredientName\": \"Tenders\", \"pricePerUnit\": 7.12, \"quantity\": 10000, \"unitType\": \"g\"}, {\"ingredientId\": \"HKhofFX3MS9UOtaO0TTuK\", \"ingredientName\": \"Latte UHT\", \"pricePerUnit\": 1.07, \"quantity\": 1500, \"unitType\": \"g\"}, {\"ingredientId\": \"-3uxDZkdn8k0VkO4Oj6CY\", \"ingredientName\": \"Yogurt greco\", \"pricePerUnit\": 4.36, \"quantity\": 1500, \"unitType\": \"g\"}, {\"ingredientId\": \"c4E_nMVnhWmdtzeTuTSB8\", \"ingredientName\": \"Farina\", \"pricePerUnit\": 1.17, \"quantity\": "
+    },
+    {
+      "id": "38ihZNiKuki0_MZXFNRL6",
+      "name": "Pane Bun",
+      "code": "PANE_BUN",
+      "components_preview": "[{\"ingredientId\": \"c4E_nMVnhWmdtzeTuTSB8\", \"ingredientName\": \"Farina\", \"pricePerUnit\": 1.17, \"quantity\": 3000, \"unitType\": \"g\"}, {\"ingredientId\": \"IdtSYIMrPyDK5pHBlDG5T\", \"ingredientName\": \"Fiocchi di patata\", \"pricePerUnit\": 3.72, \"quantity\": 180, \"unitType\": \"g\"}, {\"ingredientId\": \"FgKSsP6SQideKxG33z5Fx\", \"ingredientName\": \"Lievito otentic\", \"pricePerUnit\": 8.82, \"quantity\": 300, \"unitType\": \"g\"}, {\"ingredientId\": \"5E1AGUSgxXFoAV8f_8KAL\", \"ingredientName\": \"Sale\", \"pricePerUnit\": 0.3, \"quantit"
+    },
+    {
+      "id": "3RY7r6ujhRES0KwmjHbb9",
+      "name": "Salsa Memphis",
+      "code": "SALSA_MEMPHIS",
+      "components_preview": "[{\"ingredientId\": \"GLYgXdYlj6RH1mfx7s2Ab\", \"ingredientName\": \"Senape\", \"pricePerUnit\": 3.01, \"quantity\": 20, \"unitType\": \"g\"}, {\"ingredientId\": \"BGtpWHKEblWCiK6F0szR5\", \"ingredientName\": \"Zucchero invertito\", \"pricePerUnit\": 2, \"quantity\": 50, \"unitType\": \"g\"}, {\"ingredientId\": \"A9ndv-l08zTUT5txwIuG2\", \"ingredientName\": \"Fondo bruno vegano\", \"pricePerUnit\": 20.53, \"quantity\": 30, \"unitType\": \"g\"}, {\"ingredientId\": \"9WQvqdGlWFZnk7yV8gQnt\", \"ingredientName\": \"Xantana\", \"pricePerUnit\": 27.79, \"quan"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcode\tcomponents_preview\n1ZXiXNLTLpF861aOZM_RS\tCarne Tenders\tCARNE_TENDERS\t[{\"ingredientId\": \"1wLPbEwW6k1LHRA3ANfhO\", \"ingredientName\": \"Tenders\", \"pricePerUnit\": 7.12, \"quantity\": 10000, \"unitType\": \"g\"}, {\"ingredientId\": \"HKhofFX3MS9UOtaO0TTuK\", \"ingredientName\": \"Latte UHT\", \"pricePerUnit\": 1.07, \"quantity\": 1500, \"unitType\": \"g\"}, {\"ingredientId\": \"-3uxDZkdn8k0VkO4Oj6CY\", \"ingredientName\": \"Yogurt greco\", \"pricePerUnit\": 4.36, \"quantity\": 1500, \"unitType\": \"g\"}, {\"ingredientId\": \"c4E_nMVnhWmdtzeTuTSB8\", \"ingredientName\": \"Farina\", \"pricePerUnit\": 1.17, \"quantity\": \n38ihZNiKuki0_MZXFNRL6\tPane Bun\tPANE_BUN\t[{\"ingredientId\": \"c4E_nMVnhWmdtzeTuTSB8\", \"ingredientName\": \"Farina\", \"pricePerUnit\": 1.17, \"quantity\": 3000, \"unitType\": \"g\"}, {\"ingredientId\": \"IdtSYIMrPyDK5pHBlDG5T\", \"ingredientName\": \"Fiocchi di patata\", \"pricePerUnit\": 3.72, \"quantity\": 180, \"unitType\": \"g\"}, {\"ingredientId\": \"FgKSsP6SQideKxG33z5Fx\", \"ingredientName\": \"Lievito otentic\", \"pricePerUnit\": 8.82, \"quantity\": 300, \"unitType\": \"g\"}, {\"ingredientId\": \"5E1AGUSgxXFoAV8f_8KAL\", \"ingredientName\": \"Sale\", \"pricePerUnit\": 0.3, \"quantit\n3RY7r6ujhRES0KwmjHbb9\tSalsa Memphis\tSALSA_MEMPHIS\t[{\"ingredientId\": \"GLYgXdYlj6RH1mfx7s2Ab\", \"ingredientName\": \"Senape\", \"pricePerUnit\": 3.01, \"quantity\": 20, \"unitType\": \"g\"}, {\"ingredientId\": \"BGtpWHKEblWCiK6F0szR5\", \"ingredientName\": \"Zucchero invertito\", \"pricePerUnit\": 2, \"quantity\": 50, \"unitType\": \"g\"}, {\"ingredientId\": \"A9ndv-l08zTUT5txwIuG2\", \"ingredientName\": \"Fondo bruno vegano\", \"pricePerUnit\": 20.53, \"quantity\": 30, \"unitType\": \"g\"}, {\"ingredientId\": \"9WQvqdGlWFZnk7yV8gQnt\", \"ingredientName\": \"Xantana\", \"pricePerUnit\": 27.79, \"quan\n",
+  "stderr": "",
+  "execution_time_ms": 90
+}

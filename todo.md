@@ -137,3 +137,9 @@
 ## Shopping List - Accessibilità
 - [x] Aggiungere link Shopping List al menu di navigazione
 - [x] Verificare che la pagina sia accessibile dal menu
+
+## Correzioni Critiche Lista Acquisti
+- [x] Verificare completezza componenti ricette nel database (21/32 ricette con componenti)
+- [x] Correggere aggregazione lista acquisti (unire tutte le settimane uguali)
+- [ ] Verificare calcolo ricorsivo quantità ingredienti
+- [ ] Testare con dati reali e confrontare con Excel

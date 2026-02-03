@@ -16,8 +16,8 @@ export default function ShoppingList() {
 
   const { data: weeklyProductions } = trpc.production.listWeekly.useQuery();
   const { data: shoppingList, isLoading } = trpc.production.generateShoppingList.useQuery(
-    { weekId: selectedWeek },
-    { enabled: !!selectedWeek }
+    { weekId: selectedWeek || undefined },
+    { enabled: true }
   );
 
   const filteredList = shoppingList?.filter((item: any) =>
@@ -83,6 +83,14 @@ export default function ShoppingList() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-3">
+              <Button
+                variant={selectedWeek === "" ? "default" : "outline"}
+                onClick={() => setSelectedWeek("")}
+                className="justify-start"
+              >
+                <ShoppingCart className="mr-2 h-4 w-4" />
+                Tutte le settimane
+              </Button>
               {weeklyProductions?.map((week: any) => (
                 <Button
                   key={week.id}
@@ -98,7 +106,7 @@ export default function ShoppingList() {
           </CardContent>
         </Card>
 
-        {selectedWeek && (
+        {(
           <>
             {/* Filters */}
             <div className="flex gap-4 mb-6">

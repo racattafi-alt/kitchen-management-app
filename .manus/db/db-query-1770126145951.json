@@ -1,0 +1,13 @@
+{
+  "query": "SHOW TABLES LIKE '%semi%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SHOW TABLES LIKE '%semi%';",
+  "rows": [
+    {
+      "Tables_in_UyJAnBG4RdjFPnrCDJUrf4 (%semi%)": "semi_finished_recipes"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_UyJAnBG4RdjFPnrCDJUrf4 (%semi%)\nsemi_finished_recipes\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}
