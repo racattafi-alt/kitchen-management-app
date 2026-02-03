@@ -406,3 +406,16 @@
 - [x] Campo scarto al servizio modificabile con tooltip
 - [x] Pulsante Salva Modifiche con validazione
 - [x] Testare modifica ricetta e verificare aggiornamento
+
+## MODIFICA COMPLETA RICETTE E COSTI OPERATIVI (IN CORSO)
+- [x] Estrarre costi operativi (Cuoco, Abbattitore, ecc.) dal file Excel
+- [x] Creare tabella operations nel database con costi orari/unitari
+- [x] Importare dati operations nel database (11 operazioni: 10 macchinari + 1 lavoro)
+- [x] Aggiornare schema ricette per distinguere operations da semilavorati
+- [ ] Implementare sezione gestione componenti nel dialog modifica:
+  * Barra ricerca per aggiungere ingredienti/semilavorati/operations
+  * Pulsante elimina per ogni componente
+  * Input quantità modificabili
+  * Ricalcolo automatico costo totale
+- [ ] Aggiornare backend per gestire operations separate
+- [ ] Testare modifica completa ricetta e verifica aggiornamento database
