@@ -105,3 +105,11 @@
 - [x] Aggiornare script import_data.py per importare ricette finali
 - [x] Eseguire importazione ricette finali
 - [x] Verificare dati importati nel database (32 ricette totali)
+
+## Implementazione Pagina Ingredienti
+- [x] Verificare ingredienti duplicati nel database (154 duplicati trovati)
+- [x] Rimuovere duplicati mantenendo solo record più recenti (154 rimossi)
+- [x] Implementare tabella ingredienti con tutti i campi
+- [x] Aggiungere filtro per categoria
+- [x] Aggiungere ricerca per nome
+- [x] Testare funzionalità

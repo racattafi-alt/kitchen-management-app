@@ -15,6 +15,8 @@ import { toast } from "sonner";
 export default function Ingredients() {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [formData, setFormData] = useState({
     name: "",
     supplier: "",
@@ -27,7 +29,13 @@ export default function Ingredients() {
   });
 
   const utils = trpc.useUtils();
-  const { data: ingredients, isLoading } = trpc.ingredients.list.useQuery();
+  const { data: ingredientsRaw, isLoading } = trpc.ingredients.list.useQuery();
+  
+  const ingredients = ingredientsRaw?.filter((ingredient: any) => {
+    const matchesSearch = ingredient.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === "all" || ingredient.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
   const createMutation = trpc.ingredients.create.useMutation({
     onSuccess: () => {
       utils.ingredients.list.invalidate();
@@ -202,11 +210,47 @@ export default function Ingredients() {
           )}
         </div>
 
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle>Filtri e Ricerca</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label>Cerca per nome</Label>
+                <Input
+                  placeholder="Cerca ingrediente..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Filtra per categoria</Label>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tutte le categorie</SelectItem>
+                    <SelectItem value="Additivi">Additivi</SelectItem>
+                    <SelectItem value="Carni">Carni</SelectItem>
+                    <SelectItem value="Farine">Farine</SelectItem>
+                    <SelectItem value="Latticini">Latticini</SelectItem>
+                    <SelectItem value="Verdura">Verdura</SelectItem>
+                    <SelectItem value="Spezie">Spezie</SelectItem>
+                    <SelectItem value="Altro">Altro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Package className="h-5 w-5 text-emerald-600" />
-              Lista Ingredienti
+              Lista Ingredienti ({ingredients?.length || 0})
             </CardTitle>
           </CardHeader>
           <CardContent>
