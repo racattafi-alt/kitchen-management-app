@@ -359,3 +359,11 @@
 - [x] Includere articoli extra nel messaggio WhatsApp
 - [x] Salvare articoli extra in localStorage per persistenza
 - [x] Testare generazione PDF e WhatsApp con articoli extra
+
+## VERIFICA E CORREZIONE FRONTEND RICETTE (IN CORSO)
+- [x] Verificare stato attuale pagina Ricette Finali
+- [x] Controllare che tutte le funzionalità backend siano visibili
+- [x] Implementare dialog dettagli ricetta con componenti, costi, operazioni
+- [ ] Correggere visualizzazione nomi componenti (attualmente mostrano ID)
+- [ ] Verificare struttura JSON componenti nel database
+- [ ] Testare tutte le funzionalità ricette nel browser

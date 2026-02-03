@@ -1,0 +1,13 @@
+{
+  "query": "SELECT components FROM final_recipes WHERE code = 'CARNE_TENDERS' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT components FROM final_recipes WHERE code = 'CARNE_TENDERS' LIMIT 1;",
+  "rows": [
+    {
+      "components": "[{\"componentId\": \"pvO4mMIKWrPK2ihyo5srP\", \"quantity\": 528.2982983511811, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"UjhsGMDNvCnl2fPcY2kuz\", \"quantity\": 79.24474475267715, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"nfsoVnu7Rmj42reiis96v\", \"quantity\": 79.24474475267715, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"xNJn8vX9r-GIo04Ian1yd\", \"quantity\": 211.31931934047242, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"0TKQbZT91FRZfSZH1_LBp\", \"quantity\": 105.65965967023621, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"AJHyMU9JKkZc01X7VHVFb\", \"quantity\": 0.3169789790107086, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"YoSpoWKsB0wnF8XEh4M-0\", \"quantity\": 16.641396398062202, \"type\": \"SEMI_FINISHED\", \"unit\": \"k\", \"wastePercentage\": 0}]"
+    }
+  ],
+  "messages": [],
+  "stdout": "components\n[{\"componentId\": \"pvO4mMIKWrPK2ihyo5srP\", \"quantity\": 528.2982983511811, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"UjhsGMDNvCnl2fPcY2kuz\", \"quantity\": 79.24474475267715, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"nfsoVnu7Rmj42reiis96v\", \"quantity\": 79.24474475267715, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"xNJn8vX9r-GIo04Ian1yd\", \"quantity\": 211.31931934047242, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"0TKQbZT91FRZfSZH1_LBp\", \"quantity\": 105.65965967023621, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"AJHyMU9JKkZc01X7VHVFb\", \"quantity\": 0.3169789790107086, \"type\": \"INGREDIENT\", \"unit\": \"k\", \"wastePercentage\": 0}, {\"componentId\": \"YoSpoWKsB0wnF8XEh4M-0\", \"quantity\": 16.641396398062202, \"type\": \"SEMI_FINISHED\", \"unit\": \"k\", \"wastePercentage\": 0}]\n",
+  "stderr": "",
+  "execution_time_ms": 125
+}
