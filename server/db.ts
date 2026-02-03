@@ -1,4 +1,4 @@
-import { eq, and, like } from "drizzle-orm";
+import { eq, and, like, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,
@@ -18,6 +18,8 @@ import {
   productionBatches,
   haccp,
   cloudStorage,
+  orders,
+  orderItems,
   Ingredient,
   SemiFinishedRecipe,
   FinalRecipe,
@@ -30,6 +32,8 @@ import {
   ProductionBatch,
   HACCPRecord,
   CloudStorageFile,
+  Order,
+  OrderItem,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -442,4 +446,39 @@ export async function deleteSupplier(id: string) {
   if (!db) throw new Error("Database not available");
   await db.delete(suppliers).where(eq(suppliers.id, id));
   return { id };
+}
+
+// ============ ORDERS (STORICO ORDINI) ============
+
+export async function createOrder(data: Omit<Order, "createdAt">) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(orders).values(data as any);
+  return data;
+}
+
+export async function createOrderItem(data: Omit<OrderItem, "createdAt">) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(orderItems).values(data as any);
+  return data;
+}
+
+export async function getOrders(filters?: { weekId?: string; limit?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+  let query: any = db.select().from(orders).orderBy(desc(orders.orderDate));
+  if (filters?.weekId) {
+    query = query.where(eq(orders.weekId, filters.weekId));
+  }
+  if (filters?.limit) {
+    query = query.limit(filters.limit);
+  }
+  return query;
+}
+
+export async function getOrderItems(orderId: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
 }

@@ -188,6 +188,7 @@ const ingredientsRouter = router({
         packagePrice: input.packagePrice.toString() as any,
         pricePerKgOrUnit: pricePerKgOrUnit.toString() as any,
         minOrderQuantity: input.minOrderQuantity ? input.minOrderQuantity.toString() as any : null,
+        packageSize: null,
         brand: input.brand || null,
         notes: input.notes || null,
         isActive: true,
@@ -661,7 +662,9 @@ const productionRouter = router({
       z.object({
         shoppingList: z.array(
           z.object({
+            id: z.string(),
             itemName: z.string(),
+            itemType: z.string(),
             supplier: z.string(),
             quantityToOrder: z.number(),
             unitType: z.string(),
@@ -669,9 +672,10 @@ const productionRouter = router({
             totalCost: z.number(),
           })
         ),
+        weekId: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const { generateOrderPDF } = await import("./generateOrderPDF");
       
       // Raggruppa per fornitore
@@ -695,11 +699,63 @@ const productionRouter = router({
       // Genera PDF
       const pdfBuffer = await generateOrderPDF(supplierOrders);
       
+      // Salva ordine nel database
+      const totalCost = supplierOrders.reduce((sum, order) => sum + order.totalCost, 0);
+      const orderId = nanoid();
+      
+      await db.createOrder({
+        id: orderId,
+        orderDate: new Date(),
+        weekId: input.weekId || null,
+        totalCost: totalCost.toString() as any,
+        pdfUrl: null,
+        whatsappSent: true,
+        notes: null,
+        createdBy: ctx.user?.openId || 'unknown',
+      });
+      
+      // Salva items dell'ordine
+      for (const item of input.shoppingList) {
+        if (item.quantityToOrder > 0) {
+          await db.createOrderItem({
+            id: nanoid(),
+            orderId,
+            itemType: item.itemType as any,
+            itemId: item.id,
+            itemName: item.itemName,
+            supplier: item.supplier,
+            quantityOrdered: item.quantityToOrder.toString() as any,
+            unitType: item.unitType as any,
+            pricePerUnit: item.pricePerUnit.toString() as any,
+            totalCost: item.totalCost.toString() as any,
+          });
+        }
+      }
+      
       // Converti in base64 per il frontend
       return {
         pdf: pdfBuffer.toString('base64'),
         supplierOrders,
+        orderId,
       };
+    }),
+  
+  // Storico ordini
+  listOrders: protectedProcedure
+    .input(
+      z.object({
+        weekId: z.string().optional(),
+        limit: z.number().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      return db.getOrders(input);
+    }),
+  
+  getOrderDetails: protectedProcedure
+    .input(z.object({ orderId: z.string() }))
+    .query(async ({ input }) => {
+      return db.getOrderItems(input.orderId);
     }),
 });
 

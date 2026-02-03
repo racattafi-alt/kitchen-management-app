@@ -74,6 +74,30 @@ export async function generateOrderPDF(supplierOrders: SupplierOrder[]): Promise
         doc.y = itemY + nameHeight + 5;
       }
 
+      // Aggiungi 10 righe vuote per articoli extra
+      doc.moveDown(0.5);
+      doc.fontSize(9).font('Helvetica-Oblique');
+      doc.text('Articoli aggiuntivi:', col1X, doc.y);
+      doc.moveDown(0.3);
+      
+      doc.font('Helvetica').fontSize(9);
+      for (let i = 0; i < 10; i++) {
+        const emptyY = doc.y;
+        
+        // Controlla se c'è spazio, altrimenti nuova pagina
+        if (emptyY > 700) {
+          doc.addPage();
+          doc.y = 50;
+        }
+        
+        // Linea vuota per scrivere
+        doc.text('_'.repeat(40), col1X, doc.y);
+        doc.text('_'.repeat(10), col2X, emptyY);
+        doc.text('_'.repeat(8), col3X, emptyY);
+        doc.text('_'.repeat(8), col4X, emptyY);
+        doc.moveDown(0.8);
+      }
+
       // Totale fornitore
       doc.moveDown(0.5);
       doc.fontSize(10).font('Helvetica-Bold');

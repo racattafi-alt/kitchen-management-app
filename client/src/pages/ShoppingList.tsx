@@ -52,9 +52,26 @@ export default function ShoppingList() {
   // Fornitori unici
   const suppliers = Array.from(new Set(shoppingList?.map((item: any) => item.supplier) || []));
 
+  // Funzione per arrotondare al multiplo di minOrderQuantity più vicino
+  const roundToMinOrder = (quantity: number, minOrder: number | null): number => {
+    if (!minOrder || minOrder <= 0) return quantity;
+    if (quantity <= 0) return 0;
+    
+    // Arrotonda al multiplo superiore più vicino
+    const multiplier = Math.ceil(quantity / minOrder);
+    return multiplier * minOrder;
+  };
+
   // Aggiorna quantità da ordinare
   const handleQuantityChange = (itemId: string, value: number) => {
     setOrderQuantities(prev => ({ ...prev, [itemId]: value }));
+  };
+  
+  // Auto-arrotonda quantità necessaria al minOrderQuantity
+  const handleAutoRound = (item: any) => {
+    const rounded = roundToMinOrder(item.quantityNeeded, item.minOrderQuantity);
+    setOrderQuantities(prev => ({ ...prev, [item.id]: rounded }));
+    toast.success(`Arrotondato a ${rounded.toFixed(3)} ${item.unitType === 'k' ? 'kg' : 'pz'}`);
   };
 
   // Calcola costo totale ordine
@@ -78,13 +95,16 @@ export default function ShoppingList() {
       
       const result = await generateSupplierOrderMutation.mutateAsync({
         shoppingList: orderedItems.map((item: any) => ({
+          id: item.id,
           itemName: item.itemName,
+          itemType: item.itemType || 'INGREDIENT',
           supplier: item.supplier,
           quantityToOrder: orderQuantities[item.id] || 0,
           unitType: item.unitType,
           pricePerUnit: item.pricePerUnit,
           totalCost: (orderQuantities[item.id] || 0) * item.pricePerUnit,
         })),
+        weekId: undefined,
       });
 
       // Scarica PDF
@@ -353,14 +373,27 @@ export default function ShoppingList() {
                             )}
                           </TableCell>
                           <TableCell className="text-right">
-                            <Input
-                              type="number"
-                              min="0"
-                              step="0.001"
-                              value={orderQty}
-                              onChange={(e) => handleQuantityChange(item.id, parseFloat(e.target.value) || 0)}
-                              className="w-24 text-right"
-                            />
+                            <div className="flex items-center gap-2 justify-end">
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.001"
+                                value={orderQty}
+                                onChange={(e) => handleQuantityChange(item.id, parseFloat(e.target.value) || 0)}
+                                className="w-24 text-right"
+                              />
+                              {item.minOrderQuantity && item.quantityNeeded > 0 && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleAutoRound(item)}
+                                  title={`Arrotonda al multiplo di ${item.minOrderQuantity}`}
+                                  className="h-8 px-2"
+                                >
+                                  Auto
+                                </Button>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell className="text-right">
                             {item.unitType === 'u' ? 'Unità' : 'kg'}

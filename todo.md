@@ -329,3 +329,12 @@
 - [x] Verificare prodotti confezionati (unitari vs peso)
 - [x] Aggiornare minOrderQuantity basato su confezioni standard
 - [x] Testare correzioni e verificare impatto su ricette
+
+## STORICO ORDINI E MIGLIORAMENTI (COMPLETATO)
+- [x] Aggiornare schema database: aggiungere tabella orders e orderItems
+- [x] Aggiungere campo packageSize agli ingredienti (separato da minOrderQuantity)
+- [x] Implementare backend per salvare ordini nello storico
+- [x] Aggiungere 10 righe vuote in fondo al PDF per articoli extra
+- [x] Implementare auto-arrotondamento quantità in lista acquisti
+- [x] Creare UI per visualizzare storico ordini
+- [x] Testare tutte le funzionalità

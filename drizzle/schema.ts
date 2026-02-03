@@ -69,6 +69,7 @@ export const ingredients = mysqlTable("ingredients", {
   packagePrice: decimal("packagePrice", { precision: 10, scale: 2 }).notNull(),
   pricePerKgOrUnit: decimal("pricePerKgOrUnit", { precision: 10, scale: 2 }).notNull(),
   minOrderQuantity: decimal("minOrderQuantity", { precision: 10, scale: 3 }),
+  packageSize: decimal("packageSize", { precision: 10, scale: 3 }),
   brand: varchar("brand", { length: 255 }),
   notes: text("notes"),
   isActive: boolean("isActive").default(true).notNull(),
@@ -315,3 +316,41 @@ export const cloudStorage = mysqlTable("cloud_storage", {
 
 export type CloudStorageFile = typeof cloudStorage.$inferSelect;
 export type InsertCloudStorageFile = typeof cloudStorage.$inferInsert;
+
+/**
+ * Orders: Storico ordini fornitori
+ */
+export const orders = mysqlTable("orders", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  orderDate: timestamp("orderDate").defaultNow().notNull(),
+  weekId: varchar("weekId", { length: 50 }),
+  totalCost: decimal("totalCost", { precision: 10, scale: 2 }).notNull(),
+  pdfUrl: varchar("pdfUrl", { length: 500 }),
+  whatsappSent: boolean("whatsappSent").default(false).notNull(),
+  notes: text("notes"),
+  createdBy: varchar("createdBy", { length: 36 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Order = typeof orders.$inferSelect;
+export type InsertOrder = typeof orders.$inferInsert;
+
+/**
+ * OrderItems: Dettaglio articoli per ordine
+ */
+export const orderItems = mysqlTable("order_items", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  orderId: varchar("orderId", { length: 36 }).notNull(),
+  itemType: mysqlEnum("itemType", ["INGREDIENT", "SEMI_FINISHED"]).notNull(),
+  itemId: varchar("itemId", { length: 36 }).notNull(),
+  itemName: varchar("itemName", { length: 255 }).notNull(),
+  supplier: varchar("supplier", { length: 255 }).notNull(),
+  quantityOrdered: decimal("quantityOrdered", { precision: 10, scale: 3 }).notNull(),
+  unitType: mysqlEnum("unitType", ["u", "k"]).notNull(),
+  pricePerUnit: decimal("pricePerUnit", { precision: 10, scale: 2 }).notNull(),
+  totalCost: decimal("totalCost", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type OrderItem = typeof orderItems.$inferSelect;
+export type InsertOrderItem = typeof orderItems.$inferInsert;

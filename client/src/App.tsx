@@ -20,6 +20,7 @@ import Storage from "./pages/Storage";
 import Assistant from "./pages/Assistant";
 import MigrateSuppliers from "./pages/MigrateSuppliers";
 import Suppliers from "./pages/Suppliers";
+import OrderHistory from "./pages/OrderHistory";
 
 function Router() {
   return (
@@ -41,6 +42,7 @@ function Router() {
       <Route path={"/assistant"} component={Assistant} />
       <Route path={"/migrate-suppliers"} component={MigrateSuppliers} />
       <Route path={"/suppliers"} component={Suppliers} />
+      <Route path={"/order-history"} component={OrderHistory} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
