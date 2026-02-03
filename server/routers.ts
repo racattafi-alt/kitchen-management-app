@@ -253,6 +253,15 @@ const productionRouter = router({
     return db.getWeeklyProductions();
   }),
 
+  delete: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      return db.deleteWeeklyProduction(input.id);
+    }),
+
     generateShoppingList: publicProcedure
     .input(z.object({ weekId: z.string().optional() }))
     .query(async ({ input }) => {

@@ -1,0 +1,13 @@
+{
+  "query": "SELECT COUNT(*) as count FROM weekly_productions;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT COUNT(*) as count FROM weekly_productions;",
+  "rows": [
+    {
+      "count": "4"
+    }
+  ],
+  "messages": [],
+  "stdout": "count\n4\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

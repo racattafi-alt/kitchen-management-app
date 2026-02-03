@@ -143,3 +143,13 @@
 - [x] Correggere aggregazione lista acquisti (unire tutte le settimane uguali)
 - [ ] Verificare calcolo ricorsivo quantità ingredienti
 - [ ] Testare con dati reali e confrontare con Excel
+
+## Correzioni Lista Acquisti e Gestione Produzioni
+- [x] Diagnosticare perché lista acquisti non mostra ingredienti (tabella vuota)
+- [x] Correggere backend/frontend per visualizzare lista acquisti
+- [x] Aggiungere pulsanti modifica/elimina per ogni produzione
+- [x] Implementare procedura backend per eliminare produzione
+- [ ] Implementare procedura backend per modificare produzione
+- [x] Sostituire dialog con form inline nella pagina Produzioni
+- [x] Implementare autocomplete predittivo per selezione ricette
+- [ ] Testare flusso completo: crea → modifica → elimina produzione

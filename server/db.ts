@@ -282,6 +282,13 @@ export async function getWeeklyProductions(weekStartDate?: Date) {
   return query;
 }
 
+export async function deleteWeeklyProduction(id: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(weeklyProductions).where(eq(weeklyProductions.id, id));
+  return { success: true };
+}
+
 // ============ MENU ============
 
 export async function createMenuType(data: Omit<MenuType, "createdAt" | "updatedAt">) {
