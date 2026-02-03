@@ -187,6 +187,8 @@ const finalRecipesRouter = router({
         serviceWastePercentage: (input.serviceWastePercentage || 0).toString() as any,
         serviceWastePerIngredient: input.serviceWastePerIngredient as any,
         totalCost: totalCost.toString() as any,
+        unitType: "k" as any,
+        unitWeight: null,
       });
     }),
 
@@ -319,9 +321,17 @@ const productionRouter = router({
 
         console.log(`[generateShoppingList] Ricetta ${recipe.name}: ${formattedComponents.length} componenti`);
 
+        // Converti unità in kg se necessario
+        let desiredQuantityInKg = Number(production.desiredQuantity || 1);
+        if (recipe.unitType === 'u' && recipe.unitWeight) {
+          // Quantità in unità * peso unitario (g) / 1000 = kg
+          desiredQuantityInKg = desiredQuantityInKg * Number(recipe.unitWeight) / 1000;
+          console.log(`[generateShoppingList] Conversione: ${production.desiredQuantity} unità × ${recipe.unitWeight}g = ${desiredQuantityInKg} kg`);
+        }
+
         plannedProductions.push({
           recipeFinalId: production.recipeFinalId,
-          desiredQuantity: Number(production.desiredQuantity || 1),
+          desiredQuantity: desiredQuantityInKg,
           components: formattedComponents,
           yieldPercentage: Number(recipe.yieldPercentage || 1),
         });
@@ -342,14 +352,21 @@ const productionRouter = router({
         if (!ingredient) continue;
 
         const pricePerKg = Number(ingredient.pricePerKgOrUnit || 0);
-        const totalCost = quantityInKg * pricePerKg;
+        
+        // Arrotonda per ingredienti unitari (uova, ecc.)
+        let finalQuantity = quantityInKg;
+        if (ingredient.unitType === 'u') {
+          finalQuantity = Math.ceil(quantityInKg);
+        }
+        
+        const totalCost = finalQuantity * pricePerKg;
 
         shoppingList.push({
           id: ingredient.id,
           ingredientName: ingredient.name,
           category: ingredient.category,
           supplier: ingredient.supplier,
-          quantityNeeded: quantityInKg,
+          quantityNeeded: finalQuantity,
           unitType: ingredient.unitType,
           pricePerUnit: pricePerKg,
           totalCost,

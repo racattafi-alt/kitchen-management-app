@@ -202,3 +202,16 @@
 - [x] Normalizzate 21 ricette su 22 (batch size da foglio PREZZO_FINALE)
 - [x] Verificato calcolo corretto: 600 kg Pulled Pork = 734 kg Spalla (non 19.800 kg)
 - [x] Test passati 4/4
+
+## CORREZIONI CONVERSIONE UNITÀ E SEMILAVORATI
+- [x] Verificare peso unitario per CARNE_TENDERS (50,97g per tender)
+- [x] Implementare conversione corretta kg/unità nelle produzioni
+- [x] Verificare che i semilavorati (spezie) abbiano componenti popolati
+- [x] Implementare espansione ricorsiva completa dei semilavorati nella lista acquisti
+- [x] Implementare arrotondamento per ingredienti unitari (uova, ecc.)
+- [x] Testare con produzioni unitarie e verificare risultati
+- [x] Aggiunto campo unitType e unitWeight allo schema final_recipes
+- [x] Popolato unitWeight per CARNE_TENDERS (50,97g) e CARNE_SOVRACOSCE (63,97g)
+- [x] Aggiornata struttura 10 semilavorati da ingredientId a componentId
+- [x] Implementato arrotondamento Math.ceil() per ingredienti unitari
+- [x] Verificato espansione spezie: Pepe, Sale, Coriandolo, Cumino, Paprica, ecc.

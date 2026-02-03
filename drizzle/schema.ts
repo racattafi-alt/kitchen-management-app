@@ -98,6 +98,8 @@ export const finalRecipes = mysqlTable("final_recipes", {
   maxConservationTime: varchar("maxConservationTime", { length: 50 }).notNull(),
   serviceWastePercentage: decimal("serviceWastePercentage", { precision: 5, scale: 3 }).default("0"),
   serviceWastePerIngredient: json("serviceWastePerIngredient"),
+  unitType: mysqlEnum("unitType", ["u", "k"]).default("k").notNull(),
+  unitWeight: decimal("unitWeight", { precision: 10, scale: 3 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
