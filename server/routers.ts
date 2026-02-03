@@ -422,18 +422,20 @@ const productionRouter = router({
       const { aggregateProductionRequirements } = await import("./calculations");
       const { ingredients, semiFinished } = await aggregateProductionRequirements(plannedProductions);
 
+      // Carica TUTTI gli ingredienti e semilavorati
+      const allIngredients = await db.getIngredients();
+      const allSemiFinished = await db.getSemiFinishedRecipes();
+      
       const shoppingList = [];
       
-      // Aggiungi ingredienti
-      for (const [ingredientId, quantityInKg] of Array.from(ingredients.entries())) {
-        const ingredient = await db.getIngredientById(ingredientId);
-        if (!ingredient) continue;
-
+      // Aggiungi TUTTI gli ingredienti (anche quelli non necessari)
+      for (const ingredient of allIngredients) {
+        const quantityInKg = ingredients.get(ingredient.id) || 0;
         const pricePerKg = Number(ingredient.pricePerKgOrUnit || 0);
         
         // Arrotonda per ingredienti unitari (uova, ecc.)
         let finalQuantity = quantityInKg;
-        if (ingredient.unitType === 'u') {
+        if (ingredient.unitType === 'u' && quantityInKg > 0) {
           finalQuantity = Math.ceil(quantityInKg);
         }
         
@@ -446,17 +448,16 @@ const productionRouter = router({
           category: ingredient.category,
           supplier: ingredient.supplier,
           quantityNeeded: finalQuantity,
+          quantityToOrder: 0, // Valore iniziale 0, editabile dall'utente
           unitType: ingredient.unitType,
           pricePerUnit: pricePerKg,
           totalCost,
         });
       }
       
-      // Aggiungi semilavorati
-      for (const [semiId, quantityInKg] of Array.from(semiFinished.entries())) {
-        const semi = await db.getSemiFinishedById(semiId);
-        if (!semi) continue;
-
+      // Aggiungi TUTTI i semilavorati (anche quelli non necessari)
+      for (const semi of allSemiFinished) {
+        const quantityInKg = semiFinished.get(semi.id) || 0;
         const pricePerKg = Number(semi.finalPricePerKg || 0);
         const totalCost = quantityInKg * pricePerKg;
 
@@ -467,6 +468,7 @@ const productionRouter = router({
           category: semi.category,
           supplier: 'Produzione Interna',
           quantityNeeded: quantityInKg,
+          quantityToOrder: 0, // Valore iniziale 0, editabile dall'utente
           unitType: 'k' as const,
           pricePerUnit: pricePerKg,
           totalCost,

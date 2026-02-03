@@ -253,3 +253,22 @@
 - [ ] Implementare tab Procedura con testo procedimento
 - [ ] Implementare funzionalità Testa Modifiche (simulazione impatto prezzi su piatti)
 - [ ] Implementare funzionalità Stampa Ricetta con quantità e procedura
+
+## RIDISEGNO LISTA ACQUISTI - TUTTI GLI ARTICOLI ORDINABILI
+- [x] Modificare backend generateShoppingList per caricare TUTTI gli articoli (ingredienti + semilavorati)
+- [x] Aggiungere campo "quantityNeeded" (calcolata dalle produzioni) per ogni articolo
+- [x] Aggiungere campo "quantityToOrder" (editabile, valore iniziale 0) per ogni articolo
+- [x] Modificare frontend per mostrare tabella con colonne:
+  - [x] Nome articolo
+  - [x] Tipo (Ingrediente/Semilavorato)
+  - [x] Fornitore
+  - [x] Quantità necessaria (read-only, evidenziata in giallo se > 0)
+  - [x] Quantità da ordinare (input editabile, iniziale 0)
+  - [x] Unità (kg/Unità)
+  - [x] Prezzo unitario
+  - [x] Costo totale ordine
+- [x] Implementare statistiche: Articoli Totali, Articoli Necessari, Articoli da Ordinare, Costo Totale
+- [x] Implementare funzione Esporta Ordini (CSV)
+- [x] Testare con settimane diverse e verificare calcoli corretti
+- [x] Test passati 24/24
+- [ ] TODO futuro: Salvare quantità da ordinare nel backend (attualmente solo localStorage)
