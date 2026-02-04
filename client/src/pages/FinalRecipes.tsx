@@ -49,6 +49,40 @@ export default function FinalRecipes() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchType, setSearchType] = useState<'ingredient' | 'semi_finished' | 'operation'>('ingredient');
   
+  const createMutation = trpc.finalRecipes.create.useMutation({
+    onSuccess: () => {
+      toast.success("Ricetta creata con successo!");
+      setIsCreateOpen(false);
+      setCreateFormData({
+        name: '',
+        code: '',
+        category: 'Altro',
+        yieldPercentage: 100,
+        serviceWastePercentage: 0,
+        conservationMethod: 'Refrigerato',
+        maxConservationTime: '48 ore',
+      });
+      setCreateComponents([]);
+      trpc.useUtils().finalRecipes.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Errore durante la creazione della ricetta");
+    },
+  });
+
+  const updateMutation = trpc.finalRecipes.update.useMutation({
+    onSuccess: () => {
+      toast.success("Ricetta aggiornata con successo!");
+      setIsEditOpen(false);
+      setEditFormData(null);
+      setEditComponents([]);
+      trpc.useUtils().finalRecipes.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Errore durante l'aggiornamento della ricetta");
+    },
+  });
+
   const { data: recipeDetails } = trpc.finalRecipes.getDetails.useQuery(
     { id: selectedRecipeId! },
     { enabled: !!selectedRecipeId }
@@ -60,18 +94,6 @@ export default function FinalRecipes() {
   const { data: operations } = trpc.operations.list.useQuery();
 
   const utils = trpc.useUtils();
-  const updateMutation = trpc.finalRecipes.update.useMutation({
-    onSuccess: () => {
-      toast.success("Ricetta aggiornata con successo");
-      utils.finalRecipes.list.invalidate();
-      utils.finalRecipes.getDetails.invalidate();
-      setIsEditOpen(false);
-      setSelectedRecipeId(null);
-    },
-    onError: (error) => {
-      toast.error("Errore nell'aggiornamento: " + error.message);
-    },
-  });
 
   // Filtra componenti in base alla ricerca
   const filteredComponents = useMemo(() => {
@@ -206,13 +228,20 @@ export default function FinalRecipes() {
   const handleUpdateSubmit = () => {
     if (!editFormData) return;
     
-    // Per ora aggiorniamo solo categoria, resa e scarto
-    // TODO: aggiungere aggiornamento componenti quando backend sarà pronto
     updateMutation.mutate({
       id: editFormData.id,
       category: editFormData.category,
       yieldPercentage: editFormData.yieldPercentage,
       serviceWastePercentage: editFormData.serviceWastePercentage,
+      components: editComponents.map(comp => ({
+        type: comp.type,
+        componentId: comp.componentId || '',
+        componentName: comp.componentName || comp.name,
+        quantity: comp.quantity,
+        unit: comp.unit,
+        pricePerUnit: comp.pricePerUnit || 0,
+        costType: comp.costType || '',
+      })),
     });
   };
 
@@ -856,8 +885,24 @@ export default function FinalRecipes() {
                     toast.error("Aggiungi almeno un componente");
                     return;
                   }
-                  // TODO: implementare mutation createFinalRecipe
-                  toast.info("Funzionalità in arrivo: salvataggio ricetta");
+                  createMutation.mutate({
+                    name: createFormData.name,
+                    code: createFormData.code,
+                    category: createFormData.category,
+                    yieldPercentage: createFormData.yieldPercentage,
+                    serviceWastePercentage: createFormData.serviceWastePercentage,
+                    conservationMethod: createFormData.conservationMethod,
+                    maxConservationTime: createFormData.maxConservationTime,
+                    components: createComponents.map(comp => ({
+                      type: comp.type,
+                      componentId: comp.componentId || '',
+                      componentName: comp.componentName || comp.name,
+                      quantity: comp.quantity,
+                      unit: comp.unit,
+                      pricePerUnit: comp.pricePerUnit || 0,
+                      costType: comp.costType || '',
+                    })),
+                  });
                 }}
                 className="bg-orange-600 hover:bg-orange-700"
               >

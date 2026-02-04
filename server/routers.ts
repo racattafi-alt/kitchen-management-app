@@ -296,6 +296,51 @@ const semiFinishedRouter = router({
     .query(async ({ input }) => {
       return db.getSemiFinishedById(input.id);
     }),
+
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        category: z.enum(["SPEZIE", "SALSE", "VERDURA", "CARNE", "ALTRO"]).optional(),
+        yieldPercentage: z.number().optional(),
+        shelfLifeDays: z.number().optional(),
+        storageMethod: z.string().optional(),
+        components: z.array(
+          z.object({
+            type: z.literal("ingredient"),
+            componentId: z.string(),
+            componentName: z.string(),
+            quantity: z.number(),
+            unit: z.string(),
+            pricePerUnit: z.number().optional(),
+          })
+        ).optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+
+      const updateData: any = {
+        category: input.category,
+        yieldPercentage: input.yieldPercentage?.toString(),
+        shelfLifeDays: input.shelfLifeDays,
+        storageMethod: input.storageMethod,
+      };
+
+      // Se ci sono componenti, ricalcola finalPricePerKg
+      if (input.components) {
+        const finalPricePerKg = input.components.reduce((sum, comp) => {
+          const price = comp.pricePerUnit || 0;
+          return sum + (comp.quantity * price);
+        }, 0);
+        updateData.finalPricePerKg = finalPricePerKg.toFixed(2);
+        updateData.components = JSON.stringify(input.components);
+      }
+
+      return db.updateSemiFinished(input.id, updateData);
+    }),
 });
 
 // ============ PROCEDURE RICETTE FINALI ============
@@ -304,52 +349,69 @@ const finalRecipesRouter = router({
     return db.getFinalRecipes();
   }),
 
+  getById: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input }) => {
+      return db.getFinalRecipeById(input.id);
+    }),
+
   create: protectedProcedure
     .input(
       z.object({
-        code: z.string(),
         name: z.string(),
+        code: z.string(),
         category: z.enum(["Pane", "Carne", "Salse", "Verdure", "Formaggi", "Altro"]),
-        components: z.array(z.any()),
         yieldPercentage: z.number(),
-        productionOperations: z.array(z.any()),
+        serviceWastePercentage: z.number(),
         conservationMethod: z.string(),
         maxConservationTime: z.string(),
-        serviceWastePercentage: z.number().optional(),
-        serviceWastePerIngredient: z.array(z.any()).optional(),
+        components: z.array(
+          z.object({
+            type: z.enum(["ingredient", "semi_finished", "operation"]),
+            componentId: z.string(),
+            componentName: z.string(),
+            quantity: z.number(),
+            unit: z.string(),
+            pricePerUnit: z.number().optional(),
+            costType: z.string().optional(),
+          })
+        ),
       })
     )
     .mutation(async ({ input, ctx }) => {
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
-      const totalCost = await calculateRecipeCost(
-        input.components,
-        input.productionOperations,
-        input.yieldPercentage
-      );
+
+      // Verifica unicità codice
+      const existing = await db.getFinalRecipeByCode(input.code);
+      if (existing) {
+        throw new Error("Codice ricetta già esistente");
+      }
+
+      // Calcola costo totale dai componenti
+      const totalCost = input.components.reduce((sum, comp) => {
+        const price = comp.pricePerUnit || 0;
+        return sum + (comp.quantity * price);
+      }, 0);
+
+      const newId = crypto.randomUUID();
       return db.createFinalRecipe({
-        id: nanoid(),
-        code: input.code,
+        id: newId,
         name: input.name,
+        code: input.code,
         category: input.category,
-        components: input.components as any,
-        yieldPercentage: input.yieldPercentage.toString() as any,
-        productionOperations: input.productionOperations as any,
+        yieldPercentage: input.yieldPercentage.toString(),
+        serviceWastePercentage: input.serviceWastePercentage.toString(),
         conservationMethod: input.conservationMethod,
         maxConservationTime: input.maxConservationTime,
-        serviceWastePercentage: (input.serviceWastePercentage || 0).toString() as any,
-        serviceWastePerIngredient: input.serviceWastePerIngredient as any,
-        totalCost: totalCost.toString() as any,
-        unitType: "k" as any,
+        totalCost: totalCost.toFixed(2),
+        components: JSON.stringify(input.components),
+        unitType: "k",
         unitWeight: null,
-      });
-    }),
-
-  getById: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ input }) => {
-      return db.getFinalRecipeById(input.id);
+        productionOperations: null,
+        serviceWastePerIngredient: null,
+      } as any);
     }),
 
   update: protectedProcedure
@@ -359,17 +421,41 @@ const finalRecipesRouter = router({
         category: z.enum(["Pane", "Carne", "Salse", "Verdure", "Formaggi", "Altro"]).optional(),
         yieldPercentage: z.number().optional(),
         serviceWastePercentage: z.number().optional(),
+        components: z.array(
+          z.object({
+            type: z.enum(["ingredient", "semi_finished", "operation"]),
+            componentId: z.string(),
+            componentName: z.string(),
+            quantity: z.number(),
+            unit: z.string(),
+            pricePerUnit: z.number().optional(),
+            costType: z.string().optional(),
+          })
+        ).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
-      return db.updateFinalRecipe(input.id, {
+
+      const updateData: any = {
         category: input.category,
-        yieldPercentage: input.yieldPercentage?.toString() as any,
-        serviceWastePercentage: input.serviceWastePercentage?.toString() as any,
-      });
+        yieldPercentage: input.yieldPercentage?.toString(),
+        serviceWastePercentage: input.serviceWastePercentage?.toString(),
+      };
+
+      // Se ci sono componenti, ricalcola totalCost
+      if (input.components) {
+        const totalCost = input.components.reduce((sum, comp) => {
+          const price = comp.pricePerUnit || 0;
+          return sum + (comp.quantity * price);
+        }, 0);
+        updateData.totalCost = totalCost.toFixed(2);
+        updateData.components = JSON.stringify(input.components);
+      }
+
+      return db.updateFinalRecipe(input.id, updateData);
     }),
 
   getDetails: protectedProcedure

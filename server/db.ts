@@ -237,6 +237,17 @@ export async function getFinalRecipeById(id: string) {
   return result.length > 0 ? result[0] : null;
 }
 
+export async function getFinalRecipeByCode(code: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db
+    .select()
+    .from(finalRecipes)
+    .where(eq(finalRecipes.code, code))
+    .limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
 export async function updateFinalRecipe(id: string, data: Partial<FinalRecipe>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

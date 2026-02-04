@@ -442,3 +442,26 @@
 - [x] Verificare che handleEdit carichi correttamente i componenti esistenti
 - [x] Testare apertura dialog modifica con ricetta reale dal database
 - [x] Espandere componenti con dettagli completi (nome, prezzo) prima di caricarli nel dialog
+
+## GESTIONE COMPLETA DATABASE RICETTE FINALI (NUOVA RICHIESTA)
+- [x] Implementare mutation backend createFinalRecipe
+- [x] Collegare pulsante "Crea Ricetta" alla mutation
+- [x] Calcolare automaticamente totalCost dai componenti
+- [x] Validare unicità codice ricetta
+- [x] Implementare mutation backend updateFinalRecipe
+- [x] Collegare pulsante "Salva Modifiche" nel dialog modifica
+- [x] Ricalcolare totalCost quando si modificano componenti
+- [x] Aggiungere funzione getFinalRecipeByCode nel db.ts
+- [ ] Testare creazione e modifica ricette con database
+
+## REPLICA DINAMICA PER SEMILAVORATI (NUOVA RICHIESTA)
+- [ ] Creare dialog creazione semilavorato con form completo (frontend)
+- [ ] Aggiungere gestione componenti (solo ingredienti) nel dialog creazione (frontend)
+- [ ] Implementare ricerca e aggiunta ingredienti (frontend)
+- [ ] Calcolare automaticamente costo totale in tempo reale (frontend)
+- [ ] Creare dialog modifica semilavorato (frontend)
+- [ ] Aggiungere sezione gestione componenti nel dialog modifica (frontend)
+- [x] Mutation backend createSemiFinished già esistente (da precedente implementazione)
+- [x] Implementare mutation backend updateSemiFinished con gestione componenti
+- [x] Ricalcolare finalPricePerKg quando si modificano componenti
+- [ ] Testare creazione e modifica semilavorati con database
