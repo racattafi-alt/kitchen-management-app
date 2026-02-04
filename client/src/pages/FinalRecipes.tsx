@@ -452,82 +452,83 @@ export default function FinalRecipes() {
 
       {/* Dialog Modifica Ricetta */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-w-[99vw] w-screen max-h-[99vh] h-screen flex flex-col p-0">
-          <DialogHeader className="px-8 py-6 border-b bg-gradient-to-r from-slate-50 to-slate-100">
-            <DialogTitle className="text-4xl font-bold text-slate-900">Modifica Ricetta</DialogTitle>
-            <DialogDescription className="text-lg text-slate-600 mt-2">
+        <DialogContent className="max-w-[95vw] w-[1400px] max-h-[95vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Modifica Ricetta</DialogTitle>
+            <DialogDescription>
               Modifica categoria, resa produzione, scarto al servizio e componenti
             </DialogDescription>
           </DialogHeader>
           {editFormData && (
-            <div className="flex-1 overflow-y-auto px-8 py-8 space-y-8">
-              {/* Sezione Dati Principali - Grid 3 Colonne */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 bg-slate-50 p-6 rounded-lg border border-slate-200">
-                {/* Categoria */}
-                <div className="space-y-3">
-                  <Label htmlFor="category" className="text-base font-semibold">Categoria</Label>
-                  <Select
-                    value={editFormData.category}
-                    onValueChange={(value) => setEditFormData({ ...editFormData, category: value })}
-                  >
-                    <SelectTrigger className="h-11 text-base">
-                      <SelectValue placeholder="Seleziona categoria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Pane">Pane</SelectItem>
-                      <SelectItem value="Carne">Carne</SelectItem>
-                      <SelectItem value="Salse">Salse</SelectItem>
-                      <SelectItem value="Verdure">Verdure</SelectItem>
-                      <SelectItem value="Formaggi">Formaggi</SelectItem>
-                      <SelectItem value="Altro">Altro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Peso Finale Prodotto */}
-                <div className="space-y-3">
-                  <Label htmlFor="unitWeight" className="text-base font-semibold">Peso Finale (kg)</Label>
-                  <Input
-                    id="unitWeight"
-                    type="number"
-                    step="0.01"
-                    value={editFormData.unitWeight || ''}
-                    onChange={(e) => setEditFormData({ ...editFormData, unitWeight: parseFloat(e.target.value) })}
-                    placeholder="Peso sperimentale"
-                    className="h-11 text-base"
-                  />
-                </div>
-
-                {/* Quantità Prodotta */}
-                <div className="space-y-3">
-                  <Label htmlFor="producedQuantity" className="text-base font-semibold">Quantità Prodotta</Label>
-                  <Input
-                    id="producedQuantity"
-                    type="number"
-                    step="0.01"
-                    value={editFormData.producedQuantity || ''}
-                    onChange={(e) => setEditFormData({ ...editFormData, producedQuantity: parseFloat(e.target.value) })}
-                    placeholder="Unità prodotte"
-                    className="h-11 text-base"
-                  />
-                </div>
+            <div className="flex-1 overflow-y-auto space-y-6 pr-2">
+              {/* Categoria */}
+              <div className="space-y-2">
+                <Label htmlFor="category">Categoria</Label>
+                <Select
+                  value={editFormData.category}
+                  onValueChange={(value) => setEditFormData({ ...editFormData, category: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleziona categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pane">Pane</SelectItem>
+                    <SelectItem value="Carne">Carne</SelectItem>
+                    <SelectItem value="Salse">Salse</SelectItem>
+                    <SelectItem value="Verdure">Verdure</SelectItem>
+                    <SelectItem value="Formaggi">Formaggi</SelectItem>
+                    <SelectItem value="Altro">Altro</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Resa Calcolata - Riquadro Evidenziato */}
-              <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-300 p-6 rounded-lg">
-                <Label className="text-xl font-bold text-blue-900">Resa Calcolata</Label>
-                <div className="mt-4 p-4 bg-white border-2 border-blue-400 rounded-lg">
-                  <p className="text-3xl font-bold text-blue-600 text-center">
-                    {editFormData.unitWeight && editComponents.length > 0
+              {/* Peso Finale Prodotto */}
+              <div className="space-y-2">
+                <Label htmlFor="unitWeight">Peso Finale Prodotto (kg)</Label>
+                <Input
+                  id="unitWeight"
+                  type="number"
+                  step="0.01"
+                  value={editFormData.unitWeight || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, unitWeight: parseFloat(e.target.value) })}
+                  placeholder="Peso sperimentale dopo lavorazione"
+                />
+                <p className="text-sm text-slate-500">
+                  Peso finale del prodotto dopo lavorazione/cottura. Usato per calcolare la resa: Peso Finale / Somma Ingredienti Food
+                </p>
+              </div>
+
+              {/* Quantità Prodotta */}
+              <div className="space-y-2">
+                <Label htmlFor="producedQuantity">Quantità Prodotta (opzionale)</Label>
+                <Input
+                  id="producedQuantity"
+                  type="number"
+                  step="0.01"
+                  value={editFormData.producedQuantity || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, producedQuantity: parseFloat(e.target.value) })}
+                  placeholder="Numero di unità prodotte"
+                />
+                <p className="text-sm text-slate-500">
+                  Se inserito, il prodotto sarà considerato unitario e verrà mostrato il prezzo sia unitario che al kg
+                </p>
+              </div>
+
+              {/* Resa Produzione - Calcolata */}
+              <div className="space-y-2">
+                <Label>Resa Calcolata</Label>
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm font-medium text-blue-900">
+                    {editFormData.unitWeight && createComponents.length > 0
                       ? `${((editFormData.unitWeight / calculateWeightForFood(editComponents)) * 100).toFixed(2)}%`
-                      : 'Inserisci peso finale e componenti'}
+                      : 'Inserisci peso finale e componenti per calcolare'}
                   </p>
                 </div>
               </div>
 
               {/* Scarto al Servizio */}
-              <div className="space-y-3">
-                <Label htmlFor="serviceWastePercentage" className="text-lg font-semibold">Scarto al Servizio (%)</Label>
+              <div className="space-y-2">
+                <Label htmlFor="serviceWastePercentage">Scarto al Servizio (%)</Label>
                 <Input
                   id="serviceWastePercentage"
                   type="number"
@@ -541,16 +542,16 @@ export default function FinalRecipes() {
               </div>
 
               {/* Gestione Componenti */}
-              <div className="space-y-4 bg-gradient-to-br from-slate-50 to-slate-100 p-8 rounded-lg border-2 border-slate-200">
-                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-                  <h3 className="font-bold text-2xl text-slate-900">Componenti Ricetta</h3>
-                  <div className="text-lg text-slate-700 bg-white px-6 py-3 rounded-lg border-2 border-green-500 shadow-md">
-                    Costo totale: <span className="font-bold text-green-600 text-2xl">€ {calculateTotalCost().toFixed(2)}</span>
+              <div className="space-y-4 bg-slate-50 p-6 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-xl">Componenti</h3>
+                  <div className="text-base text-slate-700 bg-white px-4 py-2 rounded-lg border-2 border-green-500">
+                    Costo totale: <span className="font-bold text-green-600 text-lg">€ {calculateTotalCost().toFixed(2)}</span>
                   </div>
                 </div>
 
                 {/* Lista componenti attuali */}
-                <div className="border-2 border-slate-300 rounded-lg overflow-hidden bg-white max-h-[400px] overflow-y-auto shadow-md">
+                <div className="border rounded-lg overflow-hidden bg-white max-h-[300px] overflow-y-auto">
                   <table className="w-full">
                     <thead className="bg-slate-50">
                       <tr>
@@ -606,11 +607,11 @@ export default function FinalRecipes() {
                 </div>
 
                 {/* Ricerca e aggiunta componenti */}
-                <div className="space-y-4 p-6 bg-white border-2 border-dashed border-slate-400 rounded-lg">
-                  <Label className="text-lg font-bold text-slate-900">Aggiungi Componente</Label>
-                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                <div className="space-y-3 p-5 bg-white border-2 border-dashed border-slate-300 rounded-lg">
+                  <Label className="text-base font-semibold">Aggiungi Componente</Label>
+                  <div className="flex gap-3">
                     <Select value={searchType} onValueChange={(v: any) => setSearchType(v)}>
-                      <SelectTrigger className="h-11 text-base">
+                      <SelectTrigger className="w-40">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -619,20 +620,20 @@ export default function FinalRecipes() {
                         <SelectItem value="operation">Operazione</SelectItem>
                       </SelectContent>
                     </Select>
-                    <div className="relative lg:col-span-3">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                       <Input
                         placeholder="Cerca per nome..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 h-11 text-base"
+                        className="pl-10"
                       />
                     </div>
                   </div>
 
                   {/* Risultati ricerca */}
                   {searchTerm && filteredComponents.length > 0 && (
-                    <div className="border-2 border-slate-300 rounded-lg bg-white divide-y max-h-64 overflow-y-auto shadow-md">
+                    <div className="border rounded-lg bg-white divide-y max-h-48 overflow-y-auto">
                       {filteredComponents.map((comp: any) => (
                         <div
                           key={comp.id}
