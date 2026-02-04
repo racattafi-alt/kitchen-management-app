@@ -298,12 +298,33 @@ export default function FinalRecipes() {
                       <p className="text-sm text-slate-500">Codice: {item.code}</p>
                       <p className="text-sm text-slate-600 mt-1">
                         Categoria: <span className="font-medium">{item.category}</span>
-                        {item.totalCost && (
-                          <span className="ml-4">
-                            Costo: <span className="font-medium text-green-600">€ {parseFloat(item.totalCost).toFixed(2)}/kg</span>
-                          </span>
-                        )}
                       </p>
+                      {item.totalCost && (
+                        <div className="text-sm text-slate-600 mt-2 space-y-1">
+                          <div>
+                            <span className="text-slate-500">Costo Totale:</span>{' '}
+                            <span className="font-medium text-green-600">€ {parseFloat(item.totalCost).toFixed(2)}</span>
+                          </div>
+                          {item.unitWeight && (
+                            <div>
+                              <span className="text-slate-500">Prezzo al kg:</span>{' '}
+                              <span className="font-medium text-blue-600">
+                                € {(parseFloat(item.totalCost) / parseFloat(item.unitWeight)).toFixed(2)}/kg
+                              </span>
+                              <span className="text-slate-400 ml-2">(peso finale: {parseFloat(item.unitWeight).toFixed(2)} kg)</span>
+                            </div>
+                          )}
+                          {item.producedQuantity && (
+                            <div>
+                              <span className="text-slate-500">Prezzo unitario:</span>{' '}
+                              <span className="font-medium text-purple-600">
+                                € {(parseFloat(item.totalCost) / parseFloat(item.producedQuantity)).toFixed(2)}/unità
+                              </span>
+                              <span className="text-slate-400 ml-2">(quantità prodotta: {parseFloat(item.producedQuantity).toFixed(0)} unità)</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="flex gap-2">
                       <Button

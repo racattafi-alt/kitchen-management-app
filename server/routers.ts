@@ -421,6 +421,8 @@ const finalRecipesRouter = router({
         category: z.enum(["Pane", "Carne", "Salse", "Verdure", "Formaggi", "Altro"]).optional(),
         yieldPercentage: z.number().optional(),
         serviceWastePercentage: z.number().optional(),
+        unitWeight: z.number().optional(),
+        producedQuantity: z.number().optional(),
         components: z.array(
           z.object({
             type: z.enum(["ingredient", "semi_finished", "operation"]),
@@ -443,6 +445,8 @@ const finalRecipesRouter = router({
         category: input.category,
         yieldPercentage: input.yieldPercentage?.toString(),
         serviceWastePercentage: input.serviceWastePercentage?.toString(),
+        unitWeight: input.unitWeight,
+        producedQuantity: input.producedQuantity,
       };
 
       // Se ci sono componenti, ricalcola totalCost

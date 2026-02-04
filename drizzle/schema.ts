@@ -120,6 +120,7 @@ export const finalRecipes = mysqlTable("final_recipes", {
   serviceWastePerIngredient: json("serviceWastePerIngredient"),
   unitType: mysqlEnum("unitType", ["u", "k"]).default("k").notNull(),
   unitWeight: decimal("unitWeight", { precision: 10, scale: 3 }),
+  producedQuantity: decimal("producedQuantity", { precision: 10, scale: 3 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

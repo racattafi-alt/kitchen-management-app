@@ -1,0 +1,1 @@
+ALTER TABLE `final_recipes` ADD `producedQuantity` decimal(10,3);
