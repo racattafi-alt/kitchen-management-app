@@ -1,0 +1,9 @@
+{
+  "query": "-- Elimina SL_KETCHUP (mantieni SALSA_KETCHUP)\nDELETE FROM final_recipes WHERE id = 'YJiMK3-SfIuFy3hjoXBkb';\n\n-- Elimina SL_MEMPHIS (mantieni SALSA_MEMPHIS)\nDELETE FROM final_recipes WHERE id = '4u03z0dZBQKkTz2_6ANfu';\n\n-- Elimina SL_SENAPE (mantieni SALSA_SENAPE_DIJON)\nDELETE FROM final_recipes WHERE id = '9zcZ9TjnbudHRrS6nsZR-';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute -- Elimina SL_KETCHUP (mantieni SALSA_KETCHUP)\nDELETE FROM final_recipes WHERE id = 'YJiMK3-SfIuFy3hjoXBkb';\n\n-- Elimina SL_MEMPHIS (mantieni SALSA_MEMPHIS)\nDELETE FROM final_recipes WHERE id = '4u03z0dZBQKkTz2_6ANfu';\n\n-- Elimina SL_SENAPE (mantieni SALSA_SENAPE_DIJON)\nDELETE FROM final_recipes WHERE id = '9zcZ9TjnbudHRrS6nsZR-';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 76
+}

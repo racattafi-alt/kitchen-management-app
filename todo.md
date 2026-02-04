@@ -589,3 +589,11 @@
 - [x] Calcolare e mostrare margine (€ e %) in Food Matrix
 - [x] Implementare export Excel/CSV Food Matrix
 - [x] Export PDF singola ricetta già implementato nel dialog modifica
+
+## TAGGING AUTOMATICO E PULIZIA DUPLICATI
+- [x] Analizzare database per identificare ricette che erano semilavorati
+- [x] Taggare automaticamente ricette con isSemiFinished=true (20 ricette)
+- [x] Taggare tutte le ricette finali con isSellable=true (default già applicato)
+- [x] Identificare duplicati con nomi simili (4 coppie trovate)
+- [x] Mostrare lista duplicati all'utente per decisione eliminazione
+- [x] Implementare eliminazione duplicati selezionati (3 eliminati: SL_KETCHUP, SL_MEMPHIS, SL_SENAPE)
