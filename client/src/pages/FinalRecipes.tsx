@@ -28,6 +28,7 @@ type ComponentWithDetails = {
 };
 
 export default function FinalRecipes() {
+  const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'hidden'>('all');
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -55,12 +56,26 @@ export default function FinalRecipes() {
   // Filtra solo ricette finali (escludendo semilavorati che potrebbero essere nella tabella)
   const allFinalRecipes = allRecipes?.filter(r => r.category && ['Pane', 'Carne', 'Salse', 'Verdure', 'Formaggi', 'Altro'].includes(r.category)) || [];
   
-  // Applica filtro stato (attive/nascoste)
-  const recipes = allFinalRecipes.filter(r => {
-    if (filterStatus === 'active') return r.isActive !== false;
-    if (filterStatus === 'hidden') return r.isActive === false;
-    return true; // 'all'
-  });
+  // Applica filtro stato (attive/nascoste) e ricerca
+  const recipes = useMemo(() => {
+    return allFinalRecipes.filter(r => {
+      // Filtro stato
+      if (filterStatus === 'active' && r.isActive === false) return false;
+      if (filterStatus === 'hidden' && r.isActive !== false) return false;
+      
+      // Filtro ricerca
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        return (
+          r.name.toLowerCase().includes(query) ||
+          r.code.toLowerCase().includes(query) ||
+          (r.category && r.category.toLowerCase().includes(query))
+        );
+      }
+      
+      return true;
+    });
+  }, [allFinalRecipes, filterStatus, searchQuery]);
   
   const createMutation = trpc.finalRecipes.create.useMutation({
     onSuccess: () => {
@@ -468,12 +483,23 @@ export default function FinalRecipes() {
 
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-4">
               <CardTitle className="flex items-center gap-2">
                 <ChefHat className="h-5 w-5 text-orange-600" />
                 Lista Ricette
               </CardTitle>
-              <Select value={filterStatus} onValueChange={(value: any) => setFilterStatus(value)}>
+              <div className="flex gap-2">
+                <div className="relative w-64">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    type="text"
+                    placeholder="Cerca per nome, codice o categoria..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={filterStatus} onValueChange={(value: any) => setFilterStatus(value)}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Filtra per stato" />
                 </SelectTrigger>
@@ -483,7 +509,13 @@ export default function FinalRecipes() {
                   <SelectItem value="hidden">Solo Nascoste ({allFinalRecipes.filter(r => r.isActive === false).length})</SelectItem>
                 </SelectContent>
               </Select>
+              </div>
             </div>
+            {searchQuery.trim() && (
+              <p className="text-sm text-slate-500 mt-2">
+                {recipes.length} ricette trovate su {allFinalRecipes.length} totali
+              </p>
+            )}
           </CardHeader>
           <CardContent>
             {isLoading ? (

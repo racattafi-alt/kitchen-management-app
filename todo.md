@@ -716,3 +716,15 @@
 - [x] Filtrare ricette con isActive=false da calcolo shopping list
 - [x] Aggiungere filtro visualizzazione: Tutte/Solo Attive/Solo Nascoste
 - [x] Testare: nascondere ricetta, verificare che non appaia in produzione (Salsa Memphis nascosta e non appare più nel dropdown)
+
+## VISUALIZZAZIONE VERSIONI PRECEDENTI RICETTE
+- [x] Implementare dialog "Vedi Versioni Precedenti" con cronologia modifiche (GIÀ PRESENTE)
+- [x] Mostrare data/ora, utente (se disponibile), e campi modificati per ogni versione
+- [x] Aggiungere pulsante "Confronta" per vedere differenze tra versioni (diff componenti automatico)
+- [x] Aggiungere pulsante "Ripristina" per tornare a una versione precedente
+
+## BARRA RICERCA RICETTE
+- [x] Aggiungere campo ricerca in alto nella pagina Ricette Finali
+- [x] Implementare filtro automatico in tempo reale mentre si digita
+- [x] Filtrare per nome, codice, categoria ricetta
+- [x] Mostrare contatore "X ricette trovate su Y totali"
