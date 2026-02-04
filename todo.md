@@ -621,3 +621,9 @@
 - [x] Correggere errore "No procedure found on path production.list" (aggiunto alias list)
 - [x] Correggere validazione productionType (passato "final" invece di valori errati)
 - [x] Correggere campo quantity undefined (passato quantity invece di desiredQuantity)
+
+## BUG SHOPPINGLIST E WEEKLY_PRODUCTIONS
+- [x] Correggere errore toLowerCase undefined in ShoppingList (aggiunto optional chaining)
+- [x] Correggere schema database weekly_productions (rimossi desiredQuantity, unitType, currentStock, status)
+- [x] Aggiornato enum productionType da FINAL_RECIPE/SEMI_FINISHED a final/semifinished
+- [x] Aggiunta colonna quantity al posto di desiredQuantity

@@ -1,0 +1,9 @@
+{
+  "query": "-- Rimuovi colonne obsolete\nALTER TABLE weekly_productions \nDROP COLUMN desiredQuantity,\nDROP COLUMN unitType,\nDROP COLUMN currentStock,\nDROP COLUMN status;\n\n-- Aggiungi nuova colonna quantity\nALTER TABLE weekly_productions \nADD COLUMN quantity DECIMAL(10,3) NOT NULL DEFAULT 0;\n\n-- Modifica enum productionType\nALTER TABLE weekly_productions \nMODIFY COLUMN productionType ENUM('final', 'semifinished') DEFAULT 'final' NOT NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute -- Rimuovi colonne obsolete\nALTER TABLE weekly_productions \nDROP COLUMN desiredQuantity,\nDROP COLUMN unitType,\nDROP COLUMN currentStock,\nDROP COLUMN status;\n\n-- Aggiungi nuova colonna quantity\nALTER TABLE weekly_productions \nADD COLUMN quantity DECIMAL(10,3) NOT NULL DEFAULT 0;\n\n-- Modifica enum productionType\nALTER TABLE weekly_productions \nMODIFY COLUMN productionType ENUM('final', 'semifinished') DEFAULT 'final' NOT NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 3840
+}

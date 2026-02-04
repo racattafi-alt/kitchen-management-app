@@ -61,7 +61,7 @@ export default function ShoppingList() {
   );
 
   const filteredList = shoppingList?.filter((item: any) =>
-    item.itemName.toLowerCase().includes(searchQuery.toLowerCase()) &&
+    item.itemName?.toLowerCase().includes(searchQuery.toLowerCase()) &&
     (!selectedSupplier || item.supplier === selectedSupplier)
   );
 
