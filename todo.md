@@ -707,3 +707,12 @@
 - [x] Rimuovere route /semi-finished da App.tsx
 - [x] Rimuovere file client/src/pages/SemiFinished.tsx
 - [x] Testare navigazione dopo rimozione (card Semilavorati rimossa dalla homepage)
+
+## GESTIONE RICETTE NASCOSTE/NON IN UTILIZZO
+- [x] Aggiungere campo isActive (boolean, default true) a final_recipes
+- [x] Migrare database e impostare isActive=true per ricette esistenti
+- [x] Aggiungere toggle "Attiva/Nascondi" nell'interfaccia Ricette Finali
+- [x] Filtrare ricette con isActive=false da dropdown produzione
+- [x] Filtrare ricette con isActive=false da calcolo shopping list
+- [x] Aggiungere filtro visualizzazione: Tutte/Solo Attive/Solo Nascoste
+- [x] Testare: nascondere ricetta, verificare che non appaia in produzione (Salsa Memphis nascosta e non appare più nel dropdown)

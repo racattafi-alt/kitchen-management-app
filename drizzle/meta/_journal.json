@@ -120,6 +120,13 @@
       "when": 1770226297796,
       "tag": "0016_dizzy_nocturne",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "5",
+      "when": 1770231257360,
+      "tag": "0017_fixed_nomad",
+      "breakpoints": true
     }
   ]
 }

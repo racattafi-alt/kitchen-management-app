@@ -424,7 +424,8 @@ const menuRouter = router({
 // ============ PROCEDURE RICETTE FINALI ============
 const finalRecipesRouter = router({
   list: protectedProcedure.query(async () => {
-    return db.getFinalRecipes();
+    // Restituisce TUTTE le ricette (anche nascoste) per gestione nella pagina
+    return db.getAllFinalRecipes();
   }),
 
   getById: protectedProcedure
@@ -682,6 +683,21 @@ const finalRecipesRouter = router({
         components: snapshot.components,
         conservationMethod: snapshot.conservationMethod,
         maxConservationTime: snapshot.maxConservationTime,
+      });
+    }),
+
+  toggleActive: protectedProcedure
+    .input(z.object({ 
+      id: z.string(),
+      isActive: z.boolean()
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+
+      return db.updateFinalRecipe(input.id, {
+        isActive: input.isActive,
       });
     }),
 });

@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
-import { ChefHat, Plus, Eye, Pencil, Trash2, Search, FileSpreadsheet, History } from "lucide-react";
+import { ChefHat, Plus, Eye, Pencil, Trash2, Search, FileSpreadsheet, History, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
@@ -28,9 +28,7 @@ type ComponentWithDetails = {
 };
 
 export default function FinalRecipes() {
-  const { data: allRecipes, isLoading } = trpc.finalRecipes.list.useQuery();
-  // Filtra solo ricette finali (escludendo semilavorati che potrebbero essere nella tabella)
-  const recipes = allRecipes?.filter(r => r.category && ['Pane', 'Carne', 'Salse', 'Verdure', 'Formaggi', 'Altro'].includes(r.category)) || [];
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'hidden'>('all');
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<any>(null);
@@ -52,6 +50,17 @@ export default function FinalRecipes() {
   const [createComponents, setCreateComponents] = useState<ComponentWithDetails[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchType, setSearchType] = useState<'ingredient' | 'semi_finished' | 'operation'>('ingredient');
+  
+  const { data: allRecipes, isLoading } = trpc.finalRecipes.list.useQuery();
+  // Filtra solo ricette finali (escludendo semilavorati che potrebbero essere nella tabella)
+  const allFinalRecipes = allRecipes?.filter(r => r.category && ['Pane', 'Carne', 'Salse', 'Verdure', 'Formaggi', 'Altro'].includes(r.category)) || [];
+  
+  // Applica filtro stato (attive/nascoste)
+  const recipes = allFinalRecipes.filter(r => {
+    if (filterStatus === 'active') return r.isActive !== false;
+    if (filterStatus === 'hidden') return r.isActive === false;
+    return true; // 'all'
+  });
   
   const createMutation = trpc.finalRecipes.create.useMutation({
     onSuccess: () => {
@@ -88,6 +97,16 @@ export default function FinalRecipes() {
   });
 
   const utils = trpc.useUtils();
+
+  const toggleActiveMutation = trpc.finalRecipes.toggleActive.useMutation({
+    onSuccess: () => {
+      toast.success("Stato ricetta aggiornato!");
+      utils.finalRecipes.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Errore durante l'aggiornamento dello stato");
+    },
+  });
 
   const { data: recipeDetails } = trpc.finalRecipes.getDetails.useQuery(
     { id: selectedRecipeId! },
@@ -449,10 +468,22 @@ export default function FinalRecipes() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ChefHat className="h-5 w-5 text-orange-600" />
-              Lista Ricette
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <ChefHat className="h-5 w-5 text-orange-600" />
+                Lista Ricette
+              </CardTitle>
+              <Select value={filterStatus} onValueChange={(value: any) => setFilterStatus(value)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filtra per stato" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tutte ({allFinalRecipes.length})</SelectItem>
+                  <SelectItem value="active">Solo Attive ({allFinalRecipes.filter(r => r.isActive !== false).length})</SelectItem>
+                  <SelectItem value="hidden">Solo Nascoste ({allFinalRecipes.filter(r => r.isActive === false).length})</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -472,6 +503,11 @@ export default function FinalRecipes() {
                         {item.isSellable && (
                           <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
                             Vendibile
+                          </span>
+                        )}
+                        {item.isActive === false && (
+                          <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                            Nascosta
                           </span>
                         )}
                         {/* Badge Unità Misura */}
@@ -549,6 +585,23 @@ export default function FinalRecipes() {
                       >
                         <History className="h-4 w-4 mr-2" />
                         Storico
+                      </Button>
+                      <Button
+                        variant={item.isActive === false ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => toggleActiveMutation.mutate({ id: item.id, isActive: !item.isActive })}
+                      >
+                        {item.isActive === false ? (
+                          <>
+                            <Eye className="h-4 w-4 mr-2" />
+                            Attiva
+                          </>
+                        ) : (
+                          <>
+                            <EyeOff className="h-4 w-4 mr-2" />
+                            Nascondi
+                          </>
+                        )}
                       </Button>
                     </div>
                   </div>

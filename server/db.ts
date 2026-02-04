@@ -227,6 +227,15 @@ export async function createFinalRecipe(data: Omit<FinalRecipe, "createdAt" | "u
 export async function getFinalRecipes() {
   const db = await getDb();
   if (!db) return [];
+  // Filtra solo ricette attive (isActive !== false)
+  const recipes = await db.select().from(finalRecipes);
+  return recipes.filter(r => r.isActive !== false);
+}
+
+export async function getAllFinalRecipes() {
+  const db = await getDb();
+  if (!db) return [];
+  // Restituisce TUTTE le ricette (anche nascoste) per gestione
   return db.select().from(finalRecipes);
 }
 

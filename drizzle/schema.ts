@@ -128,6 +128,7 @@ export const finalRecipes = mysqlTable("final_recipes", {
   pieceWeight: decimal("pieceWeight", { precision: 10, scale: 3 }),
   isSemiFinished: boolean("isSemiFinished").default(false).notNull(),
   isSellable: boolean("isSellable").default(true).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
   sellingPrice: decimal("sellingPrice", { precision: 10, scale: 2 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

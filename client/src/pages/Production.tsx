@@ -55,6 +55,7 @@ export default function Production() {
     if (!finalRecipes || !formData.recipeSearch) return [];
     const search = formData.recipeSearch.toLowerCase();
     return finalRecipes
+      .filter((r: any) => r.isActive !== false) // Escludi ricette nascoste
       .filter((r: any) => 
         r.name.toLowerCase().includes(search) || 
         r.code.toLowerCase().includes(search)

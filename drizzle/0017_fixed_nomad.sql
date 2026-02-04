@@ -1,0 +1,1 @@
+ALTER TABLE `final_recipes` ADD `isActive` boolean DEFAULT true NOT NULL;
