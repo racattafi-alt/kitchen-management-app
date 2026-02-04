@@ -25,7 +25,7 @@ const ingredientsRouter = router({
         id: z.string(),
         name: z.string(),
         supplierId: z.string().optional(),
-        category: z.enum(["Additivi", "Carni", "Farine", "Latticini", "Verdura", "Spezie", "Altro"]),
+        category: z.enum(["Additivi", "Alcolici", "Bevande", "Birra", "Carni", "Farine", "Latticini", "Non Food", "Packaging", "Spezie", "Verdura", "Altro"]),
         unitType: z.enum(["u", "k"]),
         packageQuantity: z.number(),
         packagePrice: z.number(),
@@ -60,7 +60,7 @@ const ingredientsRouter = router({
         id: z.string(),
         name: z.string().optional(),
         supplierId: z.string().optional(),
-        category: z.enum(["Additivi", "Carni", "Farine", "Latticini", "Verdura", "Spezie", "Altro"]).optional(),
+        category: z.enum(["Additivi", "Alcolici", "Bevande", "Birra", "Carni", "Farine", "Latticini", "Non Food", "Packaging", "Spezie", "Verdura", "Altro"]).optional(),
         unitType: z.enum(["u", "k"]).optional(),
         packageQuantity: z.number().optional(),
         packagePrice: z.number().optional(),
@@ -100,6 +100,191 @@ const ingredientsRouter = router({
         throw new Error("Unauthorized");
       }
       return db.deleteIngredient(input.id);
+    }),
+  exportToExcel: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+      throw new Error("Unauthorized");
+    }
+    const ingredients = await db.getIngredients();
+    
+    // Crea file Excel con openpyxl via Python
+    const { execSync } = require('child_process');
+    const fs = require('fs');
+    const path = require('path');
+    
+    const tempFile = path.join('/tmp', `ingredienti_${Date.now()}.xlsx`);
+    const dataJson = JSON.stringify(ingredients);
+    
+    // Script Python per creare Excel
+    const pythonScript = `
+import json
+import sys
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
+
+data = json.loads('''${dataJson.replace(/'/g, "\\'").replace(/\\/g, '\\\\')}''')
+
+wb = Workbook()
+ws = wb.active
+ws.title = "Ingredienti"
+
+# Header
+headers = ["ID", "Nome", "Categoria", "Fornitore", "Unit\u00e0", "Qt\u00e0 Confezione", 
+           "Prezzo Confezione (\u20ac)", "Prezzo/kg o unit\u00e0 (\u20ac)", "Marca", "Note", "Food", "Allergeni"]
+ws.append(headers)
+
+# Stile header
+header_fill = PatternFill(start_color="10B981", end_color="10B981", fill_type="solid")
+header_font = Font(bold=True, color="FFFFFF")
+for cell in ws[1]:
+    cell.fill = header_fill
+    cell.font = header_font
+    cell.alignment = Alignment(horizontal="center")
+
+# Dati
+for ing in data:
+    allergens_str = ", ".join(ing.get("allergens", [])) if ing.get("allergens") else ""
+    ws.append([
+        ing.get("id", ""),
+        ing.get("name", ""),
+        ing.get("category", ""),
+        ing.get("supplierName", ""),
+        "kg" if ing.get("unitType") == "k" else "pz",
+        float(ing.get("packageQuantity", 0)),
+        float(ing.get("packagePrice", 0)),
+        float(ing.get("pricePerKgOrUnit", 0)),
+        ing.get("brand", ""),
+        ing.get("notes", ""),
+        "S\u00ec" if ing.get("isFood") else "No",
+        allergens_str
+    ])
+
+# Auto-size colonne
+for column in ws.columns:
+    max_length = 0
+    column_letter = column[0].column_letter
+    for cell in column:
+        try:
+            if len(str(cell.value)) > max_length:
+                max_length = len(str(cell.value))
+        except:
+            pass
+    adjusted_width = min(max_length + 2, 50)
+    ws.column_dimensions[column_letter].width = adjusted_width
+
+wb.save("${tempFile}")
+print("OK")
+`;
+    
+    try {
+      execSync(`python3 -c '${pythonScript.replace(/'/g, "'\\''")}' 2>&1`, { encoding: 'utf-8' });
+      
+      if (!fs.existsSync(tempFile)) {
+        throw new Error("File Excel non creato");
+      }
+      
+      const fileBuffer = fs.readFileSync(tempFile);
+      const base64 = fileBuffer.toString('base64');
+      
+      // Pulisci file temporaneo
+      fs.unlinkSync(tempFile);
+      
+      return {
+        filename: `ingredienti_${new Date().toISOString().split('T')[0]}.xlsx`,
+        data: base64,
+        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      };
+    } catch (error: any) {
+      console.error('Errore export Excel:', error);
+      throw new Error(`Errore durante export Excel: ${error.message}`);
+    }
+  }),
+  importFromExcel: protectedProcedure
+    .input(z.object({
+      fileData: z.string(), // base64
+      filename: z.string()
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      
+      const { execSync } = require('child_process');
+      const fs = require('fs');
+      const path = require('path');
+      
+      const tempFile = path.join('/tmp', `import_${Date.now()}.xlsx`);
+      const buffer = Buffer.from(input.fileData, 'base64');
+      fs.writeFileSync(tempFile, buffer);
+      
+      // Script Python per leggere Excel
+      const pythonScript = `
+import json
+from openpyxl import load_workbook
+
+wb = load_workbook("${tempFile}")
+ws = wb.active
+
+result = []
+headers = [cell.value for cell in ws[1]]
+
+for row in ws.iter_rows(min_row=2, values_only=True):
+    if not row[0]:  # Skip righe vuote
+        continue
+    item = {}
+    for i, header in enumerate(headers):
+        if i < len(row):
+            item[header] = row[i]
+    result.append(item)
+
+print(json.dumps(result, ensure_ascii=False))
+`;
+      
+      try {
+        const output = execSync(`python3 -c '${pythonScript.replace(/'/g, "'\\''")}' 2>&1`, { encoding: 'utf-8' });
+        const parsedData = JSON.parse(output);
+        
+        // Pulisci file temporaneo
+        fs.unlinkSync(tempFile);
+        
+        // Valida e importa dati
+        let imported = 0;
+        let errors: string[] = [];
+        
+        for (const row of parsedData) {
+          try {
+            const ingredientId = row['ID'];
+            if (!ingredientId) {
+              errors.push(`Riga senza ID: ${JSON.stringify(row)}`);
+              continue;
+            }
+            
+            const updateData: any = {};
+            if (row['Nome']) updateData.name = row['Nome'];
+            if (row['Categoria']) updateData.category = row['Categoria'];
+            if (row['Qtà Confezione']) updateData.packageQuantity = row['Qtà Confezione'].toString();
+            if (row['Prezzo Confezione (€)']) updateData.packagePrice = row['Prezzo Confezione (€)'].toString();
+            if (row['Prezzo/kg o unità (€)']) updateData.pricePerKgOrUnit = row['Prezzo/kg o unità (€)'].toString();
+            if (row['Marca']) updateData.brand = row['Marca'];
+            if (row['Note']) updateData.notes = row['Note'];
+            if (row['Food']) updateData.isFood = row['Food'] === 'Sì' || row['Food'] === 'S\u00ec' || row['Food'] === true;
+            
+            await db.updateIngredient(ingredientId, updateData);
+            imported++;
+          } catch (err: any) {
+            errors.push(`Errore riga ${row['Nome']}: ${err.message}`);
+          }
+        }
+        
+        return {
+          success: true,
+          imported,
+          errors: errors.length > 0 ? errors : undefined
+        };
+      } catch (error: any) {
+        console.error('Errore import Excel:', error);
+        throw new Error(`Errore durante import Excel: ${error.message}`);
+      }
     }),
 });
 

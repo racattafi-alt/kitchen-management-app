@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { trpc } from "@/lib/trpc";
-import { Plus, Package, Pencil, Trash2 } from "lucide-react";
+import { Plus, Package, Pencil, Trash2, Download, Upload } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -18,9 +18,12 @@ export default function Ingredients() {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [editingIngredient, setEditingIngredient] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedFoodType, setSelectedFoodType] = useState<string>("all"); // all, food, non-food
   const [sortBy, setSortBy] = useState<"name" | "category" | "supplier">("name");
   const [formData, setFormData] = useState({
     name: "",
@@ -54,7 +57,10 @@ export default function Ingredients() {
     ?.filter((ingredient: any) => {
       const matchesSearch = ingredient.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = selectedCategory === "all" || ingredient.category === selectedCategory;
-      return matchesSearch && matchesCategory;
+      const matchesFoodType = selectedFoodType === "all" || 
+        (selectedFoodType === "food" && ingredient.isFood) ||
+        (selectedFoodType === "non-food" && !ingredient.isFood);
+      return matchesSearch && matchesCategory && matchesFoodType;
     })
     ?.sort((a: any, b: any) => {
       // Mappare sortBy al campo corretto
@@ -103,6 +109,71 @@ export default function Ingredients() {
       toast.error(error.message);
     },
   });
+
+  const exportMutation = trpc.ingredients.exportToExcel.useQuery(undefined, {
+    enabled: false,
+    onSuccess: (data) => {
+      // Download file
+      const blob = new Blob([Uint8Array.from(atob(data.data), c => c.charCodeAt(0))], { type: data.mimeType });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = data.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast.success("File Excel esportato con successo");
+    },
+    onError: (error) => {
+      toast.error(`Errore export: ${error.message}`);
+    },
+  });
+
+  const importMutation = trpc.ingredients.importFromExcel.useMutation({
+    onSuccess: (result) => {
+      utils.ingredients.list.invalidate();
+      setIsImportOpen(false);
+      setSelectedFile(null);
+      if (result.errors && result.errors.length > 0) {
+        toast.warning(`Importati ${result.imported} ingredienti con ${result.errors.length} errori`);
+      } else {
+        toast.success(`${result.imported} ingredienti importati con successo`);
+      }
+    },
+    onError: (error) => {
+      toast.error(`Errore import: ${error.message}`);
+    },
+  });
+
+  const handleExportExcel = () => {
+    exportMutation.refetch();
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  const handleImportExcel = async () => {
+    if (!selectedFile) return;
+    
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const base64 = e.target?.result as string;
+      const base64Data = base64.split(',')[1]; // Rimuovi prefix data:...
+      
+      importMutation.mutate({
+        fileData: base64Data,
+        filename: selectedFile.name
+      });
+    };
+    reader.readAsDataURL(selectedFile);
+  };
+
+
 
   const canEdit = user?.role === "admin" || user?.role === "manager";
   const canDelete = user?.role === "admin";
@@ -167,13 +238,68 @@ export default function Ingredients() {
               Gestisci le materie prime (Livello 0)
             </p>
           </div>
-          {canEdit && (
-            <Dialog open={isOpen} onOpenChange={setIsOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-emerald-600 hover:bg-emerald-700">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nuovo Ingrediente
+          <div className="flex gap-2">
+            {canEdit && (
+              <>
+                <Button 
+                  variant="outline" 
+                  onClick={handleExportExcel}
+                  disabled={exportMutation.isLoading}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  {exportMutation.isLoading ? 'Esportazione...' : 'Esporta Excel'}
                 </Button>
+                <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Importa Excel
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Importa Ingredienti da Excel</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="excel-file">File Excel</Label>
+                        <Input
+                          id="excel-file"
+                          type="file"
+                          accept=".xlsx,.xls"
+                          onChange={handleFileSelect}
+                        />
+                      </div>
+                      <div className="text-sm text-slate-600">
+                        <p>Il file deve contenere le colonne:</p>
+                        <ul className="list-disc list-inside mt-2">
+                          <li>ID (obbligatorio)</li>
+                          <li>Nome, Categoria, Qtà Confezione, Prezzo Confezione, ecc.</li>
+                        </ul>
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setIsImportOpen(false)}>
+                          Annulla
+                        </Button>
+                        <Button 
+                          onClick={handleImportExcel}
+                          disabled={!selectedFile || importMutation.isLoading}
+                        >
+                          {importMutation.isLoading ? 'Importazione...' : 'Importa'}
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </>
+            )}
+            {canEdit && (
+              <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nuovo Ingrediente
+                  </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
@@ -210,11 +336,16 @@ export default function Ingredients() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="Additivi">Additivi</SelectItem>
+                          <SelectItem value="Alcolici">Alcolici</SelectItem>
+                          <SelectItem value="Bevande">Bevande</SelectItem>
+                          <SelectItem value="Birra">Birra</SelectItem>
                           <SelectItem value="Carni">Carni</SelectItem>
                           <SelectItem value="Farine">Farine</SelectItem>
                           <SelectItem value="Latticini">Latticini</SelectItem>
-                          <SelectItem value="Verdura">Verdura</SelectItem>
+                          <SelectItem value="Non Food">Non Food</SelectItem>
+                          <SelectItem value="Packaging">Packaging</SelectItem>
                           <SelectItem value="Spezie">Spezie</SelectItem>
+                          <SelectItem value="Verdura">Verdura</SelectItem>
                           <SelectItem value="Altro">Altro</SelectItem>
                         </SelectContent>
                       </Select>
@@ -306,8 +437,9 @@ export default function Ingredients() {
                   </div>
                 </form>
               </DialogContent>
-            </Dialog>
-          )}
+              </Dialog>
+            )}
+          </div>
         </div>
 
         {/* Dialog Modifica Ingrediente */}
@@ -356,11 +488,16 @@ export default function Ingredients() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Additivi">Additivi</SelectItem>
+                      <SelectItem value="Alcolici">Alcolici</SelectItem>
+                      <SelectItem value="Bevande">Bevande</SelectItem>
+                      <SelectItem value="Birra">Birra</SelectItem>
                       <SelectItem value="Carni">Carni</SelectItem>
                       <SelectItem value="Farine">Farine</SelectItem>
                       <SelectItem value="Latticini">Latticini</SelectItem>
-                      <SelectItem value="Verdura">Verdura</SelectItem>
+                      <SelectItem value="Non Food">Non Food</SelectItem>
+                      <SelectItem value="Packaging">Packaging</SelectItem>
                       <SelectItem value="Spezie">Spezie</SelectItem>
+                      <SelectItem value="Verdura">Verdura</SelectItem>
                       <SelectItem value="Altro">Altro</SelectItem>
                     </SelectContent>
                   </Select>
@@ -492,12 +629,30 @@ export default function Ingredients() {
                   <SelectContent>
                     <SelectItem value="all">Tutte le categorie</SelectItem>
                     <SelectItem value="Additivi">Additivi</SelectItem>
+                    <SelectItem value="Alcolici">Alcolici</SelectItem>
+                    <SelectItem value="Bevande">Bevande</SelectItem>
+                    <SelectItem value="Birra">Birra</SelectItem>
                     <SelectItem value="Carni">Carni</SelectItem>
                     <SelectItem value="Farine">Farine</SelectItem>
                     <SelectItem value="Latticini">Latticini</SelectItem>
-                    <SelectItem value="Verdura">Verdura</SelectItem>
+                    <SelectItem value="Non Food">Non Food</SelectItem>
+                    <SelectItem value="Packaging">Packaging</SelectItem>
                     <SelectItem value="Spezie">Spezie</SelectItem>
+                    <SelectItem value="Verdura">Verdura</SelectItem>
                     <SelectItem value="Altro">Altro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Tipo</Label>
+                <Select value={selectedFoodType} onValueChange={setSelectedFoodType}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tutti</SelectItem>
+                    <SelectItem value="food">Solo Food</SelectItem>
+                    <SelectItem value="non-food">Solo Non-Food</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
