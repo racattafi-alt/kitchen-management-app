@@ -121,7 +121,7 @@ export default function FinalRecipes() {
     return [];
   }, [searchTerm, searchType, ingredients, semiFinished, operations]);
 
-  const handleEdit = (recipe: any) => {
+  const handleEdit = async (recipe: any) => {
     setEditFormData({
       id: recipe.id,
       category: recipe.category,
@@ -129,12 +129,45 @@ export default function FinalRecipes() {
       serviceWastePercentage: parseFloat(recipe.serviceWastePercentage || "0"),
     });
     
-    // Carica componenti esistenti
+    // Carica componenti esistenti con dettagli completi
     const components = typeof recipe.components === 'string' 
       ? JSON.parse(recipe.components) 
       : recipe.components;
-    setEditComponents(components || []);
     
+    // Espandi componenti con dettagli (nome, prezzo)
+    const expandedComponents = await Promise.all(
+      (components || []).map(async (comp: any) => {
+        if (comp.type === 'ingredient') {
+          const ingredient = ingredients?.find(i => i.id === comp.componentId);
+          return {
+            ...comp,
+            name: ingredient?.name || comp.componentName || 'Sconosciuto',
+            unit: comp.unit || (ingredient?.unitType === 'u' ? 'unità' : 'kg'),
+            pricePerUnit: ingredient ? parseFloat(ingredient.pricePerKgOrUnit || '0') : 0,
+          };
+        } else if (comp.type === 'semi_finished') {
+          const semi = semiFinished?.find(s => s.id === comp.componentId);
+          return {
+            ...comp,
+            name: semi?.name || comp.componentName || 'Sconosciuto',
+            unit: comp.unit || 'kg',
+            pricePerUnit: semi ? parseFloat(semi.finalPricePerKg || '0') : 0,
+          };
+        } else if (comp.type === 'operation') {
+          const operation = operations?.find(o => o.name === comp.componentName);
+          return {
+            ...comp,
+            name: operation?.name || comp.componentName || 'Operazione',
+            unit: comp.unit || 'ore',
+            pricePerUnit: operation ? parseFloat(operation.hourlyRate || '0') : 0,
+            costType: operation?.costType || 'LAVORO',
+          };
+        }
+        return comp;
+      })
+    );
+    
+    setEditComponents(expandedComponents);
     setIsEditOpen(true);
     setSelectedRecipeId(null);
   };

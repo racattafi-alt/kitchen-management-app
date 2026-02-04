@@ -436,3 +436,9 @@
 - [x] Aggiungere campi metodo conservazione e tempo max conservazione
 - [ ] Implementare procedura backend createFinalRecipe (collegare al pulsante Crea)
 - [ ] Testare creazione ricetta completa e verifica database
+
+## BUG DA CORREGGERE (SEGNALATO UTENTE)
+- [x] Correggere errore "unexpected error" quando si clicca su pulsante "Modifica" ricetta
+- [x] Verificare che handleEdit carichi correttamente i componenti esistenti
+- [x] Testare apertura dialog modifica con ricetta reale dal database
+- [x] Espandere componenti con dettagli completi (nome, prezzo) prima di caricarli nel dialog
