@@ -568,3 +568,7 @@
 
 ## BUG CRITICO SEGNALATO
 - [x] Correggere salvataggio modifiche ricette che non funziona (hook call in callback)
+
+## BUG CONVERSIONE UNITÀ
+- [x] Correggere importazione dati: grammi interpretati come kg (es. salsa memphis 490g diventa 490kg)
+- [x] Fornire script correzione dati esistenti nel database (16 ricette corrette)

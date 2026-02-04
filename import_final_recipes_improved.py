@@ -90,15 +90,17 @@ for row_idx, row in enumerate(ws_rec.iter_rows(min_row=2, values_only=True), sta
         not_found.add(f"{component_name} (cod: {cod})")
         continue
     
-    # Converti quantità in grammi
-    qty_g = float(qty) if qty else 0
-    if um and um.lower() == 'kg':
-        qty_g *= 1000
+    # Converti quantità: tutto in kg
+    qty_kg = float(qty) if qty else 0
+    if um and um.lower() != 'kg':
+        # Se l'unità NON è kg (quindi grammi o altro), dividi per 1000
+        qty_kg = qty_kg / 1000
+    # Se è già kg, resta invariato
     
     component = {
         "type": component_type,
         "componentId": component_id,
-        "quantity": qty_g,
+        "quantity": qty_kg,
         "unit": "k",  # Sempre in kg per standardizzazione
         "wastePercentage": 0,  # Default, può essere modificato dopo
     }
