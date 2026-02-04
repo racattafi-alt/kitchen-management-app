@@ -597,3 +597,22 @@
 - [x] Identificare duplicati con nomi simili (4 coppie trovate)
 - [x] Mostrare lista duplicati all'utente per decisione eliminazione
 - [x] Implementare eliminazione duplicati selezionati (3 eliminati: SL_KETCHUP, SL_MEMPHIS, SL_SENAPE)
+
+## PROBLEMA RICETTE SENZA INGREDIENTI
+- [x] Analizzare database per identificare ricette senza componenti (18 ricette)
+- [x] Verificare se problema è nell'importazione o nella visualizzazione (doppia codifica JSON)
+- [x] Identificare causa root (campo components vuoto per ricette SL)
+- [x] Correggere importazione dati (importati da JSON + PDF)
+- [x] Verificare che tutte le ricette abbiano componenti popolati (completato)
+
+## RINOMINA RICETTE SL E IMPORTAZIONE COMPONENTI
+- [x] Eliminare ricetta SL_BBQ
+- [x] Rinominare SL_BBQRIBS in "BBQ Ribs" (code: BBQ_RIBS)
+- [x] Rinominare SL_SBACON in "Spezie Bacon" (code: SPEZIE_BACON)
+- [x] Rinominare SL_SPULLED in "Spezie Pulled Pork" (code: SPEZIE_PULLED)
+- [x] Rinominare SL_SRIBS in "Spezie Ribs" (code: SPEZIE_RIBS)
+- [x] Rinominare SL_SSOVRACOSCE in "Spezie Sovracosce" (code: SPEZIE_SOVRACOSCE)
+- [x] Rinominare SL_STENDERS in "Spezie Tenders" (code: SPEZIE_TENDERS)
+- [x] Estrarre componenti ricette da Excel/PDF tramite chat
+- [x] Importare componenti mancanti (11 salse + 6 spezie/BBQ)
+- [x] Impostare BBQ_RIBS come semilavorato non vendibile

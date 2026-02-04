@@ -1,0 +1,107 @@
+COMPONENTI RICETTE SL ESTRATTI DA PDF
+=====================================
+
+SL_SBACON (Spezie Bacon):
+- Sale grosso: 700g
+- Semi di fieno greco: 60g
+- Paprica affumicata: 80g
+- Galangal: 80g
+- Cannella: 20g
+- Aglio in polvere: 60g
+- Busta sv 30x40: 1 unità
+
+SL_SPULLED (Spezie Pulled Pork):
+- Pepe: 120g
+- Sale: 560g
+- Coriandolo in polvere: 60g
+- Cumino: 50g
+- Paprica affumicata: 60g
+- Semi di fieno greco: 50g
+- Galangal: 15g
+- Thè affumicato: 75g
+- Busta sv 30x40: 1 unità
+
+SL_SRIBS (Spezie Ribs):
+- Sale: 150g
+- Aglio in polvere: 80g
+- Paprica affumicata: 130g
+- Busta sv 30x40: 1 unità
+
+SL_STENDERS (Spezie Tenders):
+- Sale: 100g
+- Sumac: 30g
+- Aglio in polvere: 10g
+- Cumino: 10g
+- Senape in polvere: 30g
+- Paprica affumicata: 30g
+- Xantana: 5g
+- Pepe bianco: 10g
+- Farina per fritti: 20g
+- Amido pregelatinizzato: 25g
+- Busta sv 30x40: 1 unità
+
+SL_KETCHUP (già eliminato):
+- Olio di semi: 100g
+- Cipolla caramellata: 130g
+- Aglio arrosto: 20g
+- Doppio concentrato: 440g
+- Zucchero invertito: 200g
+- Aceto di mele: 150g
+- Sale: 26.4g
+- Senape: 52.8g
+- Paprica dolce: 12g
+- Acqua: 54g
+- Xantana: 2g
+
+SL_BBQ (già eliminato):
+- Fondo bruno vegano: 20g
+- Zucchero invertito: 40g
+- Ketchup: 1000g
+- Fumo liquido: 0.5g
+- Funghi Shitake: 5g
+- Rabarbaro: 0.5g
+- Radice di Angelica: 1g
+- Funghi acularia: 9g
+
+SL_BBQRIBS (BBQ Ribs):
+- Ketchup: 900g
+- Fondo bruno vegano: 200g
+- Pepe di sichuan: 5g
+- Zucchero invertito: 150g
+- Acqua: 200g
+- Lime: 80g
+- Sumac: 15g
+- Senape: 20g
+- Sale: 20g
+
+SL_MEMPHIS (già eliminato):
+- Senape: 20g
+- Acqua cetriolo: 100g
+- Acqua cavolo: 100g
+- Zucchero invertito: 50g
+- Fondo bruno vegano: 30g
+- Ketchup: 200g
+- Xantana: 0.25g
+- Amido pregelatinizzato: 0.25g
+
+SL_SENAPE (già eliminato):
+- Senape in polvere: 25g
+- Semi di senape nera: 20g
+- Semi di senape gialla: 30g
+- Zucchero invertito: 30g
+- Vino bianco: 100g
+- Aceto di mele: 50g
+- Xantana: 0.7g
+- Amido pregelatinizzato: 4g
+- Curcuma: 2g
+- Sale: 5g
+
+SL_SSOVRACOSCE (Spezie Sovracosce):
+- Paprica dolce: 20g
+- Pepe: 25g
+- Pepe bianco: 10g
+- Sale: 100g
+- Amido pregelatinizzato: 30g
+- Xantana: 5g
+- Farina per fritti: 40g
+- Busta sv 30x40: 1 unità

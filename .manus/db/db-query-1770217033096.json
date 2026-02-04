@@ -1,0 +1,9 @@
+{
+  "query": "-- Rinomina SL_SBACON in \"Spezie Bacon\"\nUPDATE final_recipes \nSET name = 'Spezie Bacon', code = 'SPEZIE_BACON'\nWHERE code = 'SL_SBACON';\n\n-- Rinomina SL_SPULLED in \"Spezie Pulled Pork\"\nUPDATE final_recipes \nSET name = 'Spezie Pulled Pork', code = 'SPEZIE_PULLED'\nWHERE code = 'SL_SPULLED';\n\n-- Rinomina SL_SRIBS in \"Spezie Ribs\"\nUPDATE final_recipes \nSET name = 'Spezie Ribs', code = 'SPEZIE_RIBS'\nWHERE code = 'SL_SRIBS';\n\n-- Rinomina SL_SSOVRACOSCE in \"Spezie Sovracosce\"\nUPDATE final_recipes \nSET name = 'Spezie Sovracosce', code = 'SPEZIE_SOVRACOSCE'\nWHERE code = 'SL_SSOVRACOSCE';\n\n-- Rinomina SL_STENDERS in \"Spezie Tenders\"\nUPDATE final_recipes \nSET name = 'Spezie Tenders', code = 'SPEZIE_TENDERS'\nWHERE code = 'SL_STENDERS';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute -- Rinomina SL_SBACON in \"Spezie Bacon\"\nUPDATE final_recipes \nSET name = 'Spezie Bacon', code = 'SPEZIE_BACON'\nWHERE code = 'SL_SBACON';\n\n-- Rinomina SL_SPULLED in \"Spezie Pulled Pork\"\nUPDATE final_recipes \nSET name = 'Spezie Pulled Pork', code = 'SPEZIE_PULLED'\nWHERE code = 'SL_SPULLED';\n\n-- Rinomina SL_SRIBS in \"Spezie Ribs\"\nUPDATE final_recipes \nSET name = 'Spezie Ribs', code = 'SPEZIE_RIBS'\nWHERE code = 'SL_SRIBS';\n\n-- Rinomina SL_SSOVRACOSCE in \"Spezie Sovracosce\"\nUPDATE final_recipes \nSET name = 'Spezie Sovracosce', code = 'SPEZIE_SOVRACOSCE'\nWHERE code = 'SL_SSOVRACOSCE';\n\n-- Rinomina SL_STENDERS in \"Spezie Tenders\"\nUPDATE final_recipes \nSET name = 'Spezie Tenders', code = 'SPEZIE_TENDERS'\nWHERE code = 'SL_STENDERS';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 126
+}
