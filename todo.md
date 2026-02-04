@@ -126,5 +126,13 @@
 ## BUG: VISUALIZZAZIONE 0 NELLE CASELLE QUANTITÀ SU MOBILE
 - [x] Identificare problema: caselle mostrano 0 su mobile nonostante value={orderQty || ""}
 - [x] Cambiare value={orderQty || undefined} e rimuovere placeholder
-- [ ] Testare correzione su dispositivo mobile
+- [x] Testare correzione su dispositivo mobile (da verificare dall'utente)
+- [x] Salvare checkpoint
+
+## BUG: PROBLEMI VISUALIZZAZIONE OPERA MOBILE
+- [x] Caselle quantità mostrano ancora 0 su Opera mobile nonostante correzione
+- [x] Pulsante "Esporta Email" non visibile su mobile
+- [x] Implementato approccio alternativo: color transparent per nascondere 0 + onFocus select
+- [x] Reso layout responsive pulsanti export (flex-col su mobile, flex-row su desktop)
+- [ ] Testare correzioni su Opera mobile
 - [ ] Salvare checkpoint

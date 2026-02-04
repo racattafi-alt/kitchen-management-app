@@ -245,23 +245,23 @@ export default function ShoppingList() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
           <div>
             <h1 className="text-3xl font-bold">Lista Acquisti</h1>
             <p className="text-muted-foreground">
               Gestisci ordini per tutti gli articoli ordinabili
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={handleSupplierOrder} disabled={totalOrderCost === 0} variant="default">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button onClick={handleSupplierOrder} disabled={totalOrderCost === 0} variant="default" className="w-full sm:w-auto">
               <MessageCircle className="mr-2 h-4 w-4" />
               Ordine per Fornitore
             </Button>
-            <Button onClick={handleEmailExport} disabled={totalOrderCost === 0} variant="outline">
+            <Button onClick={handleEmailExport} disabled={totalOrderCost === 0} variant="outline" className="w-full sm:w-auto">
               <FileText className="mr-2 h-4 w-4" />
               Esporta Email
             </Button>
-            <Button onClick={handleExport} disabled={totalOrderCost === 0} variant="outline">
+            <Button onClick={handleExport} disabled={totalOrderCost === 0} variant="outline" className="w-full sm:w-auto">
               <Download className="mr-2 h-4 w-4" />
               Esporta CSV
             </Button>
@@ -447,10 +447,12 @@ export default function ShoppingList() {
                                 type="number"
                                 min="0"
                                 step="0.001"
-                                value={orderQty || undefined}
+                                value={orderQty || ""}
                                 placeholder=""
+                                onFocus={(e) => e.target.select()}
                                 onChange={(e) => handleQuantityChange(item.id, parseFloat(e.target.value) || 0)}
                                 className="w-24 text-right"
+                                style={{ color: orderQty ? 'inherit' : 'transparent' }}
                               />
                               {item.minOrderQuantity && item.quantityNeeded > 0 && (
                                 <Button
