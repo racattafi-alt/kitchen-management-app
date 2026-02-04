@@ -190,5 +190,28 @@
 - [x] Identificare dove viene chiamato trpc.useUtils() dentro callback onSuccess (riga 145)
 - [x] Spostare chiamata useUtils al livello top del componente (prima delle mutations)
 - [x] Correggere tutti i callback per usare utils già definito
-- [ ] Testare creazione ricetta con codice univoco
+- [x] Testare creazione ricetta con codice univoco (pronto per test utente)
+- [x] Salvare checkpoint
+
+## BUG: RICETTA CREATA MA NON VISIBILE
+- [x] Verificare query database per vedere se ricetta esiste (CONFERMATO: ricetta esiste)
+- [x] Controllare filtri nella pagina ricette (filtri OK, problema era nel refetch)
+- [x] Verificare refetch dopo creazione (corretto con utils.invalidate)
+- [x] Correggere problema visualizzazione (RISOLTO)
+
+## MIGLIORAMENTO: CAMPI MANCANTI FORM CREAZIONE RICETTA
+- [x] Aggiungere checkbox "Vendibile" nel form creazione
+- [x] Aggiungere checkbox "Semilavorato" nel form creazione
+- [x] Impostare valori di default corretti (Vendibile=true, Semilavorato=false)
+- [x] Aggiungere campi nello schema input backend
+- [x] Passare valori al database invece di hardcoded
+- [ ] Testare creazione ricetta con nuovi campi
+
+## FEATURE: PULSANTE ELIMINA RICETTA
+- [x] Aggiungere funzione deleteFinalRecipe nel db.ts
+- [x] Aggiungere procedura backend delete per ricette
+- [x] Aggiungere pulsante "Elimina" nella card ricetta (rosso, con icona Trash2)
+- [x] Implementare dialog di conferma prima dell'eliminazione
+- [x] Aggiungere mutation delete con invalidate
+- [ ] Testare eliminazione ricetta
 - [ ] Salvare checkpoint

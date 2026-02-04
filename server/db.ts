@@ -269,6 +269,12 @@ export async function updateFinalRecipe(id: string, data: Partial<FinalRecipe>) 
   await db.update(finalRecipes).set(data).where(eq(finalRecipes.id, id));
 }
 
+export async function deleteFinalRecipe(id: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(finalRecipes).where(eq(finalRecipes.id, id));
+}
+
 // ============ FOOD MATRIX ============
 
 export async function createFoodMatrixItem(data: Omit<FoodMatrixItem, "createdAt" | "updatedAt">) {

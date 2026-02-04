@@ -579,6 +579,8 @@ const finalRecipesRouter = router({
         serviceWastePercentage: z.number(),
         conservationMethod: z.string(),
         maxConservationTime: z.string(),
+        isSellable: z.boolean().optional(),
+        isSemiFinished: z.boolean().optional(),
         components: z.array(
           z.object({
             type: z.enum(["ingredient", "semi_finished", "operation"]),
@@ -628,8 +630,8 @@ const finalRecipesRouter = router({
         pieceWeight: null,
         productionOperations: null,
         serviceWastePerIngredient: null,
-        isSemiFinished: false,
-        isSellable: true,
+        isSemiFinished: input.isSemiFinished ?? false,
+        isSellable: input.isSellable ?? true,
         isActive: true,
         sellingPrice: null,
       } as any);
@@ -833,6 +835,15 @@ const finalRecipesRouter = router({
     .query(async ({ input }) => {
       const { calculateRecipeAllergens } = await import("./allergens");
       return calculateRecipeAllergens(input.id);
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      return db.deleteFinalRecipe(input.id);
     }),
 
   toggleActive: protectedProcedure

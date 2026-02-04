@@ -98,6 +98,8 @@ export default function FinalRecipes() {
     serviceWastePercentage: 0,
     conservationMethod: 'Refrigerato',
     maxConservationTime: '48 ore',
+    isSellable: true,
+    isSemiFinished: false,
   });
   const [createComponents, setCreateComponents] = useState<ComponentWithDetails[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -142,6 +144,8 @@ export default function FinalRecipes() {
         serviceWastePercentage: 0,
         conservationMethod: 'Refrigerato',
         maxConservationTime: '48 ore',
+        isSellable: true,
+        isSemiFinished: false,
       });
       setCreateComponents([]);
       utils.finalRecipes.list.invalidate();
@@ -173,6 +177,21 @@ export default function FinalRecipes() {
       toast.error(error.message || "Errore durante l'aggiornamento dello stato");
     },
   });
+
+  const deleteMutation = trpc.finalRecipes.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Ricetta eliminata con successo!");
+      setIsDeleteDialogOpen(false);
+      setRecipeToDelete(null);
+      utils.finalRecipes.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Errore durante l'eliminazione della ricetta");
+    },
+  });
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [recipeToDelete, setRecipeToDelete] = useState<{ id: string; name: string } | null>(null);
 
   const { data: recipeDetails } = trpc.finalRecipes.getDetails.useQuery(
     { id: selectedRecipeId! },
@@ -687,6 +706,17 @@ export default function FinalRecipes() {
                             Nascondi
                           </>
                         )}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          setRecipeToDelete({ id: item.id, name: item.name });
+                          setIsDeleteDialogOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Elimina
                       </Button>
                     </div>
                   </div>
@@ -1257,6 +1287,34 @@ export default function FinalRecipes() {
               </div>
             </div>
 
+            {/* Flags Vendibile e Semilavorato */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="create-sellable"
+                  checked={createFormData.isSellable ?? true}
+                  onChange={(e) => setCreateFormData({ ...createFormData, isSellable: e.target.checked })}
+                  className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                />
+                <Label htmlFor="create-sellable" className="cursor-pointer">
+                  Vendibile (apparirà in Food Matrix)
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="create-semifinished"
+                  checked={createFormData.isSemiFinished ?? false}
+                  onChange={(e) => setCreateFormData({ ...createFormData, isSemiFinished: e.target.checked })}
+                  className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                />
+                <Label htmlFor="create-semifinished" className="cursor-pointer">
+                  Semilavorato (usabile in altre ricette)
+                </Label>
+              </div>
+            </div>
+
             {/* Gestione Componenti */}
             <div className="space-y-4 bg-slate-50 p-6 rounded-lg">
               <div className="flex items-center justify-between">
@@ -1449,6 +1507,8 @@ export default function FinalRecipes() {
                     serviceWastePercentage: createFormData.serviceWastePercentage,
                     conservationMethod: createFormData.conservationMethod,
                     maxConservationTime: createFormData.maxConservationTime,
+                    isSellable: createFormData.isSellable ?? true,
+                    isSemiFinished: createFormData.isSemiFinished ?? false,
                     components: createComponents.map(comp => ({
                       type: comp.type,
                       componentId: comp.componentId || '',
@@ -1465,6 +1525,42 @@ export default function FinalRecipes() {
                 Crea Ricetta
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Conferma Eliminazione */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Conferma Eliminazione</DialogTitle>
+            <DialogDescription>
+              Sei sicuro di voler eliminare la ricetta <strong>{recipeToDelete?.name}</strong>?
+              <br />
+              <span className="text-red-600 font-medium">Questa azione è irreversibile.</span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                setRecipeToDelete(null);
+              }}
+            >
+              Annulla
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (recipeToDelete) {
+                  deleteMutation.mutate({ id: recipeToDelete.id });
+                }
+              }}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Eliminazione..." : "Elimina"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
