@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE ingredients MODIFY COLUMN category ENUM('Additivi','Alcolici','Bevande','Birra','Carni','Farine','Latticini','Non Food','Packaging','Spezie','Verdura','Altro') NOT NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute ALTER TABLE ingredients MODIFY COLUMN category ENUM('Additivi','Alcolici','Bevande','Birra','Carni','Farine','Latticini','Non Food','Packaging','Spezie','Verdura','Altro') NOT NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1063
+}

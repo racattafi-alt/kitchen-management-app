@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, name, packagePrice, packageQuantity, pricePerKgOrUnit, unitType FROM ingredients WHERE name = 'Aglio pelato';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT id, name, packagePrice, packageQuantity, pricePerKgOrUnit, unitType FROM ingredients WHERE name = 'Aglio pelato';",
+  "rows": [
+    {
+      "id": "B23PC4FO2fVaOme1qxPls",
+      "name": "Aglio pelato",
+      "packagePrice": "5.98",
+      "packageQuantity": "1.000",
+      "pricePerKgOrUnit": "0.01",
+      "unitType": "k"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tpackagePrice\tpackageQuantity\tpricePerKgOrUnit\tunitType\nB23PC4FO2fVaOme1qxPls\tAglio pelato\t5.98\t1.000\t0.01\tk\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

@@ -1,0 +1,45 @@
+{
+  "query": "SELECT name, packagePrice, packageQuantity, pricePerKgOrUnit, unitType FROM ingredients WHERE name LIKE '%aglio%' OR name LIKE '%Aglio%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT name, packagePrice, packageQuantity, pricePerKgOrUnit, unitType FROM ingredients WHERE name LIKE '%aglio%' OR name LIKE '%Aglio%';",
+  "rows": [
+    {
+      "name": "Aglio pelato",
+      "packagePrice": "5.98",
+      "packageQuantity": "1.000",
+      "pricePerKgOrUnit": "0.01",
+      "unitType": "k"
+    },
+    {
+      "name": "Tovaglioli tavolo",
+      "packagePrice": "118.56",
+      "packageQuantity": "1200.000",
+      "pricePerKgOrUnit": "0.10",
+      "unitType": "u"
+    },
+    {
+      "name": "Tovaglioli (33x33)",
+      "packagePrice": "19.60",
+      "packageQuantity": "4000.000",
+      "pricePerKgOrUnit": "0.00",
+      "unitType": "u"
+    },
+    {
+      "name": "Tovaglioli economici",
+      "packagePrice": "0.00",
+      "packageQuantity": "1.000",
+      "pricePerKgOrUnit": "0.00",
+      "unitType": "u"
+    },
+    {
+      "name": "Aglio in polvere",
+      "packagePrice": "6.50",
+      "packageQuantity": "1.000",
+      "pricePerKgOrUnit": "6.50",
+      "unitType": "k"
+    }
+  ],
+  "messages": [],
+  "stdout": "name\tpackagePrice\tpackageQuantity\tpricePerKgOrUnit\tunitType\nAglio pelato\t5.98\t1.000\t0.01\tk\nTovaglioli tavolo\t118.56\t1200.000\t0.10\tu\nTovaglioli (33x33)\t19.60\t4000.000\t0.00\tu\nTovaglioli economici\t0.00\t1.000\t0.00\tu\nAglio in polvere\t6.50\t1.000\t6.50\tk\n",
+  "stderr": "",
+  "execution_time_ms": 92
+}

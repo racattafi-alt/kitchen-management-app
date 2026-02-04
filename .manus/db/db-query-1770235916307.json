@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, name, category, is_food FROM ingredients WHERE name = 'Aglio pelato';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT id, name, category, is_food FROM ingredients WHERE name = 'Aglio pelato';",
+  "rows": [
+    {
+      "id": "B23PC4FO2fVaOme1qxPls",
+      "name": "Aglio pelato",
+      "category": "Altro",
+      "is_food": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcategory\tis_food\nB23PC4FO2fVaOme1qxPls\tAglio pelato\tAltro\t1\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

@@ -1,0 +1,1 @@
+ALTER TABLE `ingredients` MODIFY COLUMN `category` enum('Additivi','Alcolici','Bevande','Birra','Carni','Farine','Latticini','Non Food','Packaging','Spezie','Verdura','Altro') NOT NULL;
