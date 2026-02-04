@@ -275,6 +275,28 @@ export async function deleteFinalRecipe(id: string) {
   await db.delete(finalRecipes).where(eq(finalRecipes.id, id));
 }
 
+export async function updateProducedQuantity(recipeId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Calcola la somma totale delle quantità prodotte per questa ricetta
+  const productions = await db
+    .select({ quantity: weeklyProductions.quantity })
+    .from(weeklyProductions)
+    .where(eq(weeklyProductions.recipeFinalId, recipeId));
+  
+  const totalQuantity = productions.reduce((sum, p) => {
+    return sum + (parseFloat(p.quantity?.toString() || '0'));
+  }, 0);
+  
+  // Aggiorna il campo producedQuantity nella ricetta
+  await db.update(finalRecipes)
+    .set({ producedQuantity: totalQuantity.toString() })
+    .where(eq(finalRecipes.id, recipeId));
+  
+  return totalQuantity;
+}
+
 // ============ FOOD MATRIX ============
 
 export async function createFoodMatrixItem(data: Omit<FoodMatrixItem, "createdAt" | "updatedAt">) {
@@ -369,8 +391,20 @@ export async function getWeeklyProductions(weekStartDate?: Date) {
 export async function deleteWeeklyProduction(id: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  
+  // Recupera recipeFinalId prima di eliminare
+  const production = await db
+    .select({ recipeFinalId: weeklyProductions.recipeFinalId })
+    .from(weeklyProductions)
+    .where(eq(weeklyProductions.id, id))
+    .limit(1);
+  
   await db.delete(weeklyProductions).where(eq(weeklyProductions.id, id));
-  return { success: true };
+  
+  return { 
+    success: true, 
+    recipeFinalId: production[0]?.recipeFinalId || null 
+  };
 }
 
 // ============ MENU ============

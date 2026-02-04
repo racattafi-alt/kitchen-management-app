@@ -394,7 +394,7 @@ const productionRouter = router({
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
-      return db.createWeeklyProduction({
+      const result = await db.createWeeklyProduction({
         id: crypto.randomUUID(),
         recipeFinalId: input.recipeFinalId || null,
         semiFinishedId: input.semiFinishedId || null,
@@ -402,6 +402,13 @@ const productionRouter = router({
         quantity: input.quantity,
         weekStartDate: input.weekStartDate,
       } as any);
+      
+      // Aggiorna la quantità totale prodotta nella ricetta
+      if (input.recipeFinalId) {
+        await db.updateProducedQuantity(input.recipeFinalId);
+      }
+      
+      return result;
     }),
 
   delete: protectedProcedure
@@ -410,7 +417,14 @@ const productionRouter = router({
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
-      return db.deleteWeeklyProduction(input.id);
+      const result = await db.deleteWeeklyProduction(input.id);
+      
+      // Aggiorna la quantità totale prodotta nella ricetta
+      if (result.recipeFinalId) {
+        await db.updateProducedQuantity(result.recipeFinalId);
+      }
+      
+      return result;
     }),
 
   generateShoppingList: protectedProcedure

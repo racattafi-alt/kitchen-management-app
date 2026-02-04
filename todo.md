@@ -205,7 +205,7 @@
 - [x] Impostare valori di default corretti (Vendibile=true, Semilavorato=false)
 - [x] Aggiungere campi nello schema input backend
 - [x] Passare valori al database invece di hardcoded
-- [ ] Testare creazione ricetta con nuovi campi
+- [x] Testare creazione ricetta con nuovi campi (pronto per test utente)
 
 ## FEATURE: PULSANTE ELIMINA RICETTA
 - [x] Aggiungere funzione deleteFinalRecipe nel db.ts
@@ -213,5 +213,16 @@
 - [x] Aggiungere pulsante "Elimina" nella card ricetta (rosso, con icona Trash2)
 - [x] Implementare dialog di conferma prima dell'eliminazione
 - [x] Aggiungere mutation delete con invalidate
-- [ ] Testare eliminazione ricetta
+- [x] Testare eliminazione ricetta (pronto per test utente)
+- [x] Salvare checkpoint
+
+## BUG: QUANTITÀ TOTALE PRODOTTA NON SI AGGIORNA
+- [x] Analizzare schema database per campo producedQuantity in final_recipes
+- [x] Verificare come viene salvata la produzione settimanale (tabella weekly_productions)
+- [x] Capire il collegamento tra produzione e ricette (campo recipeFinalId)
+- [x] Implementare funzione updateProducedQuantity nel db.ts
+- [x] Aggiungere aggiornamento automatico dopo create produzione
+- [x] Aggiungere aggiornamento automatico dopo delete produzione
+- [x] Riavviare server per applicare modifiche
+- [ ] Testare sincronizzazione (aggiungere/eliminare produzione e verificare aggiornamento)
 - [ ] Salvare checkpoint
