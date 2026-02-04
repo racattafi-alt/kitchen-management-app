@@ -1,0 +1,8 @@
+{
+  "query": "UPDATE semi_finished_recipes SET category = 'altro' WHERE category = 'ALTRO';\nUPDATE semi_finished_recipes SET category = 'salse' WHERE category = 'SALSE';\nUPDATE semi_finished_recipes SET category = 'spezie' WHERE category = 'SPEZIE';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute UPDATE semi_finished_recipes SET category = 'altro' WHERE category = 'ALTRO';\nUPDATE semi_finished_recipes SET category = 'salse' WHERE category = 'SALSE';\nUPDATE semi_finished_recipes SET category = 'spezie' WHERE category = 'SPEZIE';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1265 (01000) at line 1: Data truncated for column '%s' at row %d"
+  ]
+}

@@ -85,4 +85,25 @@
 ### Fase 4: Bug Report
 - [x] Documentare tutti i bug trovati con severity (vedi BUG_REPORT.md)
 - [x] Proporre fix per bug critici
+- [x] Salvare checkpoint finale
+
+## NORMALIZZAZIONE CATEGORIE RICETTE
+- [x] Identificare categorie duplicate nel database (ALTRO/Altro, SALSE/Salse)
+- [x] Normalizzazione lato frontend implementata (non richiede migrazione DB)
+- [x] Testare visualizzazione categorie unificate
+
+## IMPORT COMPLETO INGREDIENTI DA EXCEL
+- [ ] Installare libreria exceljs per parsing Excel
+- [ ] Implementare procedura backend per leggere file Excel
+- [ ] Validare dati Excel (prezzi, quantità, categorie)
+- [ ] Importare ingredienti dal file ingredienti_completi.xlsx
+- [ ] Verificare tutti gli ingredienti aggiornati nel database
+
+## REIMPLEMENTAZIONE EXPORT EXCEL CON NODE.JS
+- [x] Rimuovere vecchia implementazione Python
+- [x] Installare libreria exceljs
+- [x] Implementare export Excel in TypeScript con server/exportExcel.ts
+- [x] Implementare import Excel in TypeScript
+- [x] Testare export da interfaccia web (funzionante)
+- [x] Testare dialog import (funzionante)
 - [ ] Salvare checkpoint finale

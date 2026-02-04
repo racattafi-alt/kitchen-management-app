@@ -129,28 +129,12 @@ const ingredientsRouter = router({
     if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
       throw new Error("Unauthorized");
     }
+    const { exportIngredientsToExcel } = await import('./exportExcel.js');
     const ingredients = await db.getIngredients();
     
-    // Usa script Python standalone per creare Excel
-    const timestamp = Date.now();
-    const tempData = path.join('/tmp', `data_${timestamp}.json`);
-    const tempFile = path.join('/tmp', `ingredienti_${timestamp}.xlsx`);
-    const scriptPath = path.join(__dirname, 'scripts', 'export_excel.py');
-    
     try {
-      // Salva dati in JSON
-      fs.writeFileSync(tempData, JSON.stringify(ingredients));
-      
-      // Esegui script Python
-      execSync(`/usr/bin/python3.11 ${scriptPath} ${tempData} ${tempFile}`, { encoding: 'utf-8' });
-      
-      // Leggi file Excel e converti in base64
-      const fileBuffer = fs.readFileSync(tempFile);
-      const base64 = fileBuffer.toString('base64');
-      
-      // Pulisci file temporanei
-      fs.unlinkSync(tempData);
-      fs.unlinkSync(tempFile);
+      const buffer = await exportIngredientsToExcel(ingredients);
+      const base64 = buffer.toString('base64');
       
       return {
         filename: `ingredienti_${new Date().toISOString().split('T')[0]}.xlsx`,
@@ -158,9 +142,6 @@ const ingredientsRouter = router({
         mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       };
     } catch (error: any) {
-      // Pulisci file temporanei in caso di errore
-      try { fs.unlinkSync(tempFile); } catch {}
-      try { fs.unlinkSync(tempData); } catch {}
       throw new Error(`Errore creazione Excel: ${error.message}`);
     }
   }),
@@ -174,25 +155,13 @@ const ingredientsRouter = router({
         throw new Error("Unauthorized");
       }
       
-      const timestamp = Date.now();
-      const tempFile = path.join('/tmp', `import_${timestamp}.xlsx`);
-      const tempData = path.join('/tmp', `parsed_${timestamp}.json`);
-      const scriptPath = path.join(__dirname, 'scripts', 'import_excel.py');
+      const { importIngredientsFromExcel } = await import('./exportExcel.js');
       
       try {
-        // Salva file Excel
+        // Decodifica file Excel
         const buffer = Buffer.from(input.fileData, 'base64');
-        fs.writeFileSync(tempFile, buffer);
-        
-        // Esegui script Python
-        execSync(`/usr/bin/python3.11 ${scriptPath} ${tempFile} ${tempData}`, { encoding: 'utf-8' });
-        
-        // Leggi dati parsati
-        const parsedData = JSON.parse(fs.readFileSync(tempData, 'utf-8'));
-        
-        // Pulisci file temporanei
-        fs.unlinkSync(tempFile);
-        fs.unlinkSync(tempData);
+        const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+        const parsedData = await importIngredientsFromExcel(arrayBuffer);
         
         // Valida e importa dati
         let imported = 0;
