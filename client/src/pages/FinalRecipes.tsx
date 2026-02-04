@@ -169,6 +169,8 @@ export default function FinalRecipes() {
       serviceWastePercentage: parseFloat(recipe.serviceWastePercentage || "0"),
       unitWeight: parseFloat(recipe.unitWeight || "0"),
       producedQuantity: parseFloat(recipe.producedQuantity || "0"),
+      measurementType: recipe.measurementType || 'weight_only',
+      pieceWeight: parseFloat(recipe.pieceWeight || "0"),
       isSemiFinished: recipe.isSemiFinished || false,
       isSellable: recipe.isSellable !== false,
     });
@@ -286,6 +288,8 @@ export default function FinalRecipes() {
       serviceWastePercentage: editFormData.serviceWastePercentage,
       unitWeight: editFormData.unitWeight,
       producedQuantity: editFormData.producedQuantity,
+      measurementType: editFormData.measurementType,
+      pieceWeight: editFormData.pieceWeight,
       isSemiFinished: editFormData.isSemiFinished,
       isSellable: editFormData.isSellable,
       components: editComponents.map(comp => ({
@@ -761,6 +765,45 @@ export default function FinalRecipes() {
                   Se inserito, il prodotto sarà considerato unitario e verrà mostrato il prezzo sia unitario che al kg
                 </p>
               </div>
+
+              {/* Tipo Misurazione */}
+              <div className="space-y-2">
+                <Label htmlFor="measurementType">Unità di Misura Produzione</Label>
+                <Select
+                  value={editFormData.measurementType || 'weight_only'}
+                  onValueChange={(value) => setEditFormData({ ...editFormData, measurementType: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleziona unità" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="weight_only">Solo Peso (kg)</SelectItem>
+                    <SelectItem value="unit_only">Solo Pezzi</SelectItem>
+                    <SelectItem value="both">Entrambi (kg e pezzi)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-slate-500">
+                  Definisce come può essere ordinata la ricetta in produzione
+                </p>
+              </div>
+
+              {/* Peso Singolo Pezzo (se unit_only o both) */}
+              {(editFormData.measurementType === 'unit_only' || editFormData.measurementType === 'both') && (
+                <div className="space-y-2">
+                  <Label htmlFor="pieceWeight">Peso Singolo Pezzo (kg)</Label>
+                  <Input
+                    id="pieceWeight"
+                    type="number"
+                    step="0.001"
+                    value={editFormData.pieceWeight || ''}
+                    onChange={(e) => setEditFormData({ ...editFormData, pieceWeight: parseFloat(e.target.value) })}
+                    placeholder="es. 0.067 per 1 tender"
+                  />
+                  <p className="text-sm text-slate-500">
+                    Peso di 1 pezzo per conversione automatica kg ↔ pezzi
+                  </p>
+                </div>
+              )}
 
               {/* Resa Produzione - Calcolata */}
               <div className="space-y-2">

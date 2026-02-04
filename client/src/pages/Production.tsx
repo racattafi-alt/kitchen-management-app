@@ -21,6 +21,8 @@ export default function Production() {
   });
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedRecipe, setSelectedRecipe] = useState<any>(null);
+  const [inputUnit, setInputUnit] = useState<"kg" | "pezzi">("kg");
 
   const utils = trpc.useUtils();
   const { data: productions, isLoading } = trpc.production.list.useQuery({ weekStartDate: undefined });
@@ -74,11 +76,18 @@ export default function Production() {
   };
 
   const handleSelectRecipe = (recipe: any) => {
+    setSelectedRecipe(recipe);
+    
+    // Determina unità di default basata su measurementType
+    const defaultUnit = recipe.measurementType === 'unit_only' ? 'pezzi' : 'kg';
+    setInputUnit(defaultUnit);
+    
     setFormData({
       ...formData,
       recipeSearch: recipe.name,
       recipeFinalId: recipe.id,
       recipeName: recipe.name,
+      desiredQuantity: "", // Reset quantità
     });
     setShowSuggestions(false);
   };
@@ -95,11 +104,17 @@ export default function Production() {
       return;
     }
 
+    // Converti in kg se input è in pezzi
+    let quantityInKg = Number(formData.desiredQuantity);
+    if (inputUnit === 'pezzi' && selectedRecipe?.pieceWeight) {
+      quantityInKg = quantityInKg * selectedRecipe.pieceWeight;
+    }
+
     createMutation.mutate({
       weekStartDate: new Date(formData.weekStartDate),
       recipeFinalId: formData.recipeFinalId,
       productionType: "final",
-      quantity: Number(formData.desiredQuantity),
+      quantity: quantityInKg,
     });
   };
 
@@ -185,19 +200,55 @@ export default function Production() {
                   )}
                 </div>
 
-                {/* Quantità */}
+                {/* Quantità con Unità Dinamica */}
                 <div className="space-y-2">
-                  <Label htmlFor="desiredQuantity">Quantità</Label>
-                  <Input
-                    id="desiredQuantity"
-                    type="number"
-                    step="0.001"
-                    min="0.001"
-                    placeholder="1.000"
-                    value={formData.desiredQuantity}
-                    onChange={(e) => setFormData({ ...formData, desiredQuantity: e.target.value })}
-                    required
-                  />
+                  <Label htmlFor="desiredQuantity">
+                    Quantità {selectedRecipe && `(${inputUnit})`}
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="desiredQuantity"
+                      type="number"
+                      step="0.001"
+                      min="0.001"
+                      placeholder={inputUnit === 'kg' ? "1.000" : "100"}
+                      value={formData.desiredQuantity}
+                      onChange={(e) => setFormData({ ...formData, desiredQuantity: e.target.value })}
+                      required
+                      disabled={!selectedRecipe}
+                    />
+                    {/* Toggle kg/pezzi solo se measurementType = 'both' */}
+                    {selectedRecipe?.measurementType === 'both' && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          const newUnit = inputUnit === 'kg' ? 'pezzi' : 'kg';
+                          setInputUnit(newUnit);
+                          
+                          // Converti quantità esistente
+                          if (formData.desiredQuantity && selectedRecipe.pieceWeight) {
+                            const currentQty = parseFloat(formData.desiredQuantity);
+                            const converted = newUnit === 'pezzi' 
+                              ? (currentQty / selectedRecipe.pieceWeight).toFixed(0) // kg -> pezzi
+                              : (currentQty * selectedRecipe.pieceWeight).toFixed(3); // pezzi -> kg
+                            setFormData({ ...formData, desiredQuantity: converted });
+                          }
+                        }}
+                        className="whitespace-nowrap"
+                      >
+                        ↔ {inputUnit === 'kg' ? 'Pezzi' : 'kg'}
+                      </Button>
+                    )}
+                  </div>
+                  {selectedRecipe?.measurementType === 'both' && selectedRecipe.pieceWeight && formData.desiredQuantity && (
+                    <p className="text-xs text-muted-foreground">
+                      ≈ {inputUnit === 'kg' 
+                        ? `${(parseFloat(formData.desiredQuantity) / selectedRecipe.pieceWeight).toFixed(0)} pezzi`
+                        : `${(parseFloat(formData.desiredQuantity) * selectedRecipe.pieceWeight).toFixed(3)} kg`
+                      }
+                    </p>
+                  )}
                 </div>
 
                 {/* Unità */}

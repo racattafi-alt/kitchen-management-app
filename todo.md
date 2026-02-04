@@ -632,3 +632,29 @@
 - [x] Correggere warning React "Each child in a list should have a unique key prop" (già presente)
 - [x] Correggere lista acquisti vuota (allineati nomi campi backend: itemName, itemType, supplier)
 - [x] Correggere salvataggio quantità produzione (rimosso toString() da quantity)
+
+## SISTEMA UNITÀ DI MISURA RICETTE (WEIGHT/UNIT/BOTH)
+- [ ] Aggiungere colonna measurementType ENUM('weight_only', 'unit_only', 'both') a final_recipes
+- [ ] Aggiungere colonna pieceWeight DECIMAL(10,3) a final_recipes per peso singolo pezzo
+- [ ] Aggiornare schema.ts con nuovi campi
+- [ ] Aggiornare backend routers.ts input/output finalRecipes.update
+- [ ] Aggiornare backend updateData per includere measurementType e pieceWeight
+- [ ] Modificare FinalRecipes.tsx: aggiungere select measurementType nel form modifica
+- [ ] Modificare FinalRecipes.tsx: aggiungere campo pieceWeight condizionale (se unit_only o both)
+- [ ] Aggiornare handleEdit per caricare measurementType e pieceWeight
+- [ ] Aggiornare handleUpdateSubmit per inviare nuovi campi
+- [ ] Modificare Production.tsx: mostrare input appropriato basato su measurementType ricetta
+- [ ] Implementare conversione automatica kg↔pezzi in Production.tsx
+- [ ] Validare input produzione (bloccare pezzi per weight_only, bloccare kg per unit_only)
+- [ ] Testare flusso completo: modifica ricetta → produzione → conversione
+
+## SISTEMA UNITÀ DI MISURA RICETTE (COMPLETATO)
+- [x] Aggiungere campo measurementType (weight_only/unit_only/both) a final_recipes
+- [x] Aggiungere campo pieceWeight (peso singolo pezzo in kg) a final_recipes
+- [x] Aggiornare backend procedures per supportare nuovi campi (routers.ts input/updateData)
+- [x] Modificare form ricette con select unità misura e campo peso pezzo condizionale
+- [x] Aggiornare form produzione con input dinamico basato su measurementType
+- [x] Implementare toggle kg/pezzi per ricette con measurementType='both'
+- [x] Implementare conversione automatica kg ↔ pezzi usando pieceWeight
+- [x] Mostrare equivalenza in tempo reale (es. "20kg ≈ 300 pezzi")
+- [x] Salvare sempre quantità in kg nel database per coerenza

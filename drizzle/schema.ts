@@ -122,6 +122,8 @@ export const finalRecipes = mysqlTable("final_recipes", {
   unitType: mysqlEnum("unitType", ["u", "k"]).default("k").notNull(),
   unitWeight: decimal("unitWeight", { precision: 10, scale: 3 }),
   producedQuantity: decimal("producedQuantity", { precision: 10, scale: 3 }),
+  measurementType: mysqlEnum("measurementType", ["weight_only", "unit_only", "both"]).default("weight_only").notNull(),
+  pieceWeight: decimal("pieceWeight", { precision: 10, scale: 3 }),
   isSemiFinished: boolean("isSemiFinished").default(false).notNull(),
   isSellable: boolean("isSellable").default(true).notNull(),
   sellingPrice: decimal("sellingPrice", { precision: 10, scale: 2 }),
