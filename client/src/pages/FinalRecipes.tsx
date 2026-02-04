@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
-import { ChefHat, Plus, Eye, Pencil, Trash2, Search, FileSpreadsheet } from "lucide-react";
+import { ChefHat, Plus, Eye, Pencil, Trash2, Search, FileSpreadsheet, History } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
@@ -34,6 +34,8 @@ export default function FinalRecipes() {
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<any>(null);
+  const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
+  const [selectedRecipeForHistory, setSelectedRecipeForHistory] = useState<string | null>(null);
   
   // Stati per gestione componenti
   const [editComponents, setEditComponents] = useState<ComponentWithDetails[]>([]);
@@ -485,6 +487,17 @@ export default function FinalRecipes() {
                       >
                         <Pencil className="h-4 w-4 mr-2" />
                         Modifica
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedRecipeForHistory(item.id);
+                          setIsVersionHistoryOpen(true);
+                        }}
+                      >
+                        <History className="h-4 w-4 mr-2" />
+                        Storico
                       </Button>
                     </div>
                   </div>
@@ -1171,6 +1184,193 @@ export default function FinalRecipes() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog Storico Versioni */}
+      <VersionHistoryDialog
+        isOpen={isVersionHistoryOpen}
+        onClose={() => {
+          setIsVersionHistoryOpen(false);
+          setSelectedRecipeForHistory(null);
+        }}
+        recipeId={selectedRecipeForHistory}
+        onRollback={() => {
+          trpc.useUtils().finalRecipes.list.invalidate();
+          setIsVersionHistoryOpen(false);
+        }}
+      />
     </DashboardLayout>
+  );
+}
+
+// Componente Dialog Storico Versioni
+function VersionHistoryDialog({
+  isOpen,
+  onClose,
+  recipeId,
+  onRollback,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  recipeId: string | null;
+  onRollback: () => void;
+}) {
+  const { data: versions, isLoading } = trpc.finalRecipes.getVersions.useQuery(
+    { id: recipeId! },
+    { enabled: !!recipeId && isOpen }
+  );
+
+  const rollbackMutation = trpc.finalRecipes.rollbackToVersion.useMutation({
+    onSuccess: () => {
+      toast.success("Versione ripristinata con successo!");
+      onRollback();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Errore durante il ripristino");
+    },
+  });
+
+  const handleRollback = (versionId: number) => {
+    if (!recipeId) return;
+    if (confirm("Sei sicuro di voler ripristinare questa versione?")) {
+      rollbackMutation.mutate({ recipeId, versionId });
+    }
+  };
+
+  const getComponentsDiff = (oldComponents: any[], newComponents: any[]) => {
+    const changes: string[] = [];
+    
+    // Componenti aggiunti
+    newComponents.forEach(nc => {
+      const found = oldComponents.find(oc => oc.componentId === nc.componentId);
+      if (!found) {
+        changes.push(`+ Aggiunto: ${nc.componentName || nc.name} (${nc.quantity} ${nc.unit})`);
+      } else if (found.quantity !== nc.quantity) {
+        changes.push(`~ Modificato: ${nc.componentName || nc.name} da ${found.quantity} a ${nc.quantity} ${nc.unit}`);
+      }
+    });
+    
+    // Componenti rimossi
+    oldComponents.forEach(oc => {
+      const found = newComponents.find(nc => nc.componentId === oc.componentId);
+      if (!found) {
+        changes.push(`- Rimosso: ${oc.componentName || oc.name}`);
+      }
+    });
+    
+    return changes;
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="text-2xl">Storico Versioni</DialogTitle>
+          <DialogDescription>
+            Visualizza le modifiche precedenti e ripristina una versione specifica
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+          {isLoading ? (
+            <div className="text-center py-8 text-slate-500">Caricamento...</div>
+          ) : !versions || versions.length === 0 ? (
+            <div className="text-center py-8 text-slate-500">
+              Nessuna versione precedente disponibile
+            </div>
+          ) : (
+            versions.map((version: any, index: number) => {
+              const snapshot = version.snapshot as any;
+              const prevVersion = versions[index + 1];
+              const prevSnapshot = prevVersion?.snapshot as any;
+              
+              let componentsDiff: string[] = [];
+              if (prevSnapshot) {
+                const oldComps = typeof prevSnapshot.components === 'string' 
+                  ? JSON.parse(prevSnapshot.components) 
+                  : prevSnapshot.components || [];
+                const newComps = typeof snapshot.components === 'string'
+                  ? JSON.parse(snapshot.components)
+                  : snapshot.components || [];
+                componentsDiff = getComponentsDiff(oldComps, newComps);
+              }
+
+              return (
+                <Card key={version.id} className="border-l-4 border-l-blue-500">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg">
+                          Versione {version.versionNumber}
+                          {index === 0 && (
+                            <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                              Corrente
+                            </span>
+                          )}
+                        </CardTitle>
+                        <p className="text-sm text-slate-500 mt-1">
+                          {new Date(version.createdAt).toLocaleString('it-IT')}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-1">
+                          {version.changeDescription}
+                        </p>
+                      </div>
+                      {index !== 0 && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleRollback(version.id)}
+                          disabled={rollbackMutation.isPending}
+                          className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                        >
+                          <History className="h-4 w-4 mr-2" />
+                          Ripristina
+                        </Button>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium">Categoria:</span> {snapshot.category}
+                        </div>
+                        <div>
+                          <span className="font-medium">Resa:</span> {parseFloat(snapshot.yieldPercentage).toFixed(1)}%
+                        </div>
+                        <div>
+                          <span className="font-medium">Peso Finale:</span> {snapshot.unitWeight ? `${snapshot.unitWeight} kg` : 'N/A'}
+                        </div>
+                        <div>
+                          <span className="font-medium">Costo Totale:</span> €{parseFloat(snapshot.totalCost).toFixed(2)}
+                        </div>
+                      </div>
+                      
+                      {componentsDiff.length > 0 && (
+                        <div className="mt-4 p-3 bg-slate-50 rounded-lg">
+                          <p className="text-sm font-medium mb-2">Modifiche rispetto alla versione precedente:</p>
+                          <div className="space-y-1">
+                            {componentsDiff.map((change, idx) => (
+                              <p key={idx} className="text-xs font-mono">
+                                {change.startsWith('+') && <span className="text-green-600">{change}</span>}
+                                {change.startsWith('-') && <span className="text-red-600">{change}</span>}
+                                {change.startsWith('~') && <span className="text-orange-600">{change}</span>}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
+        </div>
+        <div className="flex justify-end pt-4">
+          <Button variant="outline" onClick={onClose}>
+            Chiudi
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

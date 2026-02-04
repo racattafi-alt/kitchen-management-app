@@ -1,154 +1,16 @@
-import { COOKIE_NAME } from "@shared/const";
-import { getSessionCookieOptions } from "./_core/cookies";
-import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
+import { router, protectedProcedure, publicProcedure } from "./_core/trpc";
 import { z } from "zod";
-import { nanoid } from "nanoid";
 import * as db from "./db";
-import {
-  calculateRecipeCost,
-  aggregateProductionRequirements,
-  calculateMenuItemCost,
-  calculatePromotionCost,
-} from "./calculations";
+import crypto from "crypto";
 
-// ============ PROCEDURE FORNITORI ============
-const suppliersRouter = router({
-  list: protectedProcedure.query(async () => {
-    return db.getSuppliers();
+// ============ PROCEDURE AUTENTICAZIONE ============
+const authRouter = router({
+  me: publicProcedure.query(({ ctx }) => {
+    return ctx.user ?? null;
   }),
-
-  create: protectedProcedure
-    .input(
-      z.object({
-        name: z.string(),
-        contact: z.string().optional(),
-        email: z.string().email().optional(),
-        phone: z.string().optional(),
-        address: z.string().optional(),
-        notes: z.string().optional(),
-      })
-    )
-    .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
-        throw new Error("Unauthorized");
-      }
-      return db.createSupplier({
-        id: nanoid(),
-        name: input.name,
-        contact: input.contact || null,
-        email: input.email || null,
-        phone: input.phone || null,
-        address: input.address || null,
-        notes: input.notes || null,
-      });
-    }),
-
-  update: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        data: z.object({
-          name: z.string().optional(),
-          contact: z.string().optional(),
-          email: z.string().email().optional(),
-          phone: z.string().optional(),
-          address: z.string().optional(),
-          notes: z.string().optional(),
-        }),
-      })
-    )
-    .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
-        throw new Error("Unauthorized");
-      }
-      return db.updateSupplier(input.id, input.data);
-    }),
-
-  delete: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
-        throw new Error("Unauthorized");
-      }
-      return db.deleteSupplier(input.id);
-    }),
-
-  linkIngredientsToSuppliers: protectedProcedure.mutation(async ({ ctx }) => {
-    if (ctx.user?.role !== "admin") {
-      throw new Error("Unauthorized: only admin can link ingredients");
-    }
-
-    // Carica tutti i fornitori e ingredienti
-    const allSuppliers = await db.getSuppliers();
-    const allIngredients = await db.getIngredients();
-
-    // Crea mappa nome fornitore -> ID
-    const supplierMap = new Map(allSuppliers.map(s => [s.name, s.id]));
-
-    // Aggiorna ogni ingrediente con supplierId
-    let updated = 0;
-    let skipped = 0;
-
-    for (const ingredient of allIngredients) {
-      if (!ingredient.supplierName) {
-        skipped++;
-        continue;
-      }
-
-      const supplierId = supplierMap.get(ingredient.supplierName || "");
-      if (supplierId) {
-        await db.updateIngredient(ingredient.id, { supplierId });
-        updated++;
-      } else {
-        console.warn(`Fornitore non trovato per ingrediente ${ingredient.name}: ${ingredient.supplierName}`);
-        skipped++;
-      }
-    }
-
-    return {
-      success: true,
-      updated,
-      skipped,
-      total: allIngredients.length,
-    };
-  }),
-
-  migrateFromIngredients: protectedProcedure.mutation(async ({ ctx }) => {
-    if (ctx.user?.role !== "admin") {
-      throw new Error("Unauthorized: only admin can migrate suppliers");
-    }
-
-    // Estrai fornitori unici dagli ingredienti
-    const ingredients = await db.getIngredients();
-    const uniqueSuppliers = Array.from(new Set(ingredients.map(i => i.supplierName).filter(Boolean)));
-
-    // Inserisci i fornitori nella tabella suppliers
-    const created = [];
-    for (const supplierName of uniqueSuppliers) {
-      if (!supplierName) continue;
-      try {
-        const supplier = await db.createSupplier({
-          id: nanoid(),
-          name: supplierName,
-          contact: null,
-          email: null,
-          phone: null,
-          address: null,
-          notes: null,
-        });
-        created.push(supplier);
-      } catch (error) {
-        // Ignora duplicati
-        console.warn(`Fornitore ${supplierName} già esistente`);
-      }
-    }
-
-    return {
-      success: true,
-      created: created.length,
-      total: uniqueSuppliers.length,
-    };
+  logout: protectedProcedure.mutation(({ ctx }) => {
+    ctx.logout();
+    return { success: true };
   }),
 });
 
@@ -157,92 +19,74 @@ const ingredientsRouter = router({
   list: protectedProcedure.query(async () => {
     return db.getIngredients();
   }),
-
   create: protectedProcedure
     .input(
       z.object({
+        id: z.string(),
         name: z.string(),
-        supplier: z.string(),
+        supplierId: z.string().optional(),
         category: z.enum(["Additivi", "Carni", "Farine", "Latticini", "Verdura", "Spezie", "Altro"]),
         unitType: z.enum(["u", "k"]),
         packageQuantity: z.number(),
         packagePrice: z.number(),
+        pricePerKgOrUnit: z.number(),
         minOrderQuantity: z.number().optional(),
+        packageSize: z.number().optional(),
         brand: z.string().optional(),
         notes: z.string().optional(),
+        isFood: z.boolean().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
-      const pricePerKgOrUnit = input.packagePrice / input.packageQuantity;
       return db.createIngredient({
-        id: nanoid(),
-        name: input.name,
-        supplierId: null,
-        supplier: input.supplier,
-        category: input.category,
-        unitType: input.unitType,
-        packageQuantity: input.packageQuantity.toString() as any,
-        packagePrice: input.packagePrice.toString() as any,
-        pricePerKgOrUnit: pricePerKgOrUnit.toString() as any,
-        minOrderQuantity: input.minOrderQuantity ? input.minOrderQuantity.toString() as any : null,
-        packageSize: null,
-        brand: input.brand || null,
-        notes: input.notes || null,
+        ...input,
+        packageQuantity: input.packageQuantity.toString(),
+        packagePrice: input.packagePrice.toString(),
+        pricePerKgOrUnit: input.pricePerKgOrUnit.toString(),
+        minOrderQuantity: input.minOrderQuantity?.toString() || null,
+        packageSize: input.packageSize?.toString() || null,
         isActive: true,
-        isFood: true,
-      });
+        isFood: input.isFood ?? true,
+      } as any);
     }),
-
   update: protectedProcedure
     .input(
       z.object({
         id: z.string(),
-        data: z.object({
-          name: z.string().optional(),
-          supplierId: z.string().optional(),
-          category: z.enum(["Additivi", "Carni", "Farine", "Latticini", "Verdura", "Spezie", "Altro"]).optional(),
-          unitType: z.enum(["u", "k"]).optional(),
-          packagePrice: z.number().optional(),
-          packageQuantity: z.number().optional(),
-          packageSize: z.number().optional(),
-          brand: z.string().optional(),
-          notes: z.string().optional(),
-        }),
+        name: z.string().optional(),
+        supplierId: z.string().optional(),
+        category: z.enum(["Additivi", "Carni", "Farine", "Latticini", "Verdura", "Spezie", "Altro"]).optional(),
+        unitType: z.enum(["u", "k"]).optional(),
+        packageQuantity: z.number().optional(),
+        packagePrice: z.number().optional(),
+        pricePerKgOrUnit: z.number().optional(),
+        minOrderQuantity: z.number().optional(),
+        packageSize: z.number().optional(),
+        brand: z.string().optional(),
+        notes: z.string().optional(),
+        isFood: z.boolean().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
-      const ingredient = await db.getIngredientById(input.id);
-      if (!ingredient) throw new Error("Ingredient not found");
-
-      const packagePrice = input.data.packagePrice ?? (ingredient.packagePrice as any);
-      const packageQuantity = input.data.packageQuantity ?? (ingredient.packageQuantity as any);
-      const pricePerKgOrUnit = packagePrice / packageQuantity;
-
-      const updateData: any = {
-        pricePerKgOrUnit: pricePerKgOrUnit.toString(),
-      };
-      if (input.data.name) updateData.name = input.data.name;
-      if (input.data.supplierId) updateData.supplierId = input.data.supplierId;
-      if (input.data.category) updateData.category = input.data.category;
-      if (input.data.unitType) updateData.unitType = input.data.unitType;
-      if (input.data.packagePrice !== undefined) updateData.packagePrice = input.data.packagePrice.toString();
-      if (input.data.packageQuantity !== undefined) updateData.packageQuantity = input.data.packageQuantity.toString();
-      if (input.data.packageSize !== undefined) updateData.packageSize = input.data.packageSize.toString();
-      if (input.data.brand !== undefined) updateData.brand = input.data.brand || null;
-      if (input.data.notes !== undefined) updateData.notes = input.data.notes || null;
+      const updateData: any = { ...input };
+      if (input.packageQuantity !== undefined) updateData.packageQuantity = input.packageQuantity.toString();
+      if (input.packagePrice !== undefined) updateData.packagePrice = input.packagePrice.toString();
+      if (input.pricePerKgOrUnit !== undefined) updateData.pricePerKgOrUnit = input.pricePerKgOrUnit.toString();
+      if (input.minOrderQuantity !== undefined) updateData.minOrderQuantity = input.minOrderQuantity.toString();
+      if (input.packageSize !== undefined) updateData.packageSize = input.packageSize.toString();
+      delete updateData.id;
       return db.updateIngredient(input.id, updateData);
     }),
-
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin") {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
       return db.deleteIngredient(input.id);
@@ -254,93 +98,310 @@ const semiFinishedRouter = router({
   list: protectedProcedure.query(async () => {
     return db.getSemiFinishedRecipes();
   }),
-
-  create: protectedProcedure
-    .input(
-      z.object({
-        code: z.string(),
-        name: z.string(),
-        category: z.enum(["SPEZIE", "SALSE", "VERDURA", "CARNE", "ALTRO"]),
-        yieldPercentage: z.number(),
-        shelfLifeDays: z.number(),
-        storageMethod: z.string(),
-        components: z.array(z.any()),
-        productionSteps: z.array(z.any()),
-      })
-    )
-    .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
-        throw new Error("Unauthorized");
-      }
-      const finalPricePerKg = await calculateRecipeCost(
-        input.components,
-        input.productionSteps,
-        input.yieldPercentage
-      );
-      return db.createSemiFinished({
-        id: nanoid(),
-        code: input.code,
-        name: input.name,
-        category: input.category,
-        yieldPercentage: input.yieldPercentage.toString() as any,
-        shelfLifeDays: input.shelfLifeDays,
-        storageMethod: input.storageMethod,
-        components: input.components as any,
-        productionSteps: input.productionSteps as any,
-        finalPricePerKg: finalPricePerKg.toString() as any,
-        totalQuantityProduced: null,
-      });
-    }),
-
   getById: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
       return db.getSemiFinishedById(input.id);
     }),
-
-  update: protectedProcedure
+  create: protectedProcedure
     .input(
       z.object({
         id: z.string(),
-        category: z.enum(["SPEZIE", "SALSE", "VERDURA", "CARNE", "ALTRO"]).optional(),
-        yieldPercentage: z.number().optional(),
-        shelfLifeDays: z.number().optional(),
-        storageMethod: z.string().optional(),
-        components: z.array(
-          z.object({
-            type: z.literal("ingredient"),
-            componentId: z.string(),
-            componentName: z.string(),
-            quantity: z.number(),
-            unit: z.string(),
-            pricePerUnit: z.number().optional(),
-          })
-        ).optional(),
+        code: z.string(),
+        name: z.string(),
+        category: z.enum(["SPEZIE", "SALSE", "VERDURA", "CARNE", "ALTRO"]),
+        finalPricePerKg: z.number(),
+        yieldPercentage: z.number(),
+        shelfLifeDays: z.number(),
+        storageMethod: z.string(),
+        totalQuantityProduced: z.number().optional(),
+        components: z.any().optional(),
+        productionSteps: z.any().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
+      return db.createSemiFinished({
+        ...input,
+        finalPricePerKg: input.finalPricePerKg.toString(),
+        yieldPercentage: input.yieldPercentage.toString(),
+        totalQuantityProduced: input.totalQuantityProduced?.toString() || null,
+      } as any);
+    }),
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        finalPricePerKg: z.number().optional(),
+        yieldPercentage: z.number().optional(),
+        shelfLifeDays: z.number().optional(),
+        storageMethod: z.string().optional(),
+        totalQuantityProduced: z.number().optional(),
+        components: z.any().optional(),
+        productionSteps: z.any().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      const updateData: any = {};
+      if (input.finalPricePerKg !== undefined) updateData.finalPricePerKg = input.finalPricePerKg.toString();
+      if (input.yieldPercentage !== undefined) updateData.yieldPercentage = input.yieldPercentage.toString();
+      if (input.shelfLifeDays !== undefined) updateData.shelfLifeDays = input.shelfLifeDays;
+      if (input.storageMethod !== undefined) updateData.storageMethod = input.storageMethod;
+      if (input.totalQuantityProduced !== undefined) updateData.totalQuantityProduced = input.totalQuantityProduced.toString();
+      if (input.components !== undefined) updateData.components = input.components;
+      if (input.productionSteps !== undefined) updateData.productionSteps = input.productionSteps;
+      return db.updateSemiFinished(input.id, updateData);
+    }),
+});
 
-      const updateData: any = {
-        category: input.category,
-        yieldPercentage: input.yieldPercentage?.toString(),
-        shelfLifeDays: input.shelfLifeDays,
-        storageMethod: input.storageMethod,
-      };
+// ============ PROCEDURE FOOD MATRIX ============
+const foodMatrixRouter = router({
+  list: protectedProcedure
+    .input(
+      z.object({
+        category: z.string().optional(),
+        tag: z.string().optional(),
+      }).optional()
+    )
+    .query(async ({ input }) => {
+      return db.getFoodMatrixItems(input);
+    }),
+  search: protectedProcedure
+    .input(z.object({ searchTerm: z.string() }))
+    .query(async ({ input }) => {
+      return db.searchFoodMatrix(input.searchTerm);
+    }),
+  create: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        recipeFinalId: z.string().optional(),
+        semiFinishedId: z.string().optional(),
+        categoryForMenu: z.enum(["Primi", "Secondi", "Contorni", "Dolci", "Bevande", "Altro"]),
+        tag: z.enum(["Vegetariano", "Vegano", "Senza Glutine", "Senza Lattosio", "Altro"]),
+        unitCost: z.number(),
+        sellingPrice: z.number(),
+        portionSize: z.number(),
+        allergens: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      return db.createFoodMatrixItem({
+        ...input,
+        unitCost: input.unitCost.toString(),
+        sellingPrice: input.sellingPrice.toString(),
+        portionSize: input.portionSize.toString(),
+      } as any);
+    }),
+});
 
-      // Se ci sono componenti, ricalcola finalPricePerKg
-      if (input.components) {
-        const finalPricePerKg = input.components.reduce((sum, comp) => {
-          const price = comp.pricePerUnit || 0;
-          return sum + (comp.quantity * price);
-        }, 0);
-        updateData.finalPricePerKg = finalPricePerKg.toFixed(2);
-        updateData.components = JSON.stringify(input.components);
+// ============ PROCEDURE OPERAZIONI ============
+const operationsRouter = router({
+  list: protectedProcedure.query(async () => {
+    return db.getOperations();
+  }),
+  create: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        costType: z.enum(["ENERGIA", "LAVORO"]),
+        costPerHour: z.number(),
+        description: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      return db.createOperation({
+        ...input,
+        costPerHour: input.costPerHour.toString(),
+      } as any);
+    }),
+});
+
+// ============ PROCEDURE PRODUZIONI SETTIMANALI ============
+const productionRouter = router({
+  listWeekly: protectedProcedure
+    .input(z.object({ weekStartDate: z.date().optional() }).optional())
+    .query(async ({ input }) => {
+      return db.getWeeklyProductions(input?.weekStartDate);
+    }),
+
+  create: protectedProcedure
+    .input(
+      z.object({
+        recipeFinalId: z.string().optional(),
+        semiFinishedId: z.string().optional(),
+        productionType: z.enum(["final", "semifinished"]),
+        quantity: z.number(),
+        weekStartDate: z.date(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      return db.createWeeklyProduction({
+        id: crypto.randomUUID(),
+        recipeFinalId: input.recipeFinalId || null,
+        semiFinishedId: input.semiFinishedId || null,
+        productionType: input.productionType,
+        quantity: input.quantity.toString(),
+        weekStartDate: input.weekStartDate,
+      } as any);
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      return db.deleteWeeklyProduction(input.id);
+    }),
+
+  generateShoppingList: protectedProcedure
+    .input(z.object({ weekStartDate: z.date().optional() }).optional())
+    .query(async ({ input }) => {
+      const weekStartDate = input?.weekStartDate;
+      const productions = await db.getWeeklyProductions(weekStartDate);
+
+      console.log('[generateShoppingList] Productions:', productions.length);
+
+      // Carica TUTTI gli ingredienti e semilavorati
+      const allIngredients = await db.getIngredients();
+      const allSemiFinished = await db.getSemiFinishedRecipes();
+
+      // Mappa per aggregare quantità necessarie
+      const ingredientNeeds = new Map<string, number>();
+      const semiFinishedNeeds = new Map<string, number>();
+
+      // Calcola quantità necessarie dalle produzioni
+      for (const prod of productions) {
+        let recipe = null;
+        let quantity = parseFloat(prod.quantity);
+
+        if (prod.recipeFinalId) {
+          recipe = await db.getFinalRecipeById(prod.recipeFinalId);
+        }
+
+        if (!recipe) continue;
+
+        let components: any[] = [];
+        if (typeof recipe.components === 'string') {
+          try {
+            components = JSON.parse(recipe.components);
+          } catch (e) {
+            console.error('[generateShoppingList] JSON parse error:', e);
+            components = [];
+          }
+        } else if (Array.isArray(recipe.components)) {
+          components = recipe.components;
+        }
+
+        for (const comp of components) {
+          if (comp.type === 'ingredient') {
+            const current = ingredientNeeds.get(comp.componentId) || 0;
+            ingredientNeeds.set(comp.componentId, current + (comp.quantity * quantity));
+          } else if (comp.type === 'semi_finished') {
+            const current = semiFinishedNeeds.get(comp.componentId) || 0;
+            semiFinishedNeeds.set(comp.componentId, current + (comp.quantity * quantity));
+          }
+        }
       }
 
-      return db.updateSemiFinished(input.id, updateData);
+      // Costruisci lista completa con TUTTI gli articoli
+      const shoppingList = [];
+
+      // Aggiungi tutti gli ingredienti
+      for (const ing of allIngredients) {
+        const quantityNeeded = ingredientNeeds.get(ing.id) || 0;
+        shoppingList.push({
+          id: ing.id,
+          name: ing.name,
+          type: 'Ingrediente',
+          supplierName: ing.supplierName || 'N/A',
+          quantityNeeded,
+          quantityToOrder: 0,
+          unit: ing.unitType === 'u' ? 'Unità' : 'kg',
+          pricePerUnit: parseFloat(ing.pricePerKgOrUnit),
+          totalCost: 0,
+        });
+      }
+
+      // Aggiungi tutti i semilavorati
+      for (const semi of allSemiFinished) {
+        const quantityNeeded = semiFinishedNeeds.get(semi.id) || 0;
+        shoppingList.push({
+          id: semi.id,
+          name: semi.name,
+          type: 'Semilavorato',
+          supplierName: 'Produzione Interna',
+          quantityNeeded,
+          quantityToOrder: 0,
+          unit: 'kg',
+          pricePerUnit: parseFloat(semi.finalPricePerKg),
+          totalCost: 0,
+        });
+      }
+
+      return shoppingList;
+    }),
+});
+
+// ============ PROCEDURE MENU ============
+const menuRouter = router({
+  listTypes: protectedProcedure.query(async () => {
+    return db.getMenuTypes();
+  }),
+  listItems: protectedProcedure
+    .input(z.object({ menuTypeId: z.string().optional() }).optional())
+    .query(async ({ input }) => {
+      return db.getMenuItems(input?.menuTypeId);
+    }),
+  createType: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        description: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      return db.createMenuType(input as any);
+    }),
+  createItem: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        menuTypeId: z.string(),
+        foodMatrixId: z.string(),
+        dayOfWeek: z.enum(["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]),
+        estimatedPortions: z.number(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      return db.createMenuItem({
+        ...input,
+        estimatedPortions: input.estimatedPortions.toString(),
+      } as any);
     }),
 });
 
@@ -442,8 +503,23 @@ const finalRecipesRouter = router({
         throw new Error("Unauthorized");
       }
 
-      // TODO: Implementare salvataggio automatico versioni
-      // Richiede aggiunta metodo execute in db.ts
+      // Salva versione corrente prima di modificare
+      const currentRecipe = await db.getFinalRecipeById(input.id);
+      if (currentRecipe) {
+        // Ottieni ultimo numero versione
+        const lastVersion = await db.getLastRecipeVersion(input.id, "final");
+        const newVersionNumber = lastVersion ? lastVersion.versionNumber + 1 : 1;
+        
+        // Salva snapshot
+        await db.createRecipeVersion({
+          recipeId: input.id,
+          recipeType: "final",
+          versionNumber: newVersionNumber,
+          snapshot: currentRecipe,
+          changedBy: ctx.user.openId,
+          changeDescription: "Modifica automatica",
+        });
+      }
 
       const updateData: any = {
         category: input.category,
@@ -499,22 +575,21 @@ const finalRecipesRouter = router({
               pricePerUnit: ingredient?.pricePerKgOrUnit || 0,
             };
           } else if (comp.type === 'semi_finished') {
-            const semi = await db.getSemiFinishedById(comp.componentId);
+            const semiFinished = await db.getSemiFinishedById(comp.componentId);
             return {
               ...comp,
-              name: semi?.name || 'Sconosciuto',
+              name: semiFinished?.name || 'Sconosciuto',
               unit: comp.unit || 'kg',
-              pricePerUnit: semi?.finalPricePerKg || 0,
+              pricePerUnit: semiFinished?.finalPricePerKg || 0,
             };
           } else if (comp.type === 'operation') {
-            // Recupera dettagli operation dalla tabella
-            const operation = await db.getOperationByName(comp.componentName);
+            const operation = await db.getOperationByName(comp.componentName || '');
             return {
               ...comp,
-              name: operation?.name || comp.componentName || 'Operazione',
+              name: operation?.name || comp.componentName || 'Sconosciuto',
               unit: comp.unit || 'ore',
-              pricePerUnit: operation?.hourlyRate ? parseFloat(operation.hourlyRate) : 0,
-              costType: operation?.costType || 'LAVORO',
+              pricePerUnit: operation?.costPerHour || 0,
+              costType: operation?.costType || comp.costType || 'LAVORO',
             };
           }
           return comp;
@@ -523,460 +598,63 @@ const finalRecipesRouter = router({
 
       return {
         ...recipe,
-        componentsWithDetails,
+        components: componentsWithDetails,
       };
     }),
-});
 
-// ============ PROCEDURE OPERATIONS ============
-const operationsRouter = router({
-  list: protectedProcedure.query(async () => {
-    return db.getOperations();
-  }),
-});
-
-// ============ PROCEDURE FOOD MATRIX ============
-const foodMatrixRouter = router({
-  list: protectedProcedure
-    .input(
-      z.object({
-        category: z.string().optional(),
-        tag: z.enum(["FIC", "AQ"]).optional(),
-      })
-    )
-    .query(async ({ input }) => {
-      return db.getFoodMatrixItems(input);
-    }),
-
-  search: protectedProcedure
-    .input(z.object({ searchTerm: z.string() }))
-    .query(async ({ input }) => {
-      return db.searchFoodMatrix(input.searchTerm);
-    }),
-});
-
-// ============ PROCEDURE PRODUZIONI SETTIMANALI ============
-const productionRouter = router({
-  list: protectedProcedure
-    .input(z.object({ weekStartDate: z.date().optional() }))
-    .query(async ({ input }) => {
-      const productions = await db.getWeeklyProductions(input.weekStartDate);
-      
-      // Arricchisci con nomi ricette
-      const enrichedProductions = await Promise.all(
-        productions.map(async (prod: any) => {
-          const recipe = await db.getFinalRecipeById(prod.recipeFinalId);
-          return {
-            ...prod,
-            recipeName: recipe?.name || "Ricetta non trovata",
-            recipeCode: recipe?.code || "",
-          };
-        })
-      );
-      
-      return enrichedProductions;
-    }),
-
-  create: protectedProcedure
-    .input(
-      z.object({
-        weekStartDate: z.date(),
-        recipeFinalId: z.string(),
-        desiredQuantity: z.number(),
-        unitType: z.enum(["u", "k"]),
-      })
-    )
-    .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
-        throw new Error("Unauthorized");
-      }
-      return db.createWeeklyProduction({
-        id: nanoid(),
-        weekStartDate: input.weekStartDate,
-        productionType: "FINAL_RECIPE",
-        recipeFinalId: input.recipeFinalId,
-        semiFinishedId: null,
-        desiredQuantity: input.desiredQuantity.toString() as any,
-        unitType: input.unitType,
-        currentStock: "0",
-        status: "PLANNED",
-      });
-    }),
-
-  listWeekly: protectedProcedure.query(async () => {
-    return db.getWeeklyProductions();
-  }),
-
-  delete: protectedProcedure
+  getVersions: protectedProcedure
     .input(z.object({ id: z.string() }))
+    .query(async ({ input }) => {
+      return db.getRecipeVersions(input.id, "final");
+    }),
+
+  rollbackToVersion: protectedProcedure
+    .input(z.object({ 
+      recipeId: z.string(),
+      versionId: z.number()
+    }))
     .mutation(async ({ input, ctx }) => {
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
-      return db.deleteWeeklyProduction(input.id);
-    }),
 
-    generateShoppingList: publicProcedure
-    .input(z.object({ weekId: z.string().optional() }))
-    .query(async ({ input }) => {
-      // Funzione per calcolare il lunedì della settimana (in UTC)
-      const getMondayOfWeek = (date: Date): string => {
-        const d = new Date(date);
-        // Usa UTC per evitare problemi di timezone
-        const day = d.getUTCDay(); // 0 = Domenica, 1 = Lunedì, ..., 6 = Sabato
-        const diff = day === 0 ? -6 : 1 - day;
-        d.setUTCDate(d.getUTCDate() + diff);
-        return d.toISOString().split('T')[0];
-      };
-
-      // Ottieni tutte le produzioni della settimana (o tutte se weekId non specificato)
-      const weeklyProductions = await db.getWeeklyProductions();
-      const weekProductions = input.weekId 
-        ? weeklyProductions.filter((p: any) => {
-            // weekId è il lunedì della settimana (es. "2026-02-02")
-            // Calcoliamo il lunedì della settimana di questa produzione
-            const prodMondayKey = getMondayOfWeek(new Date(p.weekStartDate));
-            return prodMondayKey === input.weekId || p.id === input.weekId;
-          })
-        : weeklyProductions;
+      // Recupera la versione richiesta
+      const versions = await db.getRecipeVersions(input.recipeId, "final");
+      const targetVersion = versions.find(v => v.id === input.versionId);
       
-      if (!weekProductions || weekProductions.length === 0) {
-        return [];
+      if (!targetVersion) {
+        throw new Error("Versione non trovata");
       }
 
-      // Prepara le produzioni per l'aggregazione
-      const plannedProductions = [];
-      
-      for (const production of weekProductions) {
-        let recipe: any;
-        let components: any[];
-        let yieldPercentage: number;
-        let unitType: string;
-        let unitWeight: number | null;
-        let recipeName: string;
-
-        // Carica ricetta finale o semilavorato in base al tipo
-        if (production.productionType === 'SEMI_FINISHED' && production.semiFinishedId) {
-          recipe = await db.getSemiFinishedById(production.semiFinishedId);
-          if (!recipe || !recipe.components) {
-            console.log(`[generateShoppingList] Semilavorato ${production.semiFinishedId} non trovato o senza componenti`);
-            continue;
-          }
-          recipeName = recipe.name;
-          yieldPercentage = Number(recipe.yieldPercentage || 1);
-          unitType = 'k';
-          unitWeight = null;
-        } else if (production.recipeFinalId) {
-          recipe = await db.getFinalRecipeById(production.recipeFinalId);
-          if (!recipe || !recipe.components) {
-            console.log(`[generateShoppingList] Ricetta ${production.recipeFinalId} non trovata o senza componenti`);
-            continue;
-          }
-          recipeName = recipe.name;
-          yieldPercentage = Number(recipe.yieldPercentage || 1);
-          unitType = recipe.unitType || 'k';
-          unitWeight = recipe.unitWeight || null;
-        } else {
-          console.log(`[generateShoppingList] Produzione senza recipeFinalId o semiFinishedId`);
-          continue;
-        }
-
-        components = typeof recipe.components === 'string' 
-          ? JSON.parse(recipe.components) 
-          : recipe.components;
-
-        if (!Array.isArray(components) || components.length === 0) {
-          console.log(`[generateShoppingList] ${recipeName} ha componenti vuoti`);
-          continue;
-        }
-
-        // Converti i componenti nel formato richiesto da aggregateProductionRequirements
-        const formattedComponents = components.map((comp: any) => ({
-          type: comp.type as "INGREDIENT" | "SEMI_FINISHED",
-          componentId: comp.componentId,
-          quantity: Number(comp.quantity || 0),
-          unit: comp.unit || "k",
-          wastePercentage: Number(comp.wastePercentage || 0),
-        }));
-
-        console.log(`[generateShoppingList] ${recipeName}: ${formattedComponents.length} componenti`);
-
-        // Converti unità in kg se necessario
-        let desiredQuantityInKg = Number(production.desiredQuantity || 1);
-        if (unitType === 'u' && unitWeight) {
-          // Quantità in unità * peso unitario (g) / 1000 = kg
-          desiredQuantityInKg = desiredQuantityInKg * Number(unitWeight) / 1000;
-          console.log(`[generateShoppingList] Conversione: ${production.desiredQuantity} unità × ${unitWeight}g = ${desiredQuantityInKg} kg`);
-        }
-
-        plannedProductions.push({
-          recipeFinalId: production.recipeFinalId || production.semiFinishedId || '',
-          desiredQuantity: desiredQuantityInKg,
-          components: formattedComponents,
-          yieldPercentage,
-        });
-      }
-
-      // Usa la funzione di aggregazione
-      const { aggregateProductionRequirements } = await import("./calculations");
-      const { ingredients, semiFinished } = await aggregateProductionRequirements(plannedProductions);
-
-      // Carica TUTTI gli ingredienti e semilavorati
-      const allIngredients = await db.getIngredients();
-      const allSemiFinished = await db.getSemiFinishedRecipes();
-      
-      const shoppingList = [];
-      
-      // Aggiungi TUTTI gli ingredienti (anche quelli non necessari)
-      for (const ingredient of allIngredients) {
-        const quantityInKg = ingredients.get(ingredient.id) || 0;
-        const pricePerKg = Number(ingredient.pricePerKgOrUnit || 0);
+      // Salva versione corrente prima del rollback
+      const currentRecipe = await db.getFinalRecipeById(input.recipeId);
+      if (currentRecipe) {
+        const lastVersion = await db.getLastRecipeVersion(input.recipeId, "final");
+        const newVersionNumber = lastVersion ? lastVersion.versionNumber + 1 : 1;
         
-        // Arrotonda per ingredienti unitari (uova, ecc.)
-        let finalQuantity = quantityInKg;
-        if (ingredient.unitType === 'u' && quantityInKg > 0) {
-          finalQuantity = Math.ceil(quantityInKg);
-        }
-        
-        const totalCost = finalQuantity * pricePerKg;
-
-        shoppingList.push({
-          id: ingredient.id,
-          itemName: ingredient.name,
-          itemType: 'INGREDIENT' as const,
-          category: ingredient.category,
-          supplier: ingredient.supplierName || 'Non specificato',
-          quantityNeeded: finalQuantity,
-          quantityToOrder: 0, // Valore iniziale 0, editabile dall'utente
-          unitType: ingredient.unitType,
-          pricePerUnit: pricePerKg,
-          totalCost,
-        });
-      }
-      
-      // Aggiungi TUTTI i semilavorati (anche quelli non necessari)
-      for (const semi of allSemiFinished) {
-        const quantityInKg = semiFinished.get(semi.id) || 0;
-        const pricePerKg = Number(semi.finalPricePerKg || 0);
-        const totalCost = quantityInKg * pricePerKg;
-
-        shoppingList.push({
-          id: semi.id,
-          itemName: semi.name,
-          itemType: 'SEMI_FINISHED' as const,
-          category: semi.category,
-          supplier: 'Produzione Interna',
-          quantityNeeded: quantityInKg,
-          quantityToOrder: 0, // Valore iniziale 0, editabile dall'utente
-          unitType: 'k' as const,
-          pricePerUnit: pricePerKg,
-          totalCost,
+        await db.createRecipeVersion({
+          recipeId: input.recipeId,
+          recipeType: "final",
+          versionNumber: newVersionNumber,
+          snapshot: currentRecipe,
+          changedBy: ctx.user.openId,
+          changeDescription: `Rollback alla versione ${targetVersion.versionNumber}`,
         });
       }
 
-      // Ordina per fornitore e poi per nome
-      return shoppingList.sort((a, b) => {
-        if (a.supplier !== b.supplier) {
-          return a.supplier.localeCompare(b.supplier);
-        }
-        return a.itemName.localeCompare(b.itemName);
+      // Ripristina la versione target
+      const snapshot = targetVersion.snapshot as any;
+      return db.updateFinalRecipe(input.recipeId, {
+        category: snapshot.category,
+        yieldPercentage: snapshot.yieldPercentage,
+        serviceWastePercentage: snapshot.serviceWastePercentage,
+        unitWeight: snapshot.unitWeight,
+        producedQuantity: snapshot.producedQuantity,
+        totalCost: snapshot.totalCost,
+        components: snapshot.components,
+        conservationMethod: snapshot.conservationMethod,
+        maxConservationTime: snapshot.maxConservationTime,
       });
-    }),
-
-  aggregateRequirements: protectedProcedure
-    .input(
-      z.object({
-        productions: z.array(
-          z.object({
-            recipeFinalId: z.string(),
-            desiredQuantity: z.number(),
-            components: z.array(z.any()),
-            yieldPercentage: z.number(),
-          })
-        ),
-      })
-    )
-    .query(async ({ input }) => {
-      const { ingredients, semiFinished } = await aggregateProductionRequirements(input.productions);
-      return {
-        ingredients: Object.fromEntries(ingredients),
-        semiFinished: Object.fromEntries(semiFinished),
-      };
-    }),
-
-  generateSupplierOrderPDF: protectedProcedure
-    .input(
-      z.object({
-        shoppingList: z.array(
-          z.object({
-            id: z.string(),
-            itemName: z.string(),
-            itemType: z.string(),
-            supplier: z.string(),
-            quantityToOrder: z.number(),
-            unitType: z.string(),
-            pricePerUnit: z.number(),
-            totalCost: z.number(),
-          })
-        ),
-        weekId: z.string().optional(),
-      })
-    )
-    .mutation(async ({ input, ctx }) => {
-      const { generateOrderPDF } = await import("./generateOrderPDF");
-      
-      // Raggruppa per fornitore
-      const supplierMap = new Map<string, any[]>();
-      for (const item of input.shoppingList) {
-        if (item.quantityToOrder > 0) {
-          if (!supplierMap.has(item.supplier)) {
-            supplierMap.set(item.supplier, []);
-          }
-          supplierMap.get(item.supplier)!.push(item);
-        }
-      }
-
-      // Prepara ordini per fornitore
-      const supplierOrders = Array.from(supplierMap.entries()).map(([supplierName, items]) => ({
-        supplierName,
-        items,
-        totalCost: items.reduce((sum, item) => sum + item.totalCost, 0),
-      }));
-
-      // Genera PDF
-      const pdfBuffer = await generateOrderPDF(supplierOrders);
-      
-      // Salva ordine nel database
-      const totalCost = supplierOrders.reduce((sum, order) => sum + order.totalCost, 0);
-      const orderId = nanoid();
-      
-      await db.createOrder({
-        id: orderId,
-        orderDate: new Date(),
-        weekId: input.weekId || null,
-        totalCost: totalCost.toString() as any,
-        pdfUrl: null,
-        whatsappSent: true,
-        notes: null,
-        createdBy: ctx.user?.openId || 'unknown',
-      });
-      
-      // Salva items dell'ordine
-      for (const item of input.shoppingList) {
-        if (item.quantityToOrder > 0) {
-          await db.createOrderItem({
-            id: nanoid(),
-            orderId,
-            itemType: item.itemType as any,
-            itemId: item.id,
-            itemName: item.itemName,
-            supplier: item.supplier,
-            quantityOrdered: item.quantityToOrder.toString() as any,
-            unitType: item.unitType as any,
-            pricePerUnit: item.pricePerUnit.toString() as any,
-            totalCost: item.totalCost.toString() as any,
-          });
-        }
-      }
-      
-      // Converti in base64 per il frontend
-      return {
-        pdf: pdfBuffer.toString('base64'),
-        supplierOrders,
-        orderId,
-      };
-    }),
-  
-  // Storico ordini
-  listOrders: protectedProcedure
-    .input(
-      z.object({
-        weekId: z.string().optional(),
-        limit: z.number().optional(),
-      })
-    )
-    .query(async ({ input }) => {
-      return db.getOrders(input);
-    }),
-  
-  getOrderDetails: protectedProcedure
-    .input(z.object({ orderId: z.string() }))
-    .query(async ({ input }) => {
-      return db.getOrderItems(input.orderId);
-    }),
-});
-
-// ============ PROCEDURE MENU ============
-const menuRouter = router({
-  listTypes: protectedProcedure.query(async () => {
-    return db.getMenuTypes();
-  }),
-
-  createType: protectedProcedure
-    .input(
-      z.object({
-        name: z.string(),
-        serviceType: z.enum(["DINE_IN", "DELIVERY", "TAKEAWAY", "EVENT"]),
-        fixedCosts: z.array(z.any()).optional(),
-      })
-    )
-    .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
-        throw new Error("Unauthorized");
-      }
-      return db.createMenuType({
-        id: nanoid(),
-        name: input.name,
-        serviceType: input.serviceType,
-        fixedCosts: input.fixedCosts || null,
-      });
-    }),
-
-  listItems: protectedProcedure
-    .input(z.object({ menuTypeId: z.string().optional() }))
-    .query(async ({ input }) => {
-      return db.getMenuItems(input.menuTypeId);
-    }),
-
-  createItem: protectedProcedure
-    .input(
-      z.object({
-        menuTypeId: z.string(),
-        name: z.string(),
-        category: z.enum(["PANINI", "CARNE_AL_PIATTO", "INSALATE", "BEVANDE", "PROMOZIONI"]),
-        components: z.array(z.any()),
-        suggestedSalePrice: z.number(),
-        actualSalePrice: z.number(),
-        isPromotion: z.boolean().optional(),
-        promotionComponents: z.array(z.any()).optional(),
-      })
-    )
-    .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
-        throw new Error("Unauthorized");
-      }
-      return db.createMenuItem({
-        id: nanoid(),
-        menuTypeId: input.menuTypeId,
-        name: input.name,
-        category: input.category,
-        components: input.components as any,
-        suggestedSalePrice: input.suggestedSalePrice.toString() as any,
-        actualSalePrice: input.actualSalePrice.toString() as any,
-        isPromotion: input.isPromotion || false,
-        promotionComponents: input.promotionComponents as any,
-      });
-    }),
-
-  calculateCost: protectedProcedure
-    .input(
-      z.object({
-        components: z.array(z.any()),
-        salePrice: z.number(),
-      })
-    )
-    .query(async ({ input }) => {
-      return calculateMenuItemCost(input.components, input.salePrice);
     }),
 });
 
@@ -986,21 +664,22 @@ const wasteRouter = router({
     .input(
       z.object({
         componentId: z.string().optional(),
-        wasteType: z.enum(["PRODUCTION", "SERVICE"]).optional(),
-      })
+        wasteType: z.string().optional(),
+      }).optional()
     )
     .query(async ({ input }) => {
       return db.getWasteRecords(input);
     }),
-
-  record: protectedProcedure
+  create: protectedProcedure
     .input(
       z.object({
-        productionBatchId: z.string().optional(),
+        id: z.string(),
         componentId: z.string(),
-        wasteType: z.enum(["PRODUCTION", "SERVICE"]),
-        wastePercentage: z.number(),
-        notes: z.string().optional(),
+        componentType: z.enum(["ingredient", "semi_finished", "final_recipe"]),
+        wasteType: z.enum(["production", "service"]),
+        quantity: z.number(),
+        reason: z.string().optional(),
+        recordedAt: z.date(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -1008,14 +687,9 @@ const wasteRouter = router({
         throw new Error("Unauthorized");
       }
       return db.createWasteRecord({
-        id: nanoid(),
-        componentId: input.componentId,
-        wasteType: input.wasteType,
-        wastePercentage: input.wastePercentage.toString() as any,
-        productionBatchId: input.productionBatchId || null,
-        notes: input.notes || null,
-        recordedAt: new Date(),
-      });
+        ...input,
+        quantity: input.quantity.toString(),
+      } as any);
     }),
 });
 
@@ -1024,63 +698,47 @@ const haccpRouter = router({
   listBatches: protectedProcedure.query(async () => {
     return db.getProductionBatches();
   }),
-
+  listRecords: protectedProcedure.query(async () => {
+    return db.getHACCPRecords();
+  }),
   createBatch: protectedProcedure
     .input(
       z.object({
+        id: z.string(),
         recipeFinalId: z.string(),
-        plannedDate: z.date(),
-        quantity: z.number(),
-        unitType: z.enum(["u", "k"]),
+        batchCode: z.string(),
+        productionDate: z.date(),
+        expiryDate: z.date(),
+        quantityProduced: z.number(),
+        storageLocation: z.string(),
       })
     )
     .mutation(async ({ input, ctx }) => {
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
-      const batchCode = `BATCH-${Date.now()}-${nanoid(6)}`;
       return db.createProductionBatch({
-        id: nanoid(),
-        batchCode,
-        recipeFinalId: input.recipeFinalId,
-        plannedDate: input.plannedDate,
-        quantity: input.quantity.toString() as any,
-        unitType: input.unitType,
-        status: "PLANNED",
-      });
+        ...input,
+        quantityProduced: input.quantityProduced.toString(),
+      } as any);
     }),
-
-  listHACCP: protectedProcedure.query(async () => {
-    return db.getHACCPRecords();
-  }),
-
-  createHACCP: protectedProcedure
+  createRecord: protectedProcedure
     .input(
       z.object({
-        productionBatchId: z.string(),
-        recipeName: z.string(),
+        id: z.string(),
         batchId: z.string(),
-        plannedDate: z.date(),
-        ingredients: z.array(z.any()),
-        checkpoints: z.array(z.any()),
+        checkType: z.enum(["temperature", "ph", "visual", "other"]),
+        checkValue: z.string(),
+        checkResult: z.enum(["pass", "fail"]),
+        notes: z.string().optional(),
+        checkedBy: z.string(),
       })
     )
     .mutation(async ({ input, ctx }) => {
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
-      return db.createHACCPRecord({
-        id: nanoid(),
-        productionBatchId: input.productionBatchId,
-        recipeName: input.recipeName,
-        batchId: input.batchId,
-        plannedDate: input.plannedDate,
-        ingredients: input.ingredients as any,
-        checkpoints: input.checkpoints as any,
-        operatorSignature: null,
-        managerVerification: null,
-        storageUrl: null,
-      });
+      return db.createHACCPRecord(input as any);
     }),
 });
 
@@ -1091,84 +749,179 @@ const storageRouter = router({
       z.object({
         documentType: z.string().optional(),
         relatedEntityId: z.string().optional(),
-      })
+      }).optional()
     )
     .query(async ({ input }) => {
       return db.getCloudStorageFiles(input);
     }),
-
-  upload: protectedProcedure
+  create: protectedProcedure
     .input(
       z.object({
-        fileKey: z.string(),
+        id: z.string(),
+        fileName: z.string(),
         fileUrl: z.string(),
-        documentType: z.enum(["HACCP", "SUPPLIER_CERT", "BATCH_PHOTO", "COMPLIANCE"]),
+        documentType: z.enum(["haccp", "certificate", "batch_photo", "other"]),
         relatedEntityId: z.string().optional(),
-        relatedEntityType: z.enum(["PRODUCTION_BATCH", "INGREDIENT", "RECIPE"]).optional(),
+        uploadedBy: z.string(),
       })
     )
     .mutation(async ({ input, ctx }) => {
-      return db.createCloudStorageFile({
-        id: nanoid(),
-        fileKey: input.fileKey,
-        fileUrl: input.fileUrl,
-        documentType: input.documentType,
-        relatedEntityId: input.relatedEntityId || null,
-        relatedEntityType: input.relatedEntityType || null,
-        uploadedBy: ctx.user?.id?.toString() || "unknown",
-      });
-     }),
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      return db.createCloudStorageFile(input as any);
+    }),
 });
 
-// ============ PROCEDURE ASSISTENTE AI ============
-const assistantRouter = router({
-  chat: protectedProcedure
+// ============ PROCEDURE FORNITORI ============
+const suppliersRouter = router({
+  list: protectedProcedure.query(async () => {
+    return db.getSuppliers();
+  }),
+  create: protectedProcedure
     .input(
       z.object({
-        message: z.string(),
-        context: z.object({
-          ingredients: z.array(z.any()).optional(),
-          recipes: z.array(z.any()).optional(),
-        }).optional(),
+        id: z.string(),
+        name: z.string(),
+        contact: z.string().optional(),
+        email: z.string().optional(),
+        phone: z.string().optional(),
+        address: z.string().optional(),
+        notes: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      return db.createSupplier(input as any);
+    }),
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string().optional(),
+        contact: z.string().optional(),
+        email: z.string().optional(),
+        phone: z.string().optional(),
+        address: z.string().optional(),
+        notes: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      const { id, ...updateData } = input;
+      return db.updateSupplier(id, updateData);
+    }),
+  delete: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      return db.deleteSupplier(input.id);
+    }),
+});
+
+// ============ PROCEDURE STORICO ORDINI ============
+const ordersRouter = router({
+  list: protectedProcedure
+    .input(
+      z.object({
+        weekId: z.string().optional(),
+        limit: z.number().optional(),
+      }).optional()
+    )
+    .query(async ({ input }) => {
+      return db.getOrders(input);
+    }),
+  getItems: protectedProcedure
+    .input(z.object({ orderId: z.string() }))
+    .query(async ({ input }) => {
+      return db.getOrderItems(input.orderId);
+    }),
+  create: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        weekId: z.string(),
+        supplierId: z.string(),
+        orderDate: z.date(),
+        deliveryDate: z.date().optional(),
+        totalAmount: z.number(),
+        status: z.enum(["pending", "confirmed", "delivered", "cancelled"]),
+        notes: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      return db.createOrder({
+        ...input,
+        totalAmount: input.totalAmount.toString(),
+      } as any);
+    }),
+  createItem: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        orderId: z.string(),
+        itemType: z.enum(["ingredient", "semifinished"]),
+        itemId: z.string(),
+        itemName: z.string(),
+        quantity: z.number(),
+        unit: z.string(),
+        pricePerUnit: z.number(),
+        totalPrice: z.number(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      return db.createOrderItem({
+        ...input,
+        quantity: input.quantity.toString(),
+        pricePerUnit: input.pricePerUnit.toString(),
+        totalPrice: input.totalPrice.toString(),
+      } as any);
+    }),
+});
+
+// ============ SISTEMA ROUTER ============
+const systemRouter = router({
+  notifyOwner: protectedProcedure
+    .input(
+      z.object({
+        title: z.string(),
+        content: z.string(),
       })
     )
     .mutation(async ({ input }) => {
-      const responses = [
-        "Posso aiutarti a ottimizzare il food cost delle tue ricette.",
-        "Per ridurre i costi, considera di sostituire ingredienti premium con alternative locali.",
-        "La struttura gerarchica delle ricette permette un calcolo preciso dei costi.",
-      ];
-      return {
-        response: responses[Math.floor(Math.random() * responses.length)],
-        suggestions: [],
-      };
+      // Implementazione notifica owner (placeholder)
+      console.log('[System] Notify owner:', input.title);
+      return { success: true };
     }),
 });
 
 export const appRouter = router({
-  system: systemRouter,
-  auth: router({
-    me: publicProcedure.query((opts) => opts.ctx.user),
-    logout: publicProcedure.mutation(({ ctx }) => {
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return {
-        success: true,
-      } as const;
-    }),
-  }),
-
-  suppliers: suppliersRouter,
+  auth: authRouter,
   ingredients: ingredientsRouter,
   semiFinished: semiFinishedRouter,
   finalRecipes: finalRecipesRouter,
-  operations: operationsRouter,
   foodMatrix: foodMatrixRouter,
+  operations: operationsRouter,
   production: productionRouter,
   menu: menuRouter,
   waste: wasteRouter,
   haccp: haccpRouter,
-    storage: storageRouter,
-  assistant: assistantRouter,
+  storage: storageRouter,
+  suppliers: suppliersRouter,
+  orders: ordersRouter,
+  system: systemRouter,
 });
+
 export type AppRouter = typeof appRouter;

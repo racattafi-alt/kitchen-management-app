@@ -3,8 +3,9 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { BarChart3, TrendingUp, TrendingDown } from "lucide-react";
+import { BarChart3, TrendingUp, TrendingDown, Download } from "lucide-react";
 import { useState, useMemo } from "react";
+import { Button } from "@/components/ui/button";
 
 export default function CostAnalysisDashboard() {
   const { user } = useAuth();
@@ -49,6 +50,44 @@ export default function CostAnalysisDashboard() {
 
   const canViewPrices = user?.role === "admin" || user?.role === "manager";
 
+  const handleExportExcel = () => {
+    if (!filteredRecipes.length) return;
+    
+    // Prepare CSV data
+    const headers = ["Codice", "Nome", "Categoria", "Costo Totale (€)", "Prezzo/kg (€)", "Prezzo Unitario (€)", "Resa (%)"];
+    const rows = filteredRecipes.map((recipe: any) => {
+      const pricePerKg = recipe.unitWeight > 0 ? (parseFloat(recipe.totalCost) / parseFloat(recipe.unitWeight)).toFixed(2) : "N/A";
+      const pricePerUnit = recipe.producedQuantity > 0 ? (parseFloat(recipe.totalCost) / parseFloat(recipe.producedQuantity)).toFixed(2) : "N/A";
+      
+      return [
+        recipe.code,
+        recipe.name,
+        recipe.category,
+        parseFloat(recipe.totalCost).toFixed(2),
+        pricePerKg,
+        pricePerUnit,
+        parseFloat(recipe.yieldPercentage).toFixed(1)
+      ];
+    });
+    
+    // Convert to CSV
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+    ].join("\n");
+    
+    // Download
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `analisi_costi_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (!canViewPrices) {
     return (
       <DashboardLayout>
@@ -71,9 +110,19 @@ export default function CostAnalysisDashboard() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Dashboard Analisi Costi</h1>
-          <p className="text-slate-600 mt-2">Analisi comparativa costi e resa ricette finali</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Dashboard Analisi Costi</h1>
+            <p className="text-slate-600 mt-2">Analisi comparativa costi e resa ricette finali</p>
+          </div>
+          <Button
+            onClick={handleExportExcel}
+            disabled={!filteredRecipes.length}
+            className="flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Esporta Excel
+          </Button>
         </div>
 
         {/* Statistiche Generali */}

@@ -558,3 +558,10 @@
 - [x] Statistiche generali: costo medio, max, min, resa media
 - [x] Tabella dettagliata con tutti i dati ricette
 - [x] Tutti i 24 test passano
+
+## NUOVE FUNZIONALITÀ RICHIESTE
+- [x] Aggiungere link "Analisi Costi" nel menu navigazione DashboardLayout sidebar
+- [x] Implementare export Excel nella dashboard analisi costi
+- [x] Implementare salvataggio automatico snapshot versioni prima modifiche ricette
+- [x] Creare UI storico versioni con visualizzazione diff componenti
+- [x] Implementare funzionalità rollback versioni ricette

@@ -1,4 +1,4 @@
-import { eq, and, like, desc } from "drizzle-orm";
+import { eq, and, desc, like } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,
@@ -34,6 +34,9 @@ import {
   CloudStorageFile,
   Order,
   OrderItem,
+  recipeVersions,
+  RecipeVersion,
+  InsertRecipeVersion,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -499,4 +502,35 @@ export async function getOrderItems(orderId: string) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+}
+
+// ============ RECIPE VERSIONS (STORICO VERSIONI) ============
+
+export async function createRecipeVersion(data: Omit<RecipeVersion, "id" | "createdAt">) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(recipeVersions).values(data as any);
+  return data;
+}
+
+export async function getLastRecipeVersion(recipeId: string, recipeType: "final" | "semifinished") {
+  const db = await getDb();
+  if (!db) return null;
+  const results = await db
+    .select()
+    .from(recipeVersions)
+    .where(and(eq(recipeVersions.recipeId, recipeId), eq(recipeVersions.recipeType, recipeType)))
+    .orderBy(desc(recipeVersions.versionNumber))
+    .limit(1);
+  return results.length > 0 ? results[0] : null;
+}
+
+export async function getRecipeVersions(recipeId: string, recipeType: "final" | "semifinished") {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(recipeVersions)
+    .where(and(eq(recipeVersions.recipeId, recipeId), eq(recipeVersions.recipeType, recipeType)))
+    .orderBy(desc(recipeVersions.versionNumber));
 }
