@@ -66,14 +66,6 @@ export default function Home() {
               </CardHeader>
             </Card>
 
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setLocation("/semi-finished")}>
-              <CardHeader>
-                <Utensils className="h-10 w-10 text-blue-600 mb-2" />
-                <CardTitle>Semilavorati</CardTitle>
-                <CardDescription>Crea e gestisci ricette intermedie</CardDescription>
-              </CardHeader>
-            </Card>
-
             <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setLocation("/final-recipes")}>
               <CardHeader>
                 <ChefHat className="h-10 w-10 text-orange-600 mb-2" />

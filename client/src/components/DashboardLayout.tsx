@@ -31,7 +31,6 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: Package, label: "Ingredienti", path: "/ingredients" },
   { icon: Building2, label: "Fornitori", path: "/suppliers" },
-  { icon: Utensils, label: "Semilavorati", path: "/semi-finished" },
   { icon: ChefHat, label: "Ricette Finali", path: "/final-recipes" },
   { icon: TrendingUp, label: "Analisi Costi", path: "/cost-analysis" },
   { icon: BarChart3, label: "Food Matrix", path: "/food-matrix" },

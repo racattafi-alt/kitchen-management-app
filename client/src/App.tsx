@@ -9,7 +9,7 @@ import Recipes from "./pages/Recipes";
 import ShoppingList from "./pages/ShoppingList";
 import Dashboard from "./pages/Dashboard";
 import Ingredients from "./pages/Ingredients";
-import SemiFinished from "./pages/SemiFinished";
+
 import FinalRecipes from "./pages/FinalRecipes";
 import FoodMatrix from "./pages/FoodMatrix";
 import Production from "./pages/Production";
@@ -31,7 +31,7 @@ function Router() {
       <Route path={"/dashboard"} component={Dashboard} />
       <Route path={"/404"} component={NotFound} />
       <Route path={"/ingredients"} component={Ingredients} />
-      <Route path={"/semi-finished"} component={SemiFinished} />
+
       <Route path={"/final-recipes"} component={FinalRecipes} />
       <Route path={"/food-matrix"} component={FoodMatrix} />
       <Route path={"/production"} component={Production} />

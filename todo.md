@@ -700,3 +700,10 @@
 - [x] Impostare isSellable=false per spezie (non vendibili nella food matrix)
 - [x] Rimuovere filtro isOrderable dalla shopping list (era sbagliato)
 - [x] Testare che spezie appaiano in shopping list (167 articoli totali, spezie incluse)
+
+## RIMOZIONE SEZIONE SEMILAVORATI (RIDONDANTE)
+- [x] Rimuovere voce "Semilavorati" dalla navigazione sidebar
+- [x] Rimuovere card "Semilavorati" dalla homepage
+- [x] Rimuovere route /semi-finished da App.tsx
+- [x] Rimuovere file client/src/pages/SemiFinished.tsx
+- [x] Testare navigazione dopo rimozione (card Semilavorati rimossa dalla homepage)
