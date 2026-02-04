@@ -447,8 +447,8 @@ export default function ShoppingList() {
                                 type="number"
                                 min="0"
                                 step="0.001"
-                                value={orderQty || ""}
-                                placeholder="0"
+                                value={orderQty || undefined}
+                                placeholder=""
                                 onChange={(e) => handleQuantityChange(item.id, parseFloat(e.target.value) || 0)}
                                 className="w-24 text-right"
                               />

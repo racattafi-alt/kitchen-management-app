@@ -121,4 +121,10 @@
 - [x] Creare formato ordine senza prezzi (solo articolo, quantità, unità)
 - [x] Generare testo email con ordini raggruppati per fornitore
 - [x] Testare export email (funzionante: apre client email con ordine formattato)
+- [x] Salvare checkpoint
+
+## BUG: VISUALIZZAZIONE 0 NELLE CASELLE QUANTITÀ SU MOBILE
+- [x] Identificare problema: caselle mostrano 0 su mobile nonostante value={orderQty || ""}
+- [x] Cambiare value={orderQty || undefined} e rimuovere placeholder
+- [ ] Testare correzione su dispositivo mobile
 - [ ] Salvare checkpoint
