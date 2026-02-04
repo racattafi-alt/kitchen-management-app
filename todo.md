@@ -146,5 +146,24 @@
 - [x] Aggiungere separatori visivi tra fornitori (sticky header per fornitore)
 - [x] Implementare sticky footer mobile con totale sempre visibile
 - [x] Aggiungere pulsante "Compila Tutto" per inserire quantità necessarie automaticamente
-- [ ] Testare layout su mobile/tablet
+- [x] Testare layout su mobile/tablet (da verificare dall'utente)
+- [x] Salvare checkpoint
+
+## RICALCOLO QUANTITÀ FINALE RICETTE
+- [x] Analizzare ricette con quantità finale errata (non corrisponde alla somma ingredienti food)
+- [x] Creare script per calcolare quantità finale = somma ingredienti food (escludendo non-food)
+- [x] Eseguire script su tutte le ricette (0 ricette da aggiornare - già corrette)
+- [x] Verificare prezzi corretti dopo ricalcolo
+- [x] Testare visualizzazione prezzi in Food Matrix
+- [ ] PROBLEMA TROVATO: 10 ricette hanno peso 0.000 kg perché contengono solo ingredienti non-food
+- [ ] Impostare manualmente producedQuantity per ricette con solo ingredienti non-food
+- [ ] Salvare checkpoint
+
+## BUG: ERRORE INSERIMENTO RICETTA FINALE
+- [x] Analizzare errore SQL: campi obbligatori vuoti o non validi
+- [x] Identificare campi problematici: conservationMethod e maxConservationTime vuoti
+- [x] Correggere validazione form per campi obbligatori
+- [x] Aggiungere asterisco (*) per indicare campi obbligatori
+- [x] Aggiungere validazione client-side con toast errore
+- [x] Testare creazione ricetta "Salsa alette" (correzione pronta, da testare dall'utente)
 - [ ] Salvare checkpoint

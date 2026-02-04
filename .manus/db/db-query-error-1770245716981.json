@@ -1,0 +1,8 @@
+{
+  "query": "\n-- Analizzare ricette con quantità errata\nSELECT \n  r.id,\n  r.name,\n  r.final_quantity as quantita_dichiarata,\n  r.unit,\n  (SELECT SUM(rc.quantity) \n   FROM recipe_components rc\n   JOIN ingredients i ON rc.ingredient_id = i.id\n   WHERE rc.recipe_id = r.id AND i.is_food = 1\n  ) as somma_ingredienti_food\nFROM final_recipes r\nWHERE r.final_quantity > 0\nLIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute \n-- Analizzare ricette con quantità errata\nSELECT \n  r.id,\n  r.name,\n  r.final_quantity as quantita_dichiarata,\n  r.unit,\n  (SELECT SUM(rc.quantity) \n   FROM recipe_components rc\n   JOIN ingredients i ON rc.ingredient_id = i.id\n   WHERE rc.recipe_id = r.id AND i.is_food = 1\n  ) as somma_ingredienti_food\nFROM final_recipes r\nWHERE r.final_quantity > 0\nLIMIT 10;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 3: Table 'uyjanbg4rdjfpnrcdjurf4.recipe_components' doesn't exist"
+  ]
+}

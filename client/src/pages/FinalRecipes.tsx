@@ -1238,7 +1238,7 @@ export default function FinalRecipes() {
             {/* Conservazione */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="create-conservation">Metodo Conservazione</Label>
+                <Label htmlFor="create-conservation">Metodo Conservazione *</Label>
                 <Input
                   id="create-conservation"
                   value={createFormData.conservationMethod}
@@ -1247,7 +1247,7 @@ export default function FinalRecipes() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="create-maxtime">Tempo Max Conservazione</Label>
+                <Label htmlFor="create-maxtime">Tempo Max Conservazione *</Label>
                 <Input
                   id="create-maxtime"
                   value={createFormData.maxConservationTime}
@@ -1431,6 +1431,16 @@ export default function FinalRecipes() {
                     toast.error("Aggiungi almeno un componente");
                     return;
                   }
+                  // Validazione campi obbligatori
+                  if (!createFormData.conservationMethod || createFormData.conservationMethod.trim() === '') {
+                    toast.error("Il metodo di conservazione è obbligatorio");
+                    return;
+                  }
+                  if (!createFormData.maxConservationTime || createFormData.maxConservationTime.trim() === '') {
+                    toast.error("Il tempo massimo di conservazione è obbligatorio");
+                    return;
+                  }
+                  
                   createMutation.mutate({
                     name: createFormData.name,
                     code: createFormData.code,
