@@ -750,3 +750,6 @@
 ## DIALOG RESPONSIVE
 - [x] Aggiungere max-height e overflow-y-auto a tutti i DialogContent
 - [x] Testare dialog su schermi piccoli (mobile/tablet)
+
+## BUG MUTATION INGREDIENTI
+- [x] Correggere errore "No values to set" in update ingredienti

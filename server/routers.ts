@@ -77,13 +77,20 @@ const ingredientsRouter = router({
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
-      const updateData: any = { ...input };
+      const updateData: any = {};
+      if (input.name !== undefined) updateData.name = input.name;
+      if (input.supplierId !== undefined) updateData.supplierId = input.supplierId;
+      if (input.category !== undefined) updateData.category = input.category;
+      if (input.unitType !== undefined) updateData.unitType = input.unitType;
       if (input.packageQuantity !== undefined) updateData.packageQuantity = input.packageQuantity.toString();
       if (input.packagePrice !== undefined) updateData.packagePrice = input.packagePrice.toString();
       if (input.pricePerKgOrUnit !== undefined) updateData.pricePerKgOrUnit = input.pricePerKgOrUnit.toString();
       if (input.minOrderQuantity !== undefined) updateData.minOrderQuantity = input.minOrderQuantity.toString();
       if (input.packageSize !== undefined) updateData.packageSize = input.packageSize.toString();
-      delete updateData.id;
+      if (input.brand !== undefined) updateData.brand = input.brand;
+      if (input.notes !== undefined) updateData.notes = input.notes;
+      if (input.isFood !== undefined) updateData.isFood = input.isFood;
+      if (input.allergens !== undefined) updateData.allergens = input.allergens;
       return db.updateIngredient(input.id, updateData);
     }),
   delete: protectedProcedure
