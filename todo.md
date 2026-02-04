@@ -106,4 +106,11 @@
 - [x] Implementare import Excel in TypeScript
 - [x] Testare export da interfaccia web (funzionante)
 - [x] Testare dialog import (funzionante)
-- [ ] Salvare checkpoint finale
+- [x] Salvare checkpoint finale
+
+## UX: RIMUOVERE 0 PREDEFINITO CASELLA QUANTITÀ LISTA ACQUISTI
+- [x] Identificare campo input quantità in ShoppingList.tsx (riga 387)
+- [x] Rimuovere value={orderQty} e usare value={orderQty || ""}
+- [x] Impostare placeholder="0" per indicare valore vuoto
+- [x] Testare funzionalità lista acquisti (caselle ora vuote con placeholder)
+- [ ] Salvare checkpoint
