@@ -166,4 +166,12 @@
 - [x] Aggiungere asterisco (*) per indicare campi obbligatori
 - [x] Aggiungere validazione client-side con toast errore
 - [x] Testare creazione ricetta "Salsa alette" (correzione pronta, da testare dall'utente)
+- [x] Salvare checkpoint
+
+## BUG: ERRORE PERSISTENTE INSERIMENTO RICETTA (BACKEND)
+- [x] Analizzare schema database per campi NOT NULL vs NULL
+- [x] Identificare campi mancanti: measurementType, isSemiFinished, isSellable, isActive
+- [x] Correggere procedura backend createFinalRecipe aggiungendo tutti i campi obbligatori
+- [x] Riavviare server per applicare modifiche
+- [ ] Testare creazione ricetta "Salsa alette" (pronto per test utente)
 - [ ] Salvare checkpoint

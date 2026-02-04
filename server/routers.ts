@@ -623,8 +623,15 @@ const finalRecipesRouter = router({
         components: JSON.stringify(input.components),
         unitType: "k",
         unitWeight: null,
+        producedQuantity: null,
+        measurementType: "weight_only",
+        pieceWeight: null,
         productionOperations: null,
         serviceWastePerIngredient: null,
+        isSemiFinished: false,
+        isSellable: true,
+        isActive: true,
+        sellingPrice: null,
       } as any);
     }),
 
