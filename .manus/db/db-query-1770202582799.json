@@ -1,0 +1,88 @@
+{
+  "query": "SELECT id, code, name, category FROM semi_finished_recipes LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT id, code, name, category FROM semi_finished_recipes LIMIT 20;",
+  "rows": [
+    {
+      "id": "2rF5VwzkcOtanlqhNrv4Y",
+      "code": "SL_KETCHUP",
+      "name": "Salsa ketchup",
+      "category": "SALSE"
+    },
+    {
+      "id": "Gduo29oLHlwVV9CnfW6vv",
+      "code": "SL_SSOVRACOSCE",
+      "name": "Spezie sovracosce",
+      "category": "SPEZIE"
+    },
+    {
+      "id": "OIomHXSLd1C-AUy7Hq3a4",
+      "code": "SL_BBQRIBS",
+      "name": "Salsa bbqRibs",
+      "category": "SALSE"
+    },
+    {
+      "id": "RGWcTRMmWqsa_sSvU4NBc",
+      "code": "SALSA_MAYO",
+      "name": "Maionese",
+      "category": "SALSE"
+    },
+    {
+      "id": "TsxY0QJCoB7sd9SrW-7QV",
+      "code": "VERDURE_CIPCARA",
+      "name": "Cipolla caramellata",
+      "category": "ALTRO"
+    },
+    {
+      "id": "Vj0gVqJTvuM6Zq54_x6mG",
+      "code": "SL_SBACON",
+      "name": "Spezie Bacon",
+      "category": "SPEZIE"
+    },
+    {
+      "id": "YoSpoWKsB0wnF8XEh4M-0",
+      "code": "SL_STENDERS",
+      "name": "Spezie tenders",
+      "category": "SPEZIE"
+    },
+    {
+      "id": "gGZum3Lm5oJfubi8cT9bP",
+      "code": "SL_MEMPHIS",
+      "name": "Salsa memphis",
+      "category": "SALSE"
+    },
+    {
+      "id": "grQJp_NtNrlirQhrixbwB",
+      "code": "SL_SENAPE",
+      "name": "Salsa senape",
+      "category": "SALSE"
+    },
+    {
+      "id": "vPoz24LrGZDHC97Te9joG",
+      "code": "SL_SPULLED",
+      "name": "Spezie Pulled",
+      "category": "SPEZIE"
+    },
+    {
+      "id": "vXdO0biDUzRAJLnlvxykg",
+      "code": "VERDURE_AGLIO_ARROSTO",
+      "name": "Aglio arrosto",
+      "category": "ALTRO"
+    },
+    {
+      "id": "xPl2rIEYPj8TFwFjEi7Ej",
+      "code": "SL_SRIBS",
+      "name": "Spezie Ribs",
+      "category": "SPEZIE"
+    },
+    {
+      "id": "zVjTg9YiyZFb6FFeZz9mX",
+      "code": "SL_BBQ",
+      "name": "Salsa bbq",
+      "category": "SALSE"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcode\tname\tcategory\n2rF5VwzkcOtanlqhNrv4Y\tSL_KETCHUP\tSalsa ketchup\tSALSE\nGduo29oLHlwVV9CnfW6vv\tSL_SSOVRACOSCE\tSpezie sovracosce\tSPEZIE\nOIomHXSLd1C-AUy7Hq3a4\tSL_BBQRIBS\tSalsa bbqRibs\tSALSE\nRGWcTRMmWqsa_sSvU4NBc\tSALSA_MAYO\tMaionese\tSALSE\nTsxY0QJCoB7sd9SrW-7QV\tVERDURE_CIPCARA\tCipolla caramellata\tALTRO\nVj0gVqJTvuM6Zq54_x6mG\tSL_SBACON\tSpezie Bacon\tSPEZIE\nYoSpoWKsB0wnF8XEh4M-0\tSL_STENDERS\tSpezie tenders\tSPEZIE\ngGZum3Lm5oJfubi8cT9bP\tSL_MEMPHIS\tSalsa memphis\tSALSE\ngrQJp_NtNrlirQhrixbwB\tSL_SENAPE\tSalsa senape\tSALSE\nvPoz24LrGZDHC97Te9joG\tSL_SPULLED\tSpezie Pulled\tSPEZIE\nvXdO0biDUzRAJLnlvxykg\tVERDURE_AGLIO_ARROSTO\tAglio arrosto\tALTRO\nxPl2rIEYPj8TFwFjEi7Ej\tSL_SRIBS\tSpezie Ribs\tSPEZIE\nzVjTg9YiyZFb6FFeZz9mX\tSL_BBQ\tSalsa bbq\tSALSE\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

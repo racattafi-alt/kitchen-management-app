@@ -475,3 +475,18 @@
 - [x] Aggiungere background colorati e bordi per sezioni componenti
 - [x] Aumentare dimensioni titoli e badge costo totale
 - [x] Testare responsività - tutti i 24 test passano
+
+## BUG CRITICI E NUOVA LOGICA CALCOLO (SEGNALATO UTENTE)
+- [ ] BUG: Semilavorati appaiono nella pagina Ricette Finali - correggere query/filtro frontend
+- [ ] BUG: Calcolo prezzi errato - totali non sommano correttamente nei dialog
+- [ ] Aggiungere flag isFood agli ingredienti (true=food, false=non-food come buste SV)
+- [ ] Aggiungere campo "Peso Finale Prodotto" (peso sperimentale dopo lavorazione)
+- [ ] Aggiungere campo "Quantità Prodotta" (opzionale - per calcolo prezzo unitario)
+- [ ] Implementare logica resa: Peso Finale / Somma Peso Ingredienti Food (escludi non-food)
+- [ ] Ingredienti NON-FOOD: prezzo SI somma, peso NO somma nel calcolo resa
+- [ ] Operations: prezzo SI somma, peso non applicabile
+- [ ] Semilavorati: espandere ricorsivamente solo ingredienti food per calcolo peso
+- [ ] Mostrare sempre entrambi prezzi (unitario e al kg) nelle info ricetta
+- [ ] Aggiornare schema database con nuovi campi (finalWeight, producedQuantity, isFood)
+- [ ] Aggiornare mutation backend create/update con nuova logica
+- [ ] Testare calcolo costi e resa con diversi scenari

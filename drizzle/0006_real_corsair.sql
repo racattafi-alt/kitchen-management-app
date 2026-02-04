@@ -1,1 +1,1 @@
-ALTER TABLE `suppliers` MODIFY COLUMN `name` text NOT NULL;
+-- Migration removed: suppliers.name should remain varchar for unique constraint

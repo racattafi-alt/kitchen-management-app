@@ -28,7 +28,9 @@ type ComponentWithDetails = {
 };
 
 export default function FinalRecipes() {
-  const { data: recipes, isLoading } = trpc.finalRecipes.list.useQuery();
+  const { data: allRecipes, isLoading } = trpc.finalRecipes.list.useQuery();
+  // Filtra solo ricette finali (escludendo semilavorati che potrebbero essere nella tabella)
+  const recipes = allRecipes?.filter(r => r.category && ['Pane', 'Carne', 'Salse', 'Verdure', 'Formaggi', 'Altro'].includes(r.category)) || [];
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<any>(null);
@@ -221,7 +223,25 @@ export default function FinalRecipes() {
 
   const calculateTotalCost = () => {
     return editComponents.reduce((sum, comp) => {
-      return sum + (comp.quantity * comp.pricePerUnit);
+      const quantity = parseFloat(String(comp.quantity)) || 0;
+      const price = parseFloat(String(comp.pricePerUnit)) || 0;
+      return sum + (quantity * price);
+    }, 0);
+  };
+
+  const calculateTotalCostForCreate = () => {
+    return createComponents.reduce((sum, comp) => {
+      const quantity = parseFloat(String(comp.quantity)) || 0;
+      const price = parseFloat(String(comp.pricePerUnit)) || 0;
+      return sum + (quantity * price);
+    }, 0);
+  };
+
+  const calculateWeightForFood = (components: ComponentWithDetails[]) => {
+    return components.reduce((sum, comp) => {
+      if (comp.type === 'operation') return sum;
+      const quantity = parseFloat(String(comp.quantity)) || 0;
+      return sum + quantity;
     }, 0);
   };
 
@@ -462,19 +482,48 @@ export default function FinalRecipes() {
                 </Select>
               </div>
 
-              {/* Resa Produzione */}
+              {/* Peso Finale Prodotto */}
               <div className="space-y-2">
-                <Label htmlFor="yieldPercentage">Resa Produzione (%)</Label>
+                <Label htmlFor="unitWeight">Peso Finale Prodotto (kg)</Label>
                 <Input
-                  id="yieldPercentage"
+                  id="unitWeight"
                   type="number"
                   step="0.01"
-                  value={editFormData.yieldPercentage}
-                  onChange={(e) => setEditFormData({ ...editFormData, yieldPercentage: parseFloat(e.target.value) })}
+                  value={editFormData.unitWeight || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, unitWeight: parseFloat(e.target.value) })}
+                  placeholder="Peso sperimentale dopo lavorazione"
                 />
                 <p className="text-sm text-slate-500">
-                  Percentuale di prodotto finito ottenuto rispetto alle materie prime utilizzate (es. 100% = nessuna perdita, 80% = 20% di perdita in cottura/lavorazione)
+                  Peso finale del prodotto dopo lavorazione/cottura. Usato per calcolare la resa: Peso Finale / Somma Ingredienti Food
                 </p>
+              </div>
+
+              {/* Quantità Prodotta */}
+              <div className="space-y-2">
+                <Label htmlFor="producedQuantity">Quantità Prodotta (opzionale)</Label>
+                <Input
+                  id="producedQuantity"
+                  type="number"
+                  step="0.01"
+                  value={editFormData.producedQuantity || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, producedQuantity: parseFloat(e.target.value) })}
+                  placeholder="Numero di unità prodotte"
+                />
+                <p className="text-sm text-slate-500">
+                  Se inserito, il prodotto sarà considerato unitario e verrà mostrato il prezzo sia unitario che al kg
+                </p>
+              </div>
+
+              {/* Resa Produzione - Calcolata */}
+              <div className="space-y-2">
+                <Label>Resa Calcolata</Label>
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm font-medium text-blue-900">
+                    {editFormData.unitWeight && createComponents.length > 0
+                      ? `${((editFormData.unitWeight / calculateWeightForFood(editComponents)) * 100).toFixed(2)}%`
+                      : 'Inserisci peso finale e componenti per calcolare'}
+                  </p>
+                </div>
               </div>
 
               {/* Scarto al Servizio */}
@@ -676,28 +725,42 @@ export default function FinalRecipes() {
               </Select>
             </div>
 
-            {/* Resa e Scarto */}
+            {/* Peso Finale e Quantita */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="create-yield">Resa Produzione (%)</Label>
+                <Label htmlFor="create-weight">Peso Finale Prodotto (kg)</Label>
                 <Input
-                  id="create-yield"
+                  id="create-weight"
                   type="number"
                   step="0.01"
-                  value={createFormData.yieldPercentage}
-                  onChange={(e) => setCreateFormData({ ...createFormData, yieldPercentage: parseFloat(e.target.value) })}
+                  value={createFormData.unitWeight || ''}
+                  onChange={(e) => setCreateFormData({ ...createFormData, unitWeight: parseFloat(e.target.value) })}
+                  placeholder="Peso sperimentale"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="create-waste">Scarto al Servizio (%)</Label>
+                <Label htmlFor="create-quantity">Quantita Prodotta (opzionale)</Label>
                 <Input
-                  id="create-waste"
+                  id="create-quantity"
                   type="number"
                   step="0.01"
-                  value={createFormData.serviceWastePercentage}
-                  onChange={(e) => setCreateFormData({ ...createFormData, serviceWastePercentage: parseFloat(e.target.value) })}
+                  value={createFormData.producedQuantity || ''}
+                  onChange={(e) => setCreateFormData({ ...createFormData, producedQuantity: parseFloat(e.target.value) })}
+                  placeholder="Unita prodotte"
                 />
               </div>
+            </div>
+
+            {/* Scarto al Servizio */}
+            <div className="space-y-2">
+              <Label htmlFor="create-waste">Scarto al Servizio (%)</Label>
+              <Input
+                id="create-waste"
+                type="number"
+                step="0.01"
+                value={createFormData.serviceWastePercentage}
+                onChange={(e) => setCreateFormData({ ...createFormData, serviceWastePercentage: parseFloat(e.target.value) })}
+              />
             </div>
 
             {/* Conservazione */}
@@ -727,7 +790,7 @@ export default function FinalRecipes() {
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-xl">Componenti</h3>
                 <div className="text-base text-slate-700 bg-white px-4 py-2 rounded-lg border-2 border-green-500">
-                  Costo totale: <span className="font-bold text-green-600 text-lg">€ {createComponents.reduce((sum, comp) => sum + (comp.quantity * comp.pricePerUnit), 0).toFixed(2)}</span>
+                  Costo totale: <span className="font-bold text-green-600 text-lg">€ {calculateTotalCostForCreate().toFixed(2)}</span>
                 </div>
               </div>
 

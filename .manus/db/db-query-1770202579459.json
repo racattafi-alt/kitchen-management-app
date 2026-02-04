@@ -1,0 +1,130 @@
+{
+  "query": "SELECT id, code, name, category FROM final_recipes LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT id, code, name, category FROM final_recipes LIMIT 20;",
+  "rows": [
+    {
+      "id": "1ZXiXNLTLpF861aOZM_RS",
+      "code": "CARNE_TENDERS",
+      "name": "Carne Tenders",
+      "category": "Salse"
+    },
+    {
+      "id": "38ihZNiKuki0_MZXFNRL6",
+      "code": "PANE_BUN",
+      "name": "Pane Bun",
+      "category": "Pane"
+    },
+    {
+      "id": "3RY7r6ujhRES0KwmjHbb9",
+      "code": "SALSA_MEMPHIS",
+      "name": "Salsa Memphis",
+      "category": "Salse"
+    },
+    {
+      "id": "4u03z0dZBQKkTz2_6ANfu",
+      "code": "SL_MEMPHIS",
+      "name": "Sl Memphis",
+      "category": "Altro"
+    },
+    {
+      "id": "525pJSkeE2IrGmhHqBC7T",
+      "code": "SALSA_KETCHUP",
+      "name": "Salsa Ketchup",
+      "category": "Salse"
+    },
+    {
+      "id": "5l4_UFjHw6YmYDN3zTK18",
+      "code": "VERDURE_COLESLAW",
+      "name": "Verdure Coleslaw",
+      "category": "Verdure"
+    },
+    {
+      "id": "62dfZ-fgLd_kbu1FN-Sjb",
+      "code": "SALSA_TFS",
+      "name": "Salsa Tfs",
+      "category": "Salse"
+    },
+    {
+      "id": "9zcZ9TjnbudHRrS6nsZR-",
+      "code": "SL_SENAPE",
+      "name": "Sl Senape",
+      "category": "Altro"
+    },
+    {
+      "id": "B8hGaWB-Nm57H6nkoFbV2",
+      "code": "SALSA_NUTTY",
+      "name": "Salsa Nutty",
+      "category": "Salse"
+    },
+    {
+      "id": "H2-hYqZ1bzhkXOrTGAYeX",
+      "code": "SL_SRIBS",
+      "name": "Sl Sribs",
+      "category": "Altro"
+    },
+    {
+      "id": "LBiK34dvKhwWRkACUJSGE",
+      "code": "VERDURE_CIPCARA",
+      "name": "Verdure Cipcara",
+      "category": "Verdure"
+    },
+    {
+      "id": "MQ-CBNLCTlc1uBskpAIf7",
+      "code": "SL_SSOVRACOSCE",
+      "name": "Sl Ssovracosce",
+      "category": "Altro"
+    },
+    {
+      "id": "TshgG8k8_m630rqX5csDd",
+      "code": "SL_STENDERS",
+      "name": "Sl Stenders",
+      "category": "Altro"
+    },
+    {
+      "id": "V6RBn9lS_2FCi--NXAIJu",
+      "code": "SL_BBQ",
+      "name": "Sl Bbq",
+      "category": "Altro"
+    },
+    {
+      "id": "Xs_hsWO4nZ7RktiPELq9O",
+      "code": "PANE_SEMI_5_0",
+      "name": "Pane Semi 5 0",
+      "category": "Pane"
+    },
+    {
+      "id": "YJiMK3-SfIuFy3hjoXBkb",
+      "code": "SL_KETCHUP",
+      "name": "Sl Ketchup",
+      "category": "Altro"
+    },
+    {
+      "id": "aHOLjO55bZxAnT_h_7HBY",
+      "code": "VERDURE_AGLIO_ARROSTO",
+      "name": "Verdure Aglio Arrosto",
+      "category": "Verdure"
+    },
+    {
+      "id": "aNByhmsi_MdPTO1kqTiSM",
+      "code": "SALSA_CHEDDAR",
+      "name": "Salsa Cheddar",
+      "category": "Salse"
+    },
+    {
+      "id": "c96oYBDAeV1M5Dr7ovDgx",
+      "code": "SALSA_MAYO",
+      "name": "Salsa Mayo",
+      "category": "Salse"
+    },
+    {
+      "id": "cUo6ygvY3n3w2rCSMR6rU",
+      "code": "SL_SBACON",
+      "name": "Sl Sbacon",
+      "category": "Altro"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcode\tname\tcategory\n1ZXiXNLTLpF861aOZM_RS\tCARNE_TENDERS\tCarne Tenders\tSalse\n38ihZNiKuki0_MZXFNRL6\tPANE_BUN\tPane Bun\tPane\n3RY7r6ujhRES0KwmjHbb9\tSALSA_MEMPHIS\tSalsa Memphis\tSalse\n4u03z0dZBQKkTz2_6ANfu\tSL_MEMPHIS\tSl Memphis\tAltro\n525pJSkeE2IrGmhHqBC7T\tSALSA_KETCHUP\tSalsa Ketchup\tSalse\n5l4_UFjHw6YmYDN3zTK18\tVERDURE_COLESLAW\tVerdure Coleslaw\tVerdure\n62dfZ-fgLd_kbu1FN-Sjb\tSALSA_TFS\tSalsa Tfs\tSalse\n9zcZ9TjnbudHRrS6nsZR-\tSL_SENAPE\tSl Senape\tAltro\nB8hGaWB-Nm57H6nkoFbV2\tSALSA_NUTTY\tSalsa Nutty\tSalse\nH2-hYqZ1bzhkXOrTGAYeX\tSL_SRIBS\tSl Sribs\tAltro\nLBiK34dvKhwWRkACUJSGE\tVERDURE_CIPCARA\tVerdure Cipcara\tVerdure\nMQ-CBNLCTlc1uBskpAIf7\tSL_SSOVRACOSCE\tSl Ssovracosce\tAltro\nTshgG8k8_m630rqX5csDd\tSL_STENDERS\tSl Stenders\tAltro\nV6RBn9lS_2FCi--NXAIJu\tSL_BBQ\tSl Bbq\tAltro\nXs_hsWO4nZ7RktiPELq9O\tPANE_SEMI_5_0\tPane Semi 5 0\tPane\nYJiMK3-SfIuFy3hjoXBkb\tSL_KETCHUP\tSl Ketchup\tAltro\naHOLjO55bZxAnT_h_7HBY\tVERDURE_AGLIO_ARROSTO\tVerdure Aglio Arrosto\tVerdure\naNByhmsi_MdPTO1kqTiSM\tSALSA_CHEDDAR\tSalsa Cheddar\tSalse\nc96oYBDAeV1M5Dr7ovDgx\tSALSA_MAYO\tSalsa Mayo\tSalse\ncUo6ygvY3n3w2rCSMR6rU\tSL_SBACON\tSl Sbacon\tAltro\n",
+  "stderr": "",
+  "execution_time_ms": 193
+}

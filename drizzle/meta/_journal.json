@@ -71,6 +71,20 @@
       "when": 1770155733192,
       "tag": "0009_typical_virginia_dare",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1770202628790,
+      "tag": "0010_odd_mysterio",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1770203098881,
+      "tag": "0011_lush_chamber",
+      "breakpoints": true
     }
   ]
 }
