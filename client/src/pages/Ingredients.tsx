@@ -40,6 +40,7 @@ export default function Ingredients() {
     packagePrice: 0,
     brand: "",
     notes: "",
+    isFood: true,
   });
 
   const utils = trpc.useUtils();
@@ -130,6 +131,7 @@ export default function Ingredients() {
       packagePrice: parseFloat(ingredient.packagePrice) || 0,
       brand: ingredient.brand || "",
       notes: ingredient.notes || "",
+      isFood: ingredient.isFood !== false,
     });
     setIsEditOpen(true);
   };
@@ -385,6 +387,20 @@ export default function Ingredients() {
                     onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
                   />
                 </div>
+                <div className="col-span-2">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="edit-isFood"
+                      checked={editFormData.isFood !== false}
+                      onChange={(e) => setEditFormData({ ...editFormData, isFood: e.target.checked })}
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
+                    <Label htmlFor="edit-isFood" className="cursor-pointer">
+                      Ingrediente Food (deseleziona per packaging/materiali non-food)
+                    </Label>
+                  </div>
+                </div>
               </div>
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>
@@ -478,6 +494,7 @@ export default function Ingredients() {
                     <TableHead>Fornitore</TableHead>
                     <TableHead>Unità</TableHead>
                     {canViewPrices && <TableHead>Prezzo/kg o unità</TableHead>}
+                    <TableHead>Tipo</TableHead>
                     {canEdit && <TableHead>Azioni</TableHead>}
                   </TableRow>
                 </TableHeader>
@@ -497,6 +514,15 @@ export default function Ingredients() {
                           €{parseFloat(ingredient.pricePerKgOrUnit).toFixed(2)}
                         </TableCell>
                       )}
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          ingredient.isFood === false 
+                            ? 'bg-orange-100 text-orange-700' 
+                            : 'bg-green-100 text-green-700'
+                        }`}>
+                          {ingredient.isFood === false ? 'Non-Food' : 'Food'}
+                        </span>
+                      </TableCell>
                       {canEdit && (
                         <TableCell>
                           <div className="flex gap-2">

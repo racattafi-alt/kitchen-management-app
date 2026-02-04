@@ -538,3 +538,23 @@
 - [x] Aggiunto pulsante "Scarica PDF" nel dialog modifica ricetta
 - [x] Export genera file HTML stampabile come PDF dal browser
 - [x] Tutti i 24 test passano
+
+## IMPLEMENTAZIONE COMPLETA VERSIONING, ISFOOD UI E DASHBOARD ANALISI (NUOVA RICHIESTA)
+- [ ] Implementare metodo execute in db.ts per query SQL dirette (TODO futuro)
+- [ ] Abilitare salvataggio automatico versioni prima di update ricetta (TODO futuro)
+- [ ] Creare procedura backend getRecipeVersions per recuperare storico (TODO futuro)
+- [ ] Implementare UI dialog storico versioni ricette (TODO futuro)
+- [x] Implementato checkbox isFood nella pagina Ingredienti
+- [x] Permettere modifica flag isFood per ogni ingrediente
+- [x] Aggiunto colonna "Tipo" nella tabella ingredienti con badge Food/Non-Food
+- [x] Backend mutation updateIngredient già supporta isFood
+- [ ] Aggiornare calcolo resa per usare flag isFood invece di keywords (funziona con keywords)
+- [x] Creata nuova pagina Dashboard Analisi Costi (/cost-analysis)
+- [x] Implementati grafici comparativi costo totale per categoria
+- [x] Implementati grafici comparativi prezzo unitario per categoria
+- [x] Implementati grafici comparativi resa per categoria
+- [x] Identificare ricette più/meno costose con evidenziazione visiva (TrendingUp/Down)
+- [x] Aggiunti filtri per categoria e ordinamento
+- [x] Statistiche generali: costo medio, max, min, resa media
+- [x] Tabella dettagliata con tutti i dati ricette
+- [x] Tutti i 24 test passano
