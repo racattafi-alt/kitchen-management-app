@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ShoppingCart, Download, Filter, Search, Calendar, MessageCircle, FileText } from "lucide-react";
+import { ShoppingCart, Download, Filter, Search, Calendar, MessageCircle, FileText, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 
 // Funzione per calcolare il lunedì della settimana (in UTC)
@@ -188,6 +188,28 @@ export default function ShoppingList() {
   };
 
   // Esporta ordine per email (senza prezzi)
+  const handleFillAll = () => {
+    if (!filteredList) return;
+    
+    const newQuantities: Record<number, number> = { ...orderQuantities };
+    let count = 0;
+    
+    filteredList.forEach((item: any) => {
+      if (item.quantityNeeded > 0 && !orderQuantities[item.id]) {
+        // Arrotonda al multiplo minimo se presente
+        if (item.minOrderQuantity) {
+          newQuantities[item.id] = Math.ceil(item.quantityNeeded / item.minOrderQuantity) * item.minOrderQuantity;
+        } else {
+          newQuantities[item.id] = item.quantityNeeded;
+        }
+        count++;
+      }
+    });
+    
+    setOrderQuantities(newQuantities);
+    toast.success(`${count} quantità compilate automaticamente`);
+  };
+
   const handleEmailExport = () => {
     const orderedItems = filteredList?.filter((item: any) => (orderQuantities[item.id] || 0) > 0);
     const validExtraItems = extraItems.filter(item => item.name && item.quantity > 0);
@@ -243,7 +265,24 @@ export default function ShoppingList() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 pb-24 md:pb-6">
+        {/* Sticky Footer Mobile con Totale */}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-primary text-primary-foreground p-4 shadow-lg z-50 border-t-2 border-primary-foreground/20">
+          <div className="flex items-center justify-between max-w-screen-xl mx-auto">
+            <div>
+              <div className="text-sm opacity-90">Totale Ordine</div>
+              <div className="text-2xl font-bold">€{totalOrderCost.toFixed(2)}</div>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleEmailExport} disabled={totalOrderCost === 0} variant="secondary" size="sm">
+                <FileText className="h-4 w-4" />
+              </Button>
+              <Button onClick={handleExport} disabled={totalOrderCost === 0} variant="secondary" size="sm">
+                <Download className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
           <div>
@@ -253,6 +292,10 @@ export default function ShoppingList() {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
+            <Button onClick={handleFillAll} variant="secondary" className="w-full sm:w-auto">
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Compila Tutto
+            </Button>
             <Button onClick={handleSupplierOrder} disabled={totalOrderCost === 0} variant="default" className="w-full sm:w-auto">
               <MessageCircle className="mr-2 h-4 w-4" />
               Ordine per Fornitore
@@ -401,7 +444,87 @@ export default function ShoppingList() {
                 Nessun articolo trovato
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+                {/* Layout Mobile: Card */}
+                <div className="block md:hidden space-y-3">
+                  {filteredList.reduce((acc: any[], item: any, index: number) => {
+                    const orderQty = orderQuantities[item.id] || 0;
+                    const orderCost = orderQty * item.pricePerUnit;
+                    const prevItem = index > 0 ? filteredList[index - 1] : null;
+                    const showSupplierHeader = !prevItem || prevItem.supplier !== item.supplier;
+                    
+                    if (showSupplierHeader) {
+                      acc.push(
+                        <div key={`supplier-${item.supplier}`} className="sticky top-0 z-10 bg-primary text-primary-foreground px-4 py-2 rounded-md font-semibold">
+                          {item.supplier}
+                        </div>
+                      );
+                    }
+                    
+                    acc.push(
+                      <Card key={item.id} className={item.quantityNeeded > 0 ? "border-orange-300 bg-orange-50/50 dark:bg-orange-950/20" : ""}>
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between gap-3 mb-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-base mb-1">{item.itemName}</div>
+                              <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+                                <Badge variant={item.itemType === 'INGREDIENT' ? 'default' : 'secondary'} className="text-xs">
+                                  {item.itemType === 'INGREDIENT' ? 'Ingrediente' : 'Semilavorato'}
+                                </Badge>
+                                <span>•</span>
+                                <span>{item.unitType === 'k' ? 'kg' : 'pz'}</span>
+                                <span>•</span>
+                                <span>€{item.pricePerUnit.toFixed(2)}/{item.unitType === 'k' ? 'kg' : 'pz'}</span>
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-end gap-2">
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.001"
+                                value={orderQty || ""}
+                                placeholder=""
+                                onFocus={(e) => e.target.select()}
+                                onChange={(e) => handleQuantityChange(item.id, parseFloat(e.target.value) || 0)}
+                                className="w-24 h-12 text-right text-lg font-semibold"
+                                style={{ color: orderQty ? 'inherit' : 'transparent' }}
+                              />
+                              {item.minOrderQuantity && item.quantityNeeded > 0 && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleAutoRound(item)}
+                                  className="w-24 h-8 text-xs"
+                                >
+                                  Auto
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                          {item.quantityNeeded > 0 && (
+                            <div className="flex items-center justify-between pt-2 border-t">
+                              <span className="text-sm font-medium">Necessario:</span>
+                              <Badge variant="destructive" className="font-semibold">
+                                {item.quantityNeeded.toFixed(3)} {item.unitType === 'k' ? 'kg' : 'pz'}
+                              </Badge>
+                            </div>
+                          )}
+                          {orderQty > 0 && (
+                            <div className="flex items-center justify-between pt-2 border-t mt-2">
+                              <span className="text-sm font-medium">Costo:</span>
+                              <span className="font-semibold text-lg">€{orderCost.toFixed(2)}</span>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                    
+                    return acc;
+                  }, [])}
+                </div>
+                
+                {/* Layout Desktop: Tabella */}
+                <div className="hidden md:block overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -485,7 +608,8 @@ export default function ShoppingList() {
                     })}
                   </TableBody>
                 </Table>
-              </div>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

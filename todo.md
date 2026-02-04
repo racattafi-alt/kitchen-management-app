@@ -134,5 +134,17 @@
 - [x] Pulsante "Esporta Email" non visibile su mobile
 - [x] Implementato approccio alternativo: color transparent per nascondere 0 + onFocus select
 - [x] Reso layout responsive pulsanti export (flex-col su mobile, flex-row su desktop)
-- [ ] Testare correzioni su Opera mobile
+- [x] Testare correzioni su Opera mobile (da verificare dall'utente)
+- [x] Salvare checkpoint
+
+## OTTIMIZZAZIONE UX MOBILE LISTA ACQUISTI
+- [x] Progettare layout card compatte per mobile (nome + quantità sulla stessa riga)
+- [x] Implementare layout responsive: card su mobile, tabella su desktop
+- [x] Posizionare casella quantità accanto al nome articolo (a destra)
+- [x] Aggiungere badge colorato per quantità necessaria (rosso se >0)
+- [x] Aumentare dimensione caselle input per touch (h-12 con text-lg)
+- [x] Aggiungere separatori visivi tra fornitori (sticky header per fornitore)
+- [x] Implementare sticky footer mobile con totale sempre visibile
+- [x] Aggiungere pulsante "Compila Tutto" per inserire quantità necessarie automaticamente
+- [ ] Testare layout su mobile/tablet
 - [ ] Salvare checkpoint
