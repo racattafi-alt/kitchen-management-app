@@ -693,3 +693,10 @@
 - [x] Verificare salse: tutte le 6 salse rimangono semilavorati (mayo, bbq, bbqribs, ketchup, senape, memphis)
 - [x] Aggiornare router shopping list per filtrare ingredienti con isOrderable=false
 - [x] Testare lista acquisti: spezie non devono apparire (143 articoli invece di 167, spezie escluse)
+
+## CORREZIONE LOGICA VENDIBILITÀ (ERRORE PRECEDENTE)
+- [x] Ripristinare isOrderable=true per tutte le spezie (devono essere ordinabili)
+- [x] Aggiungere campo isSellable agli ingredienti
+- [x] Impostare isSellable=false per spezie (non vendibili nella food matrix)
+- [x] Rimuovere filtro isOrderable dalla shopping list (era sbagliato)
+- [x] Testare che spezie appaiano in shopping list (167 articoli totali, spezie incluse)

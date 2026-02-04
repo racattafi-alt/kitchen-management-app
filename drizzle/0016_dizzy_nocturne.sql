@@ -1,0 +1,1 @@
+ALTER TABLE `ingredients` ADD `isSellable` boolean DEFAULT true NOT NULL;

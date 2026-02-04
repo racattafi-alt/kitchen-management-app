@@ -338,13 +338,8 @@ const productionRouter = router({
       // Costruisci lista completa con TUTTI gli articoli
       const shoppingList = [];
 
-      // Aggiungi tutti gli ingredienti ordinabili (escludi spezie con isOrderable=false)
+      // Aggiungi tutti gli ingredienti ordinabili
       for (const ing of allIngredients) {
-        // Salta ingredienti non ordinabili (es. spezie)
-        if (ing.isOrderable === false) {
-          continue;
-        }
-        
         const quantityNeeded = ingredientNeeds.get(ing.id) || 0;
         shoppingList.push({
           id: ing.id,
