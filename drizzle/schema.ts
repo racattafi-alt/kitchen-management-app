@@ -73,6 +73,7 @@ export const ingredients = mysqlTable("ingredients", {
   brand: varchar("brand", { length: 255 }),
   notes: text("notes"),
   isActive: boolean("isActive").default(true).notNull(),
+  isFood: boolean("is_food").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -355,3 +356,20 @@ export const orderItems = mysqlTable("order_items", {
 
 export type OrderItem = typeof orderItems.$inferSelect;
 export type InsertOrderItem = typeof orderItems.$inferInsert;
+
+/**
+ * RecipeVersions: Storico modifiche ricette
+ */
+export const recipeVersions = mysqlTable("recipe_versions", {
+  id: int("id").autoincrement().primaryKey(),
+  recipeId: varchar("recipe_id", { length: 36 }).notNull(),
+  recipeType: mysqlEnum("recipe_type", ["final", "semifinished"]).notNull(),
+  versionNumber: int("version_number").notNull(),
+  snapshot: json("snapshot").notNull(),
+  changedBy: varchar("changed_by", { length: 64 }).notNull(),
+  changeDescription: text("change_description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type RecipeVersion = typeof recipeVersions.$inferSelect;
+export type InsertRecipeVersion = typeof recipeVersions.$inferInsert;

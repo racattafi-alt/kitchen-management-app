@@ -508,3 +508,21 @@
 - [x] Aggiunta colonna "Unità" nella tabella componenti dialog (modifica e creazione)
 - [x] Migliorata funzione calculateWeightForFood per escludere non-food (buste SV, packaging)
 - [x] Tutti i 24 test passano
+
+## IMPLEMENTAZIONE FLAG ISFOOD, VALIDAZIONE E VERSIONING (NUOVA RICHIESTA)
+- [x] Aggiungere colonna isFood (boolean) alla tabella ingredients
+- [x] Aggiornato schema database con SQL diretto
+- [x] Impostato isFood=false per ingredienti non-food (buste SV, packaging)
+- [x] Aggiunto campo isFood allo schema TypeScript ingredients
+- [x] Calcolo resa mantiene keywords (isFood disponibile per uso futuro)
+- [x] Implementare validazione quantità componenti (no negativi/zero)
+- [x] Aggiungere warning per quantità anomale (>100kg)
+- [x] Validazione applicata in dialog modifica e creazione ricette
+- [x] Creare tabella recipe_versions per storico modifiche
+- [x] Aggiunto schema TypeScript recipeVersions
+- [ ] Implementare trigger salvataggio versione prima di update ricetta (TODO: richiede metodo execute in db.ts)
+- [ ] Creare procedura backend getRecipeVersions
+- [ ] Creare UI dialog storico versioni ricette
+- [ ] Mostrare diff tra versioni (componenti aggiunti/rimossi/modificati)
+- [ ] Implementare rollback a versione precedente
+- [x] Tutti i 24 test passano

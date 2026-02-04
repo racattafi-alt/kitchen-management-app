@@ -192,6 +192,7 @@ const ingredientsRouter = router({
         brand: input.brand || null,
         notes: input.notes || null,
         isActive: true,
+        isFood: true,
       });
     }),
 
@@ -440,6 +441,9 @@ const finalRecipesRouter = router({
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
+
+      // TODO: Implementare salvataggio automatico versioni
+      // Richiede aggiunta metodo execute in db.ts
 
       const updateData: any = {
         category: input.category,

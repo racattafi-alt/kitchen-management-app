@@ -657,8 +657,19 @@ export default function FinalRecipes() {
                             <Input
                               type="number"
                               step="0.01"
+                              min="0.01"
                               value={comp.quantity}
-                              onChange={(e) => handleUpdateComponentQuantity(idx, parseFloat(e.target.value))}
+                              onChange={(e) => {
+                                const val = parseFloat(e.target.value);
+                                if (val <= 0 || isNaN(val)) {
+                                  toast.error('La quantità deve essere maggiore di zero');
+                                  return;
+                                }
+                                if (val > 100) {
+                                  toast.warning('Quantità elevata (>100kg) - verifica che sia corretta');
+                                }
+                                handleUpdateComponentQuantity(idx, val);
+                              }}
                               className="w-24 text-right"
                             />
                           </td>
@@ -904,10 +915,19 @@ export default function FinalRecipes() {
                             <Input
                               type="number"
                               step="0.01"
+                              min="0.01"
                               value={comp.quantity}
                               onChange={(e) => {
+                                const val = parseFloat(e.target.value);
+                                if (val <= 0 || isNaN(val)) {
+                                  toast.error('La quantità deve essere maggiore di zero');
+                                  return;
+                                }
+                                if (val > 100) {
+                                  toast.warning('Quantità elevata (>100kg) - verifica che sia corretta');
+                                }
                                 const updated = [...createComponents];
-                                updated[idx] = { ...updated[idx], quantity: parseFloat(e.target.value) };
+                                updated[idx] = { ...updated[idx], quantity: val };
                                 setCreateComponents(updated);
                               }}
                               className="w-24 text-right"

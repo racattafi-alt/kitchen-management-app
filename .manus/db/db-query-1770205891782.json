@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE ingredients SET is_food = FALSE WHERE LOWER(name) LIKE '%busta%' OR LOWER(name) LIKE '%sv%' OR LOWER(name) LIKE '%sottovuoto%' OR LOWER(name) LIKE '%packaging%' OR LOWER(name) LIKE '%sacchetto%' OR LOWER(name) LIKE '%contenitore%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute UPDATE ingredients SET is_food = FALSE WHERE LOWER(name) LIKE '%busta%' OR LOWER(name) LIKE '%sv%' OR LOWER(name) LIKE '%sottovuoto%' OR LOWER(name) LIKE '%packaging%' OR LOWER(name) LIKE '%sacchetto%' OR LOWER(name) LIKE '%contenitore%';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 81
+}
