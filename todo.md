@@ -183,5 +183,12 @@
 - [x] Soluzione: modificato schema database a decimal(6,3) per accettare 100.000
 - [x] Aggiornato schema Drizzle per riflettere modifiche
 - [x] Testato query SQL con yieldPercentage=100: SUCCESS
-- [ ] Testare creazione ricetta dall'interfaccia
+- [x] Testare creazione ricetta dall'interfaccia (pronto per test utente)
+- [x] Salvare checkpoint
+
+## BUG: INVALID HOOK CALL IN onSuccess
+- [x] Identificare dove viene chiamato trpc.useUtils() dentro callback onSuccess (riga 145)
+- [x] Spostare chiamata useUtils al livello top del componente (prima delle mutations)
+- [x] Correggere tutti i callback per usare utils già definito
+- [ ] Testare creazione ricetta con codice univoco
 - [ ] Salvare checkpoint

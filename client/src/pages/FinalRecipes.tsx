@@ -128,6 +128,8 @@ export default function FinalRecipes() {
     });
   }, [allFinalRecipes, filterStatus, searchQuery]);
   
+  const utils = trpc.useUtils();
+  
   const createMutation = trpc.finalRecipes.create.useMutation({
     onSuccess: () => {
       toast.success("Ricetta creata con successo!");
@@ -142,7 +144,7 @@ export default function FinalRecipes() {
         maxConservationTime: '48 ore',
       });
       setCreateComponents([]);
-      trpc.useUtils().finalRecipes.list.invalidate();
+      utils.finalRecipes.list.invalidate();
     },
     onError: (error) => {
       toast.error(error.message || "Errore durante la creazione della ricetta");
@@ -161,8 +163,6 @@ export default function FinalRecipes() {
       toast.error(error.message || "Errore durante l'aggiornamento della ricetta");
     },
   });
-
-  const utils = trpc.useUtils();
 
   const toggleActiveMutation = trpc.finalRecipes.toggleActive.useMutation({
     onSuccess: () => {
