@@ -279,6 +279,96 @@ export default function FinalRecipes() {
     });
   };
 
+  const handleExportPDF = async () => {
+    if (!editFormData) return;
+    
+    try {
+      // Crea contenuto HTML per PDF
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+            h2 { color: #34495e; margin-top: 30px; border-bottom: 2px solid #95a5a6; padding-bottom: 5px; }
+            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+            th { background-color: #3498db; color: white; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+            .info-item { background: #ecf0f1; padding: 15px; border-radius: 5px; }
+            .info-label { font-weight: bold; color: #2c3e50; }
+            .cost-highlight { background: #2ecc71; color: white; padding: 10px; border-radius: 5px; font-size: 18px; font-weight: bold; text-align: center; margin: 20px 0; }
+          </style>
+        </head>
+        <body>
+          <h1>Scheda Tecnica Ricetta: ${editFormData.name}</h1>
+          
+          <div class="info-grid">
+            <div class="info-item"><span class="info-label">Codice:</span> ${editFormData.code}</div>
+            <div class="info-item"><span class="info-label">Categoria:</span> ${editFormData.category}</div>
+            <div class="info-item"><span class="info-label">Resa Produzione:</span> ${editFormData.yieldPercentage}%</div>
+            <div class="info-item"><span class="info-label">Scarto al Servizio:</span> ${editFormData.serviceWastePercentage}%</div>
+            <div class="info-item"><span class="info-label">Peso Finale:</span> ${editFormData.unitWeight || 'N/A'} kg</div>
+            <div class="info-item"><span class="info-label">Quantità Prodotta:</span> ${editFormData.producedQuantity || 'N/A'}</div>
+            <div class="info-item"><span class="info-label">Metodo Conservazione:</span> ${editFormData.conservationMethod || 'N/A'}</div>
+            <div class="info-item"><span class="info-label">Tempo Max Conservazione:</span> ${editFormData.maxConservationTime || 'N/A'}</div>
+          </div>
+          
+          <div class="cost-highlight">Costo Totale: €${calculateTotalCost().toFixed(2)}</div>
+          
+          <h2>Componenti</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Nome</th>
+                <th>Quantità</th>
+                <th>Unità</th>
+                <th>Prezzo Unitario (€)</th>
+                <th>Costo Totale (€)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${editComponents.map(comp => `
+                <tr>
+                  <td>${comp.type === 'ingredient' ? 'Ingrediente' : comp.type === 'semi_finished' ? 'Semilavorato' : 'Operazione'}</td>
+                  <td>${comp.name}</td>
+                  <td>${comp.quantity}</td>
+                  <td>${comp.unit}</td>
+                  <td>${comp.pricePerUnit.toFixed(2)}</td>
+                  <td>${(comp.quantity * comp.pricePerUnit).toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <p style="margin-top: 40px; color: #7f8c8d; font-size: 12px;">
+            Documento generato il ${new Date().toLocaleDateString('it-IT')} alle ${new Date().toLocaleTimeString('it-IT')}
+          </p>
+        </body>
+        </html>
+      `;
+      
+      // Crea Blob e download
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `scheda_ricetta_${editFormData.code}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast.success('Scheda tecnica esportata! Apri il file HTML e stampalo come PDF dal browser.');
+    } catch (error) {
+      toast.error('Errore durante l\'esportazione PDF');
+      console.error(error);
+    }
+  };
+
   const handleExportExcel = () => {
     if (!recipes || recipes.length === 0) {
       toast.error('Nessuna ricetta da esportare');
@@ -745,6 +835,14 @@ export default function FinalRecipes() {
               <div className="flex justify-end gap-3 pt-4">
                 <Button variant="outline" onClick={() => setIsEditOpen(false)}>
                   Annulla
+                </Button>
+                <Button
+                  onClick={handleExportPDF}
+                  variant="outline"
+                  className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                >
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  Scarica PDF
                 </Button>
                 <Button
                   onClick={handleUpdateSubmit}

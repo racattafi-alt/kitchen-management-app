@@ -526,3 +526,15 @@
 - [ ] Mostrare diff tra versioni (componenti aggiunti/rimossi/modificati)
 - [ ] Implementare rollback a versione precedente
 - [x] Tutti i 24 test passano
+
+## PROBLEMI CRITICI E EXPORT PDF (SEGNALATO UTENTE)
+- [x] Verificato calcolo costo totale - include correttamente ingredienti + semilavorati + operations
+- [x] Verificato salvataggio modifiche ricette - percorso funzionante (mutation update + handleUpdateSubmit)
+- [x] Verificata mutation backend update per finalRecipes (righe 456-464)
+- [x] Verificato handleUpdateSubmit nel frontend (riga 260)
+- [x] Calcolo totalCost corretto: somma tutti i componenti (quantity * pricePerUnit)
+- [x] Implementato export PDF scheda tecnica ricetta singola (HTML con stili)
+- [x] Incluso in PDF: codice, nome, categoria, componenti dettagliati, costi, resa, istruzioni conservazione
+- [x] Aggiunto pulsante "Scarica PDF" nel dialog modifica ricetta
+- [x] Export genera file HTML stampabile come PDF dal browser
+- [x] Tutti i 24 test passano
