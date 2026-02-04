@@ -264,7 +264,7 @@ const productionRouter = router({
         recipeFinalId: input.recipeFinalId || null,
         semiFinishedId: input.semiFinishedId || null,
         productionType: input.productionType,
-        quantity: input.quantity.toString(),
+        quantity: input.quantity,
         weekStartDate: input.weekStartDate,
       } as any);
     }),
@@ -336,30 +336,32 @@ const productionRouter = router({
         const quantityNeeded = ingredientNeeds.get(ing.id) || 0;
         shoppingList.push({
           id: ing.id,
-          name: ing.name,
-          type: 'Ingrediente',
-          supplierName: ing.supplierName || 'N/A',
+          itemName: ing.name,
+          itemType: 'INGREDIENT',
+          supplier: ing.supplierName || 'N/A',
           quantityNeeded,
           quantityToOrder: 0,
-          unit: ing.unitType === 'u' ? 'Unità' : 'kg',
+          unitType: ing.unitType || 'k',
           pricePerUnit: parseFloat(ing.pricePerKgOrUnit),
           totalCost: 0,
+          minOrderQuantity: ing.minOrderQuantity ? parseFloat(ing.minOrderQuantity) : null,
         });
       }
 
-      // Aggiungi tutti i semilavorati
+      // Aggiungi tutti i semilavorati dalla tabella semi_finished_recipes
       for (const semi of allSemiFinished) {
         const quantityNeeded = semiFinishedNeeds.get(semi.id) || 0;
         shoppingList.push({
           id: semi.id,
-          name: semi.name,
-          type: 'Semilavorato',
-          supplierName: 'Produzione Interna',
+          itemName: semi.name,
+          itemType: 'SEMI_FINISHED',
+          supplier: 'Produzione Interna',
           quantityNeeded,
           quantityToOrder: 0,
-          unit: 'kg',
+          unitType: 'k',
           pricePerUnit: parseFloat(semi.finalPricePerKg),
           totalCost: 0,
+          minOrderQuantity: null,
         });
       }
 

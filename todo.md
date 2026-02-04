@@ -627,3 +627,8 @@
 - [x] Correggere schema database weekly_productions (rimossi desiredQuantity, unitType, currentStock, status)
 - [x] Aggiornato enum productionType da FINAL_RECIPE/SEMI_FINISHED a final/semifinished
 - [x] Aggiunta colonna quantity al posto di desiredQuantity
+
+## BUG SHOPPINGLIST E PRODUZIONE
+- [x] Correggere warning React "Each child in a list should have a unique key prop" (già presente)
+- [x] Correggere lista acquisti vuota (allineati nomi campi backend: itemName, itemType, supplier)
+- [x] Correggere salvataggio quantità produzione (rimosso toString() da quantity)
