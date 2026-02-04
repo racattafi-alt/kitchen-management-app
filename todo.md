@@ -665,3 +665,14 @@
 - [x] Rimuovere obbligatorietà pieceWeight per ricette unit_only (già opzionale)
 - [x] Implementare navigazione tastiera (↑↓ Enter Esc) in autocomplete Production
 - [x] Aggiungere badge visivi unità misura in lista ricette (Solo kg / Solo pezzi / kg + pezzi)
+
+## BUG CRITICI FORM PRODUZIONE
+- [x] Correggere quantità salvata sempre a 0 (usare quantity invece di desiredQuantity)
+- [x] Correggere visualizzazione nome ricetta (aggiunto join con final_recipes in getWeeklyProductions)
+- [x] Verificare handleSubmit e mutation create (problema nel backend query)
+
+## VALIDAZIONE E UX UNITÀ MISURA
+- [x] Implementare validazione form produzione: bloccare pezzi per weight_only, bloccare kg per unit_only
+- [x] Aggiungere colonna "Unità" in tabella produzioni con badge colorati (blu=Solo kg, arancione=Solo pezzi, indigo=kg+pezzi)
+- [x] Aggiungere tooltip quantità convertita per ricette both (es. "20kg ≈ 300 pezzi")
+- [x] Creare utility batch import Excel (batch_import_measurement_types.py)

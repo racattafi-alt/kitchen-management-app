@@ -322,10 +322,29 @@ export async function createWeeklyProduction(data: Omit<WeeklyProduction, "creat
 export async function getWeeklyProductions(weekStartDate?: Date) {
   const db = await getDb();
   if (!db) return [];
-  let query: any = db.select().from(weeklyProductions);
+  
+  let query: any = db
+    .select({
+      id: weeklyProductions.id,
+      weekStartDate: weeklyProductions.weekStartDate,
+      productionType: weeklyProductions.productionType,
+      recipeFinalId: weeklyProductions.recipeFinalId,
+      semiFinishedId: weeklyProductions.semiFinishedId,
+      quantity: weeklyProductions.quantity,
+      createdAt: weeklyProductions.createdAt,
+      updatedAt: weeklyProductions.updatedAt,
+      recipeName: finalRecipes.name,
+      recipeCode: finalRecipes.code,
+      measurementType: finalRecipes.measurementType,
+      pieceWeight: finalRecipes.pieceWeight,
+    })
+    .from(weeklyProductions)
+    .leftJoin(finalRecipes, eq(weeklyProductions.recipeFinalId, finalRecipes.id));
+  
   if (weekStartDate) {
     query = query.where(eq(weeklyProductions.weekStartDate, weekStartDate));
   }
+  
   return query;
 }
 

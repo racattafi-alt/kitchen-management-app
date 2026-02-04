@@ -105,6 +105,18 @@ export default function Production() {
       return;
     }
 
+    // Validazione unità misura
+    if (selectedRecipe) {
+      if (selectedRecipe.measurementType === 'weight_only' && inputUnit === 'pezzi') {
+        toast.error("Questa ricetta può essere ordinata solo a peso (kg)");
+        return;
+      }
+      if (selectedRecipe.measurementType === 'unit_only' && inputUnit === 'kg') {
+        toast.error("Questa ricetta può essere ordinata solo a pezzi");
+        return;
+      }
+    }
+
     // Converti in kg se input è in pezzi
     let quantityInKg = Number(formData.desiredQuantity);
     if (inputUnit === 'pezzi' && selectedRecipe?.pieceWeight) {
@@ -338,10 +350,28 @@ export default function Production() {
                           <span className="text-sm text-muted-foreground">{prod.recipeCode}</span>
                         </div>
                       </TableCell>
-                      <TableCell>{Number(prod.desiredQuantity || 0).toFixed(3)}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">
-                          {prod.unitType === "k" ? "Kg" : "Unità"}
+                        <div className="flex flex-col">
+                          <span>{Number(prod.quantity || 0).toFixed(3)} kg</span>
+                          {prod.measurementType === 'both' && prod.pieceWeight && (
+                            <span className="text-xs text-muted-foreground">
+                              ≈ {(Number(prod.quantity) / Number(prod.pieceWeight)).toFixed(0)} pezzi
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant="outline" 
+                          className={
+                            prod.measurementType === 'weight_only' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                            prod.measurementType === 'unit_only' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                            'bg-indigo-50 text-indigo-700 border-indigo-200'
+                          }
+                        >
+                          {prod.measurementType === 'weight_only' ? 'Solo kg' :
+                           prod.measurementType === 'unit_only' ? 'Solo pezzi' :
+                           'kg + pezzi'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
