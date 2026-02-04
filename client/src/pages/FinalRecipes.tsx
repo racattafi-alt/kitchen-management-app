@@ -117,10 +117,11 @@ export default function FinalRecipes() {
         }));
     }
     
-    if (searchType === 'semi_finished' && semiFinished) {
-      return semiFinished
+    if (searchType === 'semi_finished') {
+      // Mostra sia i semilavorati della tabella semi_finished_recipes
+      // che le ricette finali con flag isSemiFinished=true
+      const semiFromTable = (semiFinished || [])
         .filter(s => s.name.toLowerCase().includes(term))
-        .slice(0, 5)
         .map(s => ({
           type: 'semi_finished' as const,
           id: s.id,
@@ -128,6 +129,18 @@ export default function FinalRecipes() {
           unit: 'kg',
           pricePerUnit: parseFloat(s.finalPricePerKg || '0'),
         }));
+      
+      const semiFromRecipes = (allRecipes || [])
+        .filter(r => r.isSemiFinished && r.name.toLowerCase().includes(term))
+        .map(r => ({
+          type: 'semi_finished' as const,
+          id: r.id,
+          name: r.name,
+          unit: 'kg',
+          pricePerUnit: r.unitWeight ? parseFloat(r.totalCost || '0') / parseFloat(r.unitWeight) : 0,
+        }));
+      
+      return [...semiFromTable, ...semiFromRecipes].slice(0, 5);
     }
     
     if (searchType === 'operation' && operations) {
@@ -150,11 +163,14 @@ export default function FinalRecipes() {
   const handleEdit = async (recipe: any) => {
     setEditFormData({
       id: recipe.id,
+      name: recipe.name,
       category: recipe.category,
       yieldPercentage: parseFloat(recipe.yieldPercentage || "100"),
       serviceWastePercentage: parseFloat(recipe.serviceWastePercentage || "0"),
       unitWeight: parseFloat(recipe.unitWeight || "0"),
       producedQuantity: parseFloat(recipe.producedQuantity || "0"),
+      isSemiFinished: recipe.isSemiFinished || false,
+      isSellable: recipe.isSellable !== false,
     });
     
     // Carica componenti esistenti con dettagli completi
@@ -264,11 +280,14 @@ export default function FinalRecipes() {
     
     updateMutation.mutate({
       id: editFormData.id,
+      name: editFormData.name,
       category: editFormData.category,
       yieldPercentage: editFormData.yieldPercentage,
       serviceWastePercentage: editFormData.serviceWastePercentage,
       unitWeight: editFormData.unitWeight,
       producedQuantity: editFormData.producedQuantity,
+      isSemiFinished: editFormData.isSemiFinished,
+      isSellable: editFormData.isSellable,
       components: editComponents.map(comp => ({
         type: comp.type,
         componentId: comp.componentId || '',
@@ -439,7 +458,19 @@ export default function FinalRecipes() {
                 {recipes.map((item: any) => (
                   <div key={item.id} className="p-4 border rounded-lg flex items-center justify-between hover:bg-slate-50">
                     <div>
-                      <h3 className="font-semibold">{item.name}</h3>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold">{item.name}</h3>
+                        {item.isSemiFinished && (
+                          <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
+                            Semilavorato
+                          </span>
+                        )}
+                        {item.isSellable && (
+                          <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
+                            Vendibile
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-slate-500">Codice: {item.code}</p>
                       <p className="text-sm text-slate-600 mt-1">
                         Categoria: <span className="font-medium">{item.category}</span>
@@ -638,6 +669,46 @@ export default function FinalRecipes() {
           </DialogHeader>
           {editFormData && (
             <div className="flex-1 overflow-y-auto space-y-6 pr-2">
+              {/* Nome Ricetta */}
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome Ricetta</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  value={editFormData.name || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                  placeholder="Nome della ricetta"
+                />
+              </div>
+
+              {/* Flag Semilavorato e Vendibile */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="isSemiFinished"
+                    checked={editFormData.isSemiFinished || false}
+                    onChange={(e) => setEditFormData({ ...editFormData, isSemiFinished: e.target.checked })}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <Label htmlFor="isSemiFinished" className="cursor-pointer">
+                    Semilavorato (usabile come componente)
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="isSellable"
+                    checked={editFormData.isSellable !== false}
+                    onChange={(e) => setEditFormData({ ...editFormData, isSellable: e.target.checked })}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <Label htmlFor="isSellable" className="cursor-pointer">
+                    Vendibile (appare in Food Matrix)
+                  </Label>
+                </div>
+              </div>
+
               {/* Categoria */}
               <div className="space-y-2">
                 <Label htmlFor="category">Categoria</Label>

@@ -572,3 +572,20 @@
 ## BUG CONVERSIONE UNITÀ
 - [x] Correggere importazione dati: grammi interpretati come kg (es. salsa memphis 490g diventa 490kg)
 - [x] Fornire script correzione dati esistenti nel database (16 ricette corrette)
+
+## UNIFICAZIONE RICETTE E FOOD MATRIX
+- [x] Aggiungere campo isSemiFinished (boolean) a final_recipes schema
+- [x] Aggiungere campo isSellable (boolean, default true) a final_recipes schema
+- [x] Aggiungere campo sellingPrice (decimal) a final_recipes schema per Food Matrix
+- [x] Eseguire migration database per nuovi campi (ALTER TABLE)
+- [x] Aggiornare backend procedures per gestire nuovi campi (name, isSemiFinished, isSellable, sellingPrice)
+- [x] Aggiungere badge "Semilavorato" e "Vendibile" nella tabella ricette
+- [x] Permettere modifica nome ricetta nel dialog modifica
+- [x] Aggiungere toggle isSemiFinished e isSellable nel form ricetta
+- [x] Filtrare componenti semi-finished per mostrare ricette con isSemiFinished=true + vecchi semilavorati
+- [x] Creare pagina Food Matrix con link nel menu (già esistente, riscritta)
+- [x] Implementare tabella Food Matrix con filtri categoria e ricerca
+- [x] Aggiungere colonna prezzo vendita editabile inline in Food Matrix
+- [x] Calcolare e mostrare margine (€ e %) in Food Matrix
+- [x] Implementare export Excel/CSV Food Matrix
+- [x] Export PDF singola ricetta già implementato nel dialog modifica
