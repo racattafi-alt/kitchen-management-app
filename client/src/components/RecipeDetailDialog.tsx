@@ -153,7 +153,7 @@ export default function RecipeDetailDialog({
                       </TableRow>
                     ) : (
                       components.map((comp: any, idx: number) => {
-                        const baseQty = Number(comp.quantity) / 1000; // Converti da grammi a kg
+                        const baseQty = Number(comp.quantity); // Quantità già in kg
                         const multipliedQty = baseQty * multiplier;
                         const cost = multipliedQty * Number(comp.pricePerUnit || 0);
                         

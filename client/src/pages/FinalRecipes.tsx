@@ -240,8 +240,18 @@ export default function FinalRecipes() {
   };
 
   const calculateWeightForFood = (components: ComponentWithDetails[]) => {
+    // Escludi operations e non-food (buste SV, packaging, etc.)
+    const nonFoodKeywords = ['busta', 'sv', 'sottovuoto', 'packaging', 'sacchetto', 'contenitore'];
+    
     return components.reduce((sum, comp) => {
       if (comp.type === 'operation') return sum;
+      
+      // Escludi non-food basandosi sul nome
+      const isNonFood = nonFoodKeywords.some(keyword => 
+        comp.name.toLowerCase().includes(keyword)
+      );
+      if (isNonFood) return sum;
+      
       const quantity = parseFloat(String(comp.quantity)) || 0;
       return sum + quantity;
     }, 0);
@@ -622,6 +632,7 @@ export default function FinalRecipes() {
                         <th className="text-left p-3 text-sm font-medium text-slate-700">Nome</th>
                         <th className="text-left p-3 text-sm font-medium text-slate-700">Tipo</th>
                         <th className="text-right p-3 text-sm font-medium text-slate-700">Quantità</th>
+                        <th className="text-left p-3 text-sm font-medium text-slate-700">Unità</th>
                         <th className="text-right p-3 text-sm font-medium text-slate-700">Prezzo/Unità</th>
                         <th className="text-right p-3 text-sm font-medium text-slate-700">Costo</th>
                         <th className="text-center p-3 text-sm font-medium text-slate-700">Azioni</th>
@@ -651,6 +662,7 @@ export default function FinalRecipes() {
                               className="w-24 text-right"
                             />
                           </td>
+                          <td className="p-3 text-slate-600">{comp.unit || 'kg'}</td>
                           <td className="p-3 text-right">€ {comp.pricePerUnit.toFixed(2)}</td>
                           <td className="p-3 text-right font-medium">
                             € {(comp.quantity * comp.pricePerUnit).toFixed(2)}
@@ -867,6 +879,7 @@ export default function FinalRecipes() {
                         <th className="text-left p-3 text-sm font-medium text-slate-700">Nome</th>
                         <th className="text-left p-3 text-sm font-medium text-slate-700">Tipo</th>
                         <th className="text-right p-3 text-sm font-medium text-slate-700">Quantità</th>
+                        <th className="text-left p-3 text-sm font-medium text-slate-700">Unità</th>
                         <th className="text-right p-3 text-sm font-medium text-slate-700">Prezzo/Unità</th>
                         <th className="text-right p-3 text-sm font-medium text-slate-700">Costo</th>
                         <th className="text-center p-3 text-sm font-medium text-slate-700">Azioni</th>
@@ -900,6 +913,7 @@ export default function FinalRecipes() {
                               className="w-24 text-right"
                             />
                           </td>
+                          <td className="p-3 text-slate-600">{comp.unit || 'kg'}</td>
                           <td className="p-3 text-right">€ {comp.pricePerUnit.toFixed(2)}</td>
                           <td className="p-3 text-right font-medium">
                             € {(comp.quantity * comp.pricePerUnit).toFixed(2)}

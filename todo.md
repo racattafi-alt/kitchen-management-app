@@ -499,3 +499,12 @@
 - [x] Implementare ricalcolo automatico resa quando si modificano componenti
 - [x] Implementare export Excel ricette con tutti i dati (CSV compatibile)
 - [x] Tutti i 24 test passano
+
+## PROBLEMI CRITICI CALCOLO RESA E UNITÀ MISURA (SEGNALATO UTENTE)
+- [x] BUG CRITICO: Calcolo resa corretto - formula: totale ottenuto / somma ingredienti food (esclusi ops e non-food)
+- [x] BUG CRITICO: Unità misura aggiunte nel dialog componenti - mostra kg/unità/ore accanto a quantità
+- [x] BUG CRITICO: Conversioni unità misura standardizzate - tutto in kg, rimossa conversione errata /1000 in RecipeDetailDialog
+- [x] Standardizzata unità misura in tutta l'app (database pricePerKg, frontend kg, calcoli kg)
+- [x] Aggiunta colonna "Unità" nella tabella componenti dialog (modifica e creazione)
+- [x] Migliorata funzione calculateWeightForFood per escludere non-food (buste SV, packaging)
+- [x] Tutti i 24 test passano
