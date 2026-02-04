@@ -27,6 +27,57 @@ type ComponentWithDetails = {
   costType?: string;
 };
 
+// Componente per visualizzare allergeni nel dialog dettaglio
+function AllergensSection({ recipeId }: { recipeId: string }) {
+  const { data: allergens, isLoading } = trpc.finalRecipes.getAllergens.useQuery({ recipeId });
+  
+  if (isLoading) {
+    return <div className="text-sm text-slate-500">Caricamento allergeni...</div>;
+  }
+  
+  if (!allergens || allergens.length === 0) {
+    return (
+      <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+        <p className="text-sm text-green-700 font-medium">✓ Nessun allergene presente</p>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="space-y-2">
+      <p className="text-sm text-slate-600 mb-3">
+        Questa ricetta contiene i seguenti allergeni (calcolati automaticamente dai componenti):
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {allergens.map((allergen) => (
+          <span
+            key={allergen}
+            className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-red-100 text-red-800 border border-red-200"
+          >
+            ⚠️ {allergen}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Componente per badge allergeni nelle card ricette
+function RecipeAllergensBadge({ recipeId }: { recipeId: string }) {
+  const { data: allergens } = trpc.finalRecipes.getAllergens.useQuery({ recipeId });
+  
+  if (!allergens || allergens.length === 0) {
+    return null;
+  }
+  
+  // Mostra solo il numero di allergeni nella card
+  return (
+    <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
+      ⚠️ {allergens.length} allergeni
+    </span>
+  );
+}
+
 export default function FinalRecipes() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'hidden'>('all');
@@ -558,6 +609,8 @@ export default function FinalRecipes() {
                             kg + pezzi
                           </span>
                         )}
+                        {/* Badge Allergeni */}
+                        <RecipeAllergensBadge recipeId={item.id} />
                       </div>
                       <p className="text-sm text-slate-500">Codice: {item.code}</p>
                       <p className="text-sm text-slate-600 mt-1">
@@ -758,6 +811,12 @@ export default function FinalRecipes() {
                   ) : null}
                 </div>
               ) : null}
+
+              {/* Sezione Allergeni */}
+              <div>
+                <h3 className="font-semibold text-lg mb-3">Allergeni</h3>
+                <AllergensSection recipeId={recipeDetails.id} />
+              </div>
             </div>
           )}
         </DialogContent>

@@ -771,3 +771,10 @@
 - [ ] Scrivere vitest per mutation update ingrediente
 - [ ] Testare tutti i campi (nome, categoria, fornitore, prezzi, allergeni)
 - [ ] Testare casi edge (campi vuoti, valori zero)
+
+## VISUALIZZAZIONE ALLERGENI RICETTE
+- [x] Aggiungere sezione "Allergeni" nel dialog dettaglio ricetta
+- [x] Chiamare procedura getAllergens per calcolare allergeni automaticamente
+- [x] Mostrare lista allergeni con icone/badge nel dialog
+- [x] Aggiungere badge allergeni nelle card ricette per visibilità immediata
+- [x] Testare con ricette che contengono ingredienti con allergeni
