@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
-import { ChefHat, Plus, Eye, Pencil, Trash2, Search } from "lucide-react";
+import { ChefHat, Plus, Eye, Pencil, Trash2, Search, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
@@ -151,6 +151,8 @@ export default function FinalRecipes() {
       category: recipe.category,
       yieldPercentage: parseFloat(recipe.yieldPercentage || "100"),
       serviceWastePercentage: parseFloat(recipe.serviceWastePercentage || "0"),
+      unitWeight: parseFloat(recipe.unitWeight || "0"),
+      producedQuantity: parseFloat(recipe.producedQuantity || "0"),
     });
     
     // Carica componenti esistenti con dettagli completi
@@ -253,6 +255,8 @@ export default function FinalRecipes() {
       category: editFormData.category,
       yieldPercentage: editFormData.yieldPercentage,
       serviceWastePercentage: editFormData.serviceWastePercentage,
+      unitWeight: editFormData.unitWeight,
+      producedQuantity: editFormData.producedQuantity,
       components: editComponents.map(comp => ({
         type: comp.type,
         componentId: comp.componentId || '',
@@ -265,6 +269,39 @@ export default function FinalRecipes() {
     });
   };
 
+  const handleExportExcel = () => {
+    if (!recipes || recipes.length === 0) {
+      toast.error('Nessuna ricetta da esportare');
+      return;
+    }
+
+    // Crea CSV (compatibile Excel)
+    const headers = ['Codice', 'Nome', 'Categoria', 'Costo Totale (€)', 'Peso Finale (kg)', 'Prezzo al kg (€)', 'Quantità Prodotta', 'Prezzo Unitario (€)', 'Resa (%)'];
+    const rows = recipes.map(r => [
+      r.code,
+      r.name,
+      r.category,
+      parseFloat(r.totalCost || '0').toFixed(2),
+      r.unitWeight ? parseFloat(r.unitWeight).toFixed(2) : '',
+      r.unitWeight ? (parseFloat(r.totalCost || '0') / parseFloat(r.unitWeight)).toFixed(2) : '',
+      r.producedQuantity ? parseFloat(r.producedQuantity).toFixed(0) : '',
+      r.producedQuantity ? (parseFloat(r.totalCost || '0') / parseFloat(r.producedQuantity)).toFixed(2) : '',
+      r.yieldPercentage ? parseFloat(r.yieldPercentage).toFixed(2) : '',
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `ricette_finali_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    toast.success('Export Excel completato');
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -273,10 +310,16 @@ export default function FinalRecipes() {
             <h1 className="text-3xl font-bold text-slate-900">Ricette Finali</h1>
             <p className="text-slate-600 mt-1">Piatti pronti per il menu (Livello 2)</p>
           </div>
-          <Button className="bg-orange-600 hover:bg-orange-700" onClick={() => setIsCreateOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nuova Ricetta
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExportExcel}>
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Esporta Excel
+            </Button>
+            <Button className="bg-orange-600 hover:bg-orange-700" onClick={() => setIsCreateOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nuova Ricetta
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -540,7 +583,7 @@ export default function FinalRecipes() {
                 <Label>Resa Calcolata</Label>
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-sm font-medium text-blue-900">
-                    {editFormData.unitWeight && createComponents.length > 0
+                    {editFormData.unitWeight && editComponents.length > 0
                       ? `${((editFormData.unitWeight / calculateWeightForFood(editComponents)) * 100).toFixed(2)}%`
                       : 'Inserisci peso finale e componenti per calcolare'}
                   </p>
@@ -572,8 +615,8 @@ export default function FinalRecipes() {
                 </div>
 
                 {/* Lista componenti attuali */}
-                <div className="border rounded-lg overflow-hidden bg-white max-h-[300px] overflow-y-auto">
-                  <table className="w-full">
+                <div className="border rounded-lg bg-white max-h-[400px] overflow-auto">
+                  <table className="w-full min-w-[800px]">
                     <thead className="bg-slate-50">
                       <tr>
                         <th className="text-left p-3 text-sm font-medium text-slate-700">Nome</th>

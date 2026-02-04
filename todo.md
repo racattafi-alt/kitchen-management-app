@@ -490,3 +490,12 @@
 - [ ] Aggiornare schema database con nuovi campi (finalWeight, producedQuantity, isFood)
 - [ ] Aggiornare mutation backend create/update con nuova logica
 - [ ] Testare calcolo costi e resa con diversi scenari
+
+## PROBLEMI CRITICI E FUNZIONALITÀ (NUOVA RICHIESTA)
+- [x] BUG CRITICO: Tabella ingredienti nel dialog modifica non scorre - aggiunto overflow-auto e min-width
+- [x] BUG CRITICO: Semilavorati separati correttamente (verificato database - 5 categorie distinte)
+- [x] BUG CRITICO: Somme ingredienti verificate - calcolo corretto (verificato con PANE_WILD)
+- [x] Collegare frontend dialog modifica al salvataggio backend (unitWeight, producedQuantity)
+- [x] Implementare ricalcolo automatico resa quando si modificano componenti
+- [x] Implementare export Excel ricette con tutti i dati (CSV compatibile)
+- [x] Tutti i 24 test passano
