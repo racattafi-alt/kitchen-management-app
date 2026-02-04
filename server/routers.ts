@@ -317,13 +317,20 @@ const productionRouter = router({
           components = recipe.components;
         }
 
+        // Normalizza le quantità dei componenti per il peso unitario della ricetta
+        const unitWeight = parseFloat(recipe.unitWeight || '1');
+        
         for (const comp of components) {
+          // comp.quantity è per unitWeight kg di output, quindi normalizziamo
+          const quantityPerKg = comp.quantity / unitWeight;
+          const totalNeeded = quantityPerKg * quantity;
+          
           if (comp.type === 'ingredient') {
             const current = ingredientNeeds.get(comp.componentId) || 0;
-            ingredientNeeds.set(comp.componentId, current + (comp.quantity * quantity));
+            ingredientNeeds.set(comp.componentId, current + totalNeeded);
           } else if (comp.type === 'semi_finished') {
             const current = semiFinishedNeeds.get(comp.componentId) || 0;
-            semiFinishedNeeds.set(comp.componentId, current + (comp.quantity * quantity));
+            semiFinishedNeeds.set(comp.componentId, current + totalNeeded);
           }
         }
       }

@@ -1,0 +1,8 @@
+{
+  "query": "SELECT \n  fr.code, fr.name, fr.unitWeight, fr.yieldPercentage,\n  frc.quantity, frc.componentType,\n  i.name as ingredient_name, i.unitType as ing_unit,\n  fr2.name as recipe_name, fr2.code as recipe_code\nFROM final_recipes fr\nLEFT JOIN final_recipe_components frc ON fr.id = frc.recipeFinalId\nLEFT JOIN ingredients i ON frc.componentId = i.id AND frc.componentType = 'INGREDIENT'\nLEFT JOIN final_recipes fr2 ON frc.componentId = fr2.id AND frc.componentType = 'SEMI_FINISHED'\nWHERE fr.code = 'CARNE_RIBS'\nORDER BY frc.quantity DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT \n  fr.code, fr.name, fr.unitWeight, fr.yieldPercentage,\n  frc.quantity, frc.componentType,\n  i.name as ingredient_name, i.unitType as ing_unit,\n  fr2.name as recipe_name, fr2.code as recipe_code\nFROM final_recipes fr\nLEFT JOIN final_recipe_components frc ON fr.id = frc.recipeFinalId\nLEFT JOIN ingredients i ON frc.componentId = i.id AND frc.componentType = 'INGREDIENT'\nLEFT JOIN final_recipes fr2 ON frc.componentId = fr2.id AND frc.componentType = 'SEMI_FINISHED'\nWHERE fr.code = 'CARNE_RIBS'\nORDER BY frc.quantity DESC;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table 'uyjanbg4rdjfpnrcdjurf4.final_recipe_components' doesn't exist"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "query": "SELECT code, name, unitWeight, yieldPercentage, components \nFROM final_recipes \nWHERE code = 'CARNE_RIBS';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT code, name, unitWeight, yieldPercentage, components \nFROM final_recipes \nWHERE code = 'CARNE_RIBS';",
+  "rows": [
+    {
+      "code": "CARNE_RIBS",
+      "name": "Carne Ribs",
+      "unitWeight": "28.450",
+      "yieldPercentage": "85.000",
+      "components": "\"[{\\\"type\\\":\\\"ingredient\\\",\\\"componentId\\\":\\\"I_2s4hfY98dAEF9xBAI7l\\\",\\\"quantity\\\":32.07,\\\"unit\\\":\\\"kg\\\"},{\\\"type\\\":\\\"semi_finished\\\",\\\"componentId\\\":\\\"xPl2rIEYPj8TFwFjEi7Ej\\\",\\\"quantity\\\":0.7,\\\"unit\\\":\\\"kg\\\"},{\\\"type\\\":\\\"semi_finished\\\",\\\"componentId\\\":\\\"OIomHXSLd1C-AUy7Hq3a4\\\",\\\"quantity\\\":0.7,\\\"unit\\\":\\\"kg\\\"},{\\\"type\\\":\\\"operation\\\",\\\"componentName\\\":\\\"Cuoco\\\",\\\"quantity\\\":2,\\\"unit\\\":\\\"unità\\\"},{\\\"type\\\":\\\"operation\\\",\\\"componentName\\\":\\\"Forno\\\",\\\"quantity\\\":8,\\\"unit\\\":\\\"unità\\\"}]\""
+    }
+  ],
+  "messages": [],
+  "stdout": "code\tname\tunitWeight\tyieldPercentage\tcomponents\nCARNE_RIBS\tCarne Ribs\t28.450\t85.000\t\"[{\\\"type\\\":\\\"ingredient\\\",\\\"componentId\\\":\\\"I_2s4hfY98dAEF9xBAI7l\\\",\\\"quantity\\\":32.07,\\\"unit\\\":\\\"kg\\\"},{\\\"type\\\":\\\"semi_finished\\\",\\\"componentId\\\":\\\"xPl2rIEYPj8TFwFjEi7Ej\\\",\\\"quantity\\\":0.7,\\\"unit\\\":\\\"kg\\\"},{\\\"type\\\":\\\"semi_finished\\\",\\\"componentId\\\":\\\"OIomHXSLd1C-AUy7Hq3a4\\\",\\\"quantity\\\":0.7,\\\"unit\\\":\\\"kg\\\"},{\\\"type\\\":\\\"operation\\\",\\\"componentName\\\":\\\"Cuoco\\\",\\\"quantity\\\":2,\\\"unit\\\":\\\"unità\\\"},{\\\"type\\\":\\\"operation\\\",\\\"componentName\\\":\\\"Forno\\\",\\\"quantity\\\":8,\\\"unit\\\":\\\"unità\\\"}]\"\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

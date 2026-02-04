@@ -679,3 +679,11 @@
 
 ## UX IMPROVEMENT FORM PRODUZIONE
 - [x] Rimuovere menu a tendina "Tipo Unità" (ridondante con pulsanti kg/pezzi)
+
+## BUG CRITICO PROPORZIONI RICETTE
+- [x] Verificare proporzioni ricetta RIBS (100kg ribs → 3200kg costolette è errato)
+- [x] Analizzare dati componenti nel database vs Excel originale
+- [x] Identificare errori: calculations.ts divideva per 1000, routers.ts non normalizzava per unitWeight
+- [x] Correggere calculations.ts: rimossa divisione per 1000
+- [x] Correggere routers.ts generateShoppingList: aggiunta normalizzazione per unitWeight
+- [x] Testare calcolo lista acquisti: 100kg RIBS ora richiede 112.7kg costolette (corretto!)
