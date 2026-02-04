@@ -746,3 +746,7 @@
 
 ## BUG PAGINA INGREDIENTI
 - [x] Correggere errore "sortOrder is not defined" in Ingredients.tsx
+
+## DIALOG RESPONSIVE
+- [x] Aggiungere max-height e overflow-y-auto a tutti i DialogContent
+- [x] Testare dialog su schermi piccoli (mobile/tablet)

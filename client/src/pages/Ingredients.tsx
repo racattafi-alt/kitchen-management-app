@@ -172,7 +172,7 @@ export default function Ingredients() {
                   Nuovo Ingrediente
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Aggiungi Ingrediente</DialogTitle>
                 </DialogHeader>
@@ -309,7 +309,7 @@ export default function Ingredients() {
 
         {/* Dialog Modifica Ingrediente */}
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Modifica Ingrediente</DialogTitle>
             </DialogHeader>

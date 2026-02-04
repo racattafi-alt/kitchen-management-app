@@ -139,7 +139,7 @@ export default function Suppliers() {
                 <Plus className="mr-2 h-4 w-4" />
                 Nuovo Fornitore
               </Button>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Nuovo Fornitore</DialogTitle>
                 </DialogHeader>
@@ -213,7 +213,7 @@ export default function Suppliers() {
 
         {/* Dialog Modifica Fornitore */}
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Modifica Fornitore</DialogTitle>
             </DialogHeader>
