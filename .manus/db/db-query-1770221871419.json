@@ -1,0 +1,234 @@
+{
+  "query": "SELECT code, name, unitType, unitWeight, measurementType, pieceWeight FROM final_recipes ORDER BY name LIMIT 30",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT code, name, unitType, unitWeight, measurementType, pieceWeight FROM final_recipes ORDER BY name LIMIT 30",
+  "rows": [
+    {
+      "code": "BBQ_RIBS",
+      "name": "BBQ Ribs",
+      "unitType": "k",
+      "unitWeight": "NULL",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "CARNE_PULLED_PORK",
+      "name": "Carne Pulled Pork",
+      "unitType": "k",
+      "unitWeight": "26.960",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "CARNE_RIBS",
+      "name": "Carne Ribs",
+      "unitType": "k",
+      "unitWeight": "28.450",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "CARNE_SOVRACOSCE",
+      "name": "Carne Sovracosce",
+      "unitType": "u",
+      "unitWeight": "18.870",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "CARNE_TENDERS",
+      "name": "Carne Tenders",
+      "unitType": "u",
+      "unitWeight": "18.900",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "PANE_BRIOCHE_5_0",
+      "name": "Pane Brioche 5 0",
+      "unitType": "k",
+      "unitWeight": "NULL",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "PANE_BUN",
+      "name": "Pane Bun",
+      "unitType": "k",
+      "unitWeight": "0.000",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "PANE_SEMI_5_0",
+      "name": "Pane Semi 5 0",
+      "unitType": "k",
+      "unitWeight": "NULL",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "PANE_WILD",
+      "name": "Pane Wild",
+      "unitType": "k",
+      "unitWeight": "NULL",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "SALSA_AVOCADO",
+      "name": "Salsa Avocado",
+      "unitType": "k",
+      "unitWeight": "1.149",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "SALSA_CAJUN",
+      "name": "Salsa Cajun",
+      "unitType": "k",
+      "unitWeight": "0.868",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "SALSA_CHEDDAR",
+      "name": "Salsa Cheddar",
+      "unitType": "k",
+      "unitWeight": "1.769",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "SALSA_KETCHUP",
+      "name": "Salsa Ketchup",
+      "unitType": "k",
+      "unitWeight": "NULL",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "SALSA_MAYO",
+      "name": "Salsa Mayo",
+      "unitType": "k",
+      "unitWeight": "14.602",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "SALSA_MEMPHIS",
+      "name": "Salsa Memphis",
+      "unitType": "k",
+      "unitWeight": "0.490",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "SALSA_NDUJA",
+      "name": "Salsa Nduja",
+      "unitType": "k",
+      "unitWeight": "3.008",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "SALSA_NUTTY",
+      "name": "Salsa Nutty",
+      "unitType": "k",
+      "unitWeight": "1.249",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "SALSA_SENAPE_DIJON",
+      "name": "Salsa Senape Dijon",
+      "unitType": "k",
+      "unitWeight": "0.310",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "SALSA_TFS",
+      "name": "Salsa Tfs",
+      "unitType": "k",
+      "unitWeight": "21.249",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "SALSA_TZATZIKI",
+      "name": "Salsa Tzatziki",
+      "unitType": "k",
+      "unitWeight": "1.366",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "SPEZIE_BACON",
+      "name": "Spezie Bacon",
+      "unitType": "k",
+      "unitWeight": "NULL",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "SPEZIE_PULLED",
+      "name": "Spezie Pulled Pork",
+      "unitType": "k",
+      "unitWeight": "NULL",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "SPEZIE_RIBS",
+      "name": "Spezie Ribs",
+      "unitType": "k",
+      "unitWeight": "NULL",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "SPEZIE_SOVRACOSCE",
+      "name": "Spezie Sovracosce",
+      "unitType": "k",
+      "unitWeight": "NULL",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "SPEZIE_TENDERS",
+      "name": "Spezie Tenders",
+      "unitType": "k",
+      "unitWeight": "NULL",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "VERDURE_AGLIO_ARROSTO",
+      "name": "Verdure Aglio Arrosto",
+      "unitType": "k",
+      "unitWeight": "19.855",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "VERDURE_CIPCARA",
+      "name": "Verdure Cipcara",
+      "unitType": "k",
+      "unitWeight": "1.284",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    },
+    {
+      "code": "VERDURE_COLESLAW",
+      "name": "Verdure Coleslaw",
+      "unitType": "k",
+      "unitWeight": "1.926",
+      "measurementType": "weight_only",
+      "pieceWeight": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "code\tname\tunitType\tunitWeight\tmeasurementType\tpieceWeight\nBBQ_RIBS\tBBQ Ribs\tk\tNULL\tweight_only\tNULL\nCARNE_PULLED_PORK\tCarne Pulled Pork\tk\t26.960\tweight_only\tNULL\nCARNE_RIBS\tCarne Ribs\tk\t28.450\tweight_only\tNULL\nCARNE_SOVRACOSCE\tCarne Sovracosce\tu\t18.870\tweight_only\tNULL\nCARNE_TENDERS\tCarne Tenders\tu\t18.900\tweight_only\tNULL\nPANE_BRIOCHE_5_0\tPane Brioche 5 0\tk\tNULL\tweight_only\tNULL\nPANE_BUN\tPane Bun\tk\t0.000\tweight_only\tNULL\nPANE_SEMI_5_0\tPane Semi 5 0\tk\tNULL\tweight_only\tNULL\nPANE_WILD\tPane Wild\tk\tNULL\tweight_only\tNULL\nSALSA_AVOCADO\tSalsa Avocado\tk\t1.149\tweight_only\tNULL\nSALSA_CAJUN\tSalsa Cajun\tk\t0.868\tweight_only\tNULL\nSALSA_CHEDDAR\tSalsa Cheddar\tk\t1.769\tweight_only\tNULL\nSALSA_KETCHUP\tSalsa Ketchup\tk\tNULL\tweight_only\tNULL\nSALSA_MAYO\tSalsa Mayo\tk\t14.602\tweight_only\tNULL\nSALSA_MEMPHIS\tSalsa Memphis\tk\t0.490\tweight_only\tNULL\nSALSA_NDUJA\tSalsa Nduja\tk\t3.008\tweight_only\tNULL\nSALSA_NUTTY\tSalsa Nutty\tk\t1.249\tweight_only\tNULL\nSALSA_SENAPE_DIJON\tSalsa Senape Dijon\tk\t0.310\tweight_only\tNULL\nSALSA_TFS\tSalsa Tfs\tk\t21.249\tweight_only\tNULL\nSALSA_TZATZIKI\tSalsa Tzatziki\tk\t1.366\tweight_only\tNULL\nSPEZIE_BACON\tSpezie Bacon\tk\tNULL\tweight_only\tNULL\nSPEZIE_PULLED\tSpezie Pulled Pork\tk\tNULL\tweight_only\tNULL\nSPEZIE_RIBS\tSpezie Ribs\tk\tNULL\tweight_only\tNULL\nSPEZIE_SOVRACOSCE\tSpezie Sovracosce\tk\tNULL\tweight_only\tNULL\nSPEZIE_TENDERS\tSpezie Tenders\tk\tNULL\tweight_only\tNULL\nVERDURE_AGLIO_ARROSTO\tVerdure Aglio Arrosto\tk\t19.855\tweight_only\tNULL\nVERDURE_CIPCARA\tVerdure Cipcara\tk\t1.284\tweight_only\tNULL\nVERDURE_COLESLAW\tVerdure Coleslaw\tk\t1.926\tweight_only\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

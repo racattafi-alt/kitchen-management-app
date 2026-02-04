@@ -1,0 +1,9 @@
+{
+  "query": "-- Salse e Spezie: solo peso\nUPDATE final_recipes SET measurementType = 'weight_only' WHERE code LIKE 'SALSA_%' OR code LIKE 'SPEZIE_%';\n\n-- Tenders: sia peso che pezzi\nUPDATE final_recipes SET measurementType = 'both', pieceWeight = 0.05097 WHERE code = 'CARNE_TENDERS';\n\n-- Sovracosce: sia peso che pezzi\nUPDATE final_recipes SET measurementType = 'both', pieceWeight = 0.06397 WHERE code = 'CARNE_SOVRACOSCE';\n\n-- BBQ Ribs: solo peso\nUPDATE final_recipes SET measurementType = 'weight_only' WHERE code = 'BBQ_RIBS';\n\n-- Altre carni: solo peso\nUPDATE final_recipes SET measurementType = 'weight_only' WHERE code LIKE 'CARNE_%' AND measurementType IS NULL;\n\n-- Verdure: solo peso\nUPDATE final_recipes SET measurementType = 'weight_only' WHERE code LIKE 'VERDURE_%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute -- Salse e Spezie: solo peso\nUPDATE final_recipes SET measurementType = 'weight_only' WHERE code LIKE 'SALSA_%' OR code LIKE 'SPEZIE_%';\n\n-- Tenders: sia peso che pezzi\nUPDATE final_recipes SET measurementType = 'both', pieceWeight = 0.05097 WHERE code = 'CARNE_TENDERS';\n\n-- Sovracosce: sia peso che pezzi\nUPDATE final_recipes SET measurementType = 'both', pieceWeight = 0.06397 WHERE code = 'CARNE_SOVRACOSCE';\n\n-- BBQ Ribs: solo peso\nUPDATE final_recipes SET measurementType = 'weight_only' WHERE code = 'BBQ_RIBS';\n\n-- Altre carni: solo peso\nUPDATE final_recipes SET measurementType = 'weight_only' WHERE code LIKE 'CARNE_%' AND measurementType IS NULL;\n\n-- Verdure: solo peso\nUPDATE final_recipes SET measurementType = 'weight_only' WHERE code LIKE 'VERDURE_%';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 121
+}

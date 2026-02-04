@@ -658,3 +658,10 @@
 - [x] Implementare conversione automatica kg ↔ pezzi usando pieceWeight
 - [x] Mostrare equivalenza in tempo reale (es. "20kg ≈ 300 pezzi")
 - [x] Salvare sempre quantità in kg nel database per coerenza
+
+## POPOLAMENTO E UX UNITÀ MISURA
+- [x] Popolare measurementType per tutte le ricette esistenti (26 weight_only, 2 both)
+- [x] Popolare pieceWeight per ricette both (Tenders=0.05097kg, Sovracosce=0.06397kg)
+- [x] Rimuovere obbligatorietà pieceWeight per ricette unit_only (già opzionale)
+- [x] Implementare navigazione tastiera (↑↓ Enter Esc) in autocomplete Production
+- [x] Aggiungere badge visivi unità misura in lista ricette (Solo kg / Solo pezzi / kg + pezzi)

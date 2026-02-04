@@ -23,6 +23,7 @@ export default function Production() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<any>(null);
   const [inputUnit, setInputUnit] = useState<"kg" | "pezzi">("kg");
+  const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
 
   const utils = trpc.useUtils();
   const { data: productions, isLoading } = trpc.production.list.useQuery({ weekStartDate: undefined });
@@ -177,20 +178,43 @@ export default function Production() {
                     onChange={(e) => {
                       setFormData({ ...formData, recipeSearch: e.target.value, recipeFinalId: "", recipeName: "" });
                       setShowSuggestions(true);
+                      setHighlightedIndex(-1);
                     }}
                     onFocus={() => setShowSuggestions(true)}
+                    onKeyDown={(e) => {
+                      if (!showSuggestions || filteredRecipes.length === 0) return;
+                      
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        setHighlightedIndex(prev => 
+                          prev < filteredRecipes.length - 1 ? prev + 1 : prev
+                        );
+                      } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        setHighlightedIndex(prev => prev > 0 ? prev - 1 : -1);
+                      } else if (e.key === 'Enter' && highlightedIndex >= 0) {
+                        e.preventDefault();
+                        handleSelectRecipe(filteredRecipes[highlightedIndex]);
+                      } else if (e.key === 'Escape') {
+                        setShowSuggestions(false);
+                        setHighlightedIndex(-1);
+                      }
+                    }}
                     required
                   />
                   
                   {/* Dropdown Suggerimenti */}
                   {showSuggestions && filteredRecipes.length > 0 && (
                     <div className="absolute z-10 w-full mt-1 bg-background border rounded-md shadow-lg max-h-60 overflow-auto">
-                      {filteredRecipes.map((recipe: any) => (
+                      {filteredRecipes.map((recipe: any, index: number) => (
                         <button
                           key={recipe.id}
                           type="button"
-                          className="w-full px-4 py-2 text-left hover:bg-accent hover:text-accent-foreground flex justify-between items-center"
+                          className={`w-full px-4 py-2 text-left hover:bg-accent hover:text-accent-foreground flex justify-between items-center ${
+                            index === highlightedIndex ? 'bg-accent text-accent-foreground' : ''
+                          }`}
                           onClick={() => handleSelectRecipe(recipe)}
+                          onMouseEnter={() => setHighlightedIndex(index)}
                         >
                           <span>{recipe.name}</span>
                           <Badge variant="outline">{recipe.code}</Badge>

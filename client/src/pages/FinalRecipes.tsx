@@ -474,6 +474,22 @@ export default function FinalRecipes() {
                             Vendibile
                           </span>
                         )}
+                        {/* Badge Unità Misura */}
+                        {item.measurementType === 'weight_only' && (
+                          <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">
+                            Solo kg
+                          </span>
+                        )}
+                        {item.measurementType === 'unit_only' && (
+                          <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">
+                            Solo pezzi
+                          </span>
+                        )}
+                        {item.measurementType === 'both' && (
+                          <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">
+                            kg + pezzi
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm text-slate-500">Codice: {item.code}</p>
                       <p className="text-sm text-slate-600 mt-1">
