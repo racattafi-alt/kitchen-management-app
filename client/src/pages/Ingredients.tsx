@@ -110,24 +110,8 @@ export default function Ingredients() {
     },
   });
 
-  const exportMutation = trpc.ingredients.exportToExcel.useQuery(undefined, {
+  const exportQuery = trpc.ingredients.exportToExcel.useQuery(undefined, {
     enabled: false,
-    onSuccess: (data) => {
-      // Download file
-      const blob = new Blob([Uint8Array.from(atob(data.data), c => c.charCodeAt(0))], { type: data.mimeType });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = data.filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      toast.success("File Excel esportato con successo");
-    },
-    onError: (error) => {
-      toast.error(`Errore export: ${error.message}`);
-    },
   });
 
   const importMutation = trpc.ingredients.importFromExcel.useMutation({
@@ -146,8 +130,23 @@ export default function Ingredients() {
     },
   });
 
-  const handleExportExcel = () => {
-    exportMutation.refetch();
+  const handleExportExcel = async () => {
+    const result = await exportQuery.refetch();
+    if (result.data) {
+      const data = result.data;
+      const blob = new Blob([Uint8Array.from(atob(data.data), c => c.charCodeAt(0))], { type: data.mimeType });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = data.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast.success("File Excel esportato con successo");
+    } else if (result.error) {
+      toast.error(`Errore export: ${result.error.message}`);
+    }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -183,18 +182,52 @@ export default function Ingredients() {
     setFormData({
       name: "",
       supplier: "",
-      category: "Altro",
-      unitType: "k",
+      category: "Altro" as const,
+      unitType: "k" as const,
       packageQuantity: 0,
       packagePrice: 0,
       brand: "",
       notes: "",
+      allergens: [] as string[],
     });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate(formData);
+    
+    // Validazione prezzi
+    if (formData.packagePrice < 0) {
+      toast.error("Il prezzo non può essere negativo");
+      return;
+    }
+    if (formData.packageQuantity <= 0) {
+      toast.error("La quantità deve essere maggiore di zero");
+      return;
+    }
+    if (!formData.name.trim()) {
+      toast.error("Il nome è obbligatorio");
+      return;
+    }
+    
+    const pricePerUnit = formData.packagePrice / formData.packageQuantity;
+    // Warning per prezzi anomali
+    if (pricePerUnit > 100) {
+      toast.warning(`Attenzione: prezzo unitario elevato (€${pricePerUnit.toFixed(2)}/${formData.unitType === 'k' ? 'kg' : 'pz'})`);
+    }
+    
+    createMutation.mutate({
+      id: crypto.randomUUID(),
+      name: formData.name,
+      supplierId: formData.supplier || undefined,
+      category: formData.category,
+      unitType: formData.unitType,
+      packageQuantity: formData.packageQuantity,
+      packagePrice: formData.packagePrice,
+      pricePerKgOrUnit: pricePerUnit,
+      brand: formData.brand || undefined,
+      notes: formData.notes || undefined,
+      allergens: formData.allergens,
+    });
   };
 
   const handleEdit = (ingredient: any) => {
@@ -217,14 +250,42 @@ export default function Ingredients() {
   const handleUpdateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingIngredient) return;
+    
+    const pkgQty = parseFloat(editFormData.packageQuantity as any) || 0;
+    const pkgPrice = parseFloat(editFormData.packagePrice as any) || 0;
+    
+    // Validazione prezzi
+    if (pkgPrice < 0) {
+      toast.error("Il prezzo non può essere negativo");
+      return;
+    }
+    if (pkgQty <= 0) {
+      toast.error("La quantità deve essere maggiore di zero");
+      return;
+    }
+    if (!editFormData.name.trim()) {
+      toast.error("Il nome è obbligatorio");
+      return;
+    }
+    
+    const pricePerUnit = pkgPrice / pkgQty;
+    // Warning per prezzi anomali
+    if (pricePerUnit > 100) {
+      toast.warning(`Attenzione: prezzo unitario elevato (€${pricePerUnit.toFixed(2)}/${editFormData.unitType === 'k' ? 'kg' : 'pz'})`);
+    }
+    
     updateMutation.mutate({
       id: editingIngredient.id,
-      ...editFormData,
-      packageQuantity: parseFloat(editFormData.packageQuantity as any) || 0,
-      packagePrice: parseFloat(editFormData.packagePrice as any) || 0,
-      pricePerKgOrUnit: parseFloat(editFormData.pricePerKgOrUnit as any) || 0,
-      minOrderQuantity: parseFloat(editFormData.minOrderQuantity as any) || 0,
-      packageSize: parseFloat(editFormData.packageSize as any) || 0,
+      name: editFormData.name,
+      supplierId: editFormData.supplierId || undefined,
+      category: editFormData.category,
+      unitType: editFormData.unitType,
+      packageQuantity: pkgQty,
+      packagePrice: pkgPrice,
+      brand: editFormData.brand || undefined,
+      notes: editFormData.notes || undefined,
+      isFood: editFormData.isFood,
+      allergens: editFormData.allergens,
     });
   };
 
@@ -244,10 +305,10 @@ export default function Ingredients() {
                 <Button 
                   variant="outline" 
                   onClick={handleExportExcel}
-                  disabled={exportMutation.isLoading}
+                  disabled={exportQuery.isFetching}
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  {exportMutation.isLoading ? 'Esportazione...' : 'Esporta Excel'}
+                  {exportQuery.isFetching ? 'Esportazione...' : 'Esporta Excel'}
                 </Button>
                 <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
                   <DialogTrigger asChild>
@@ -283,9 +344,9 @@ export default function Ingredients() {
                         </Button>
                         <Button 
                           onClick={handleImportExcel}
-                          disabled={!selectedFile || importMutation.isLoading}
+                          disabled={!selectedFile || importMutation.isPending}
                         >
-                          {importMutation.isLoading ? 'Importazione...' : 'Importa'}
+                          {importMutation.isPending ? 'Importazione...' : 'Importa'}
                         </Button>
                       </div>
                     </div>

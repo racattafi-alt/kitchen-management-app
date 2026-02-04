@@ -92,7 +92,10 @@ export default function Suppliers() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate(formData);
+    createMutation.mutate({
+      id: crypto.randomUUID(),
+      ...formData,
+    });
   };
 
   const handleEdit = (supplier: any) => {
@@ -113,7 +116,7 @@ export default function Suppliers() {
     if (!editingSupplier) return;
     updateMutation.mutate({
       id: editingSupplier.id,
-      data: editFormData,
+      ...editFormData,
     });
   };
 

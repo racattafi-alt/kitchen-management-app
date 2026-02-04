@@ -783,7 +783,7 @@ const finalRecipesRouter = router({
               ...comp,
               name: operation?.name || comp.componentName || 'Sconosciuto',
               unit: comp.unit || 'ore',
-              pricePerUnit: operation?.costPerHour || 0,
+              pricePerUnit: operation?.hourlyRate ? parseFloat(operation.hourlyRate) : 0,
               costType: operation?.costType || comp.costType || 'LAVORO',
             };
           }

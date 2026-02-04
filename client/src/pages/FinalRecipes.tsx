@@ -29,7 +29,7 @@ type ComponentWithDetails = {
 
 // Componente per visualizzare allergeni nel dialog dettaglio
 function AllergensSection({ recipeId }: { recipeId: string }) {
-  const { data: allergens, isLoading } = trpc.finalRecipes.getAllergens.useQuery({ recipeId });
+  const { data: allergens, isLoading } = trpc.finalRecipes.getAllergens.useQuery({ id: recipeId });
   
   if (isLoading) {
     return <div className="text-sm text-slate-500">Caricamento allergeni...</div>;
@@ -64,7 +64,7 @@ function AllergensSection({ recipeId }: { recipeId: string }) {
 
 // Componente per badge allergeni nelle card ricette
 function RecipeAllergensBadge({ recipeId }: { recipeId: string }) {
-  const { data: allergens } = trpc.finalRecipes.getAllergens.useQuery({ recipeId });
+  const { data: allergens } = trpc.finalRecipes.getAllergens.useQuery({ id: recipeId });
   
   if (!allergens || allergens.length === 0) {
     return null;
@@ -752,7 +752,7 @@ export default function FinalRecipes() {
                       </tr>
                     </thead>
                     <tbody>
-                      {((recipeDetails.componentsWithDetails as ComponentWithDetails[]) || []).map((comp: ComponentWithDetails, idx: number) => (
+                      {((recipeDetails.components as ComponentWithDetails[]) || []).map((comp: ComponentWithDetails, idx: number) => (
                         <tr key={idx} className="border-t">
                           <td className="p-3">{comp.name}</td>
                           <td className="p-3">

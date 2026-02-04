@@ -60,4 +60,29 @@
 - [x] Identificare logica di ricalcolo pricePerKgOrUnit nel form modifica
 - [x] Correggere formula: pricePerKgOrUnit = packagePrice / packageQuantity
 - [x] Testare correzione con shopper bio (ora calcola correttamente €0.04/pz)
-- [ ] Salvare checkpoint con bug corretto
+- [x] Salvare checkpoint con bug corretto
+
+## AUDIT COMPLETO E CORREZIONE ERRORI
+### Fase 1: Correzione Errori TypeScript
+- [x] Correggere errori in Suppliers.tsx (id mancante, data non esiste)
+- [x] Correggere errore logout in routers.ts
+- [x] Correggere errore costPerHour in routers.ts
+- [x] Risolvere tutti i 23 errori TypeScript (0 errori rimanenti)
+
+### Fase 2: Validazione Prezzi Client-Side
+- [x] Aggiungere validazione prezzi >= 0 nel form ingredienti
+- [x] Aggiungere validazione quantità > 0
+- [x] Mostrare warning per prezzi anomali (>€100/unità)
+- [x] Impedire salvataggio con valori invalidi (toast errore)
+
+### Fase 3: Test Funzionalità Core
+- [x] Test pagina Ricette (41 ricette, 28 finali, 13 semilavorati)
+- [x] Test Food Matrix (27 ricette vendibili, filtri funzionanti)
+- [x] Test pagina Produzione (pianificazione settimanale funzionante)
+- [x] Test Lista Acquisti (167 articoli, filtri per fornitore)
+- [ ] Menu - ESCLUSO (da sviluppare in seguito)
+
+### Fase 4: Bug Report
+- [x] Documentare tutti i bug trovati con severity (vedi BUG_REPORT.md)
+- [x] Proporre fix per bug critici
+- [ ] Salvare checkpoint finale

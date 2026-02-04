@@ -56,7 +56,7 @@ export default function ShoppingList() {
 
   // Genera lista acquisti per la settimana selezionata (o tutte)
   const { data: shoppingList, isLoading } = trpc.production.generateShoppingList.useQuery(
-    { weekId: selectedWeekGroup || undefined },
+    selectedWeekGroup ? { weekStartDate: new Date(selectedWeekGroup) } : undefined,
     { enabled: true }
   );
 
@@ -96,9 +96,7 @@ export default function ShoppingList() {
     return sum + (qty * item.pricePerUnit);
   }, 0) || 0;
 
-  // Genera ordine per fornitore con PDF e WhatsApp
-  const generateSupplierOrderMutation = trpc.production.generateSupplierOrderPDF.useMutation();
-  
+  // Genera ordine per fornitore con WhatsApp (senza PDF per ora)
   const handleSupplierOrder = async () => {
     const orderedItems = filteredList?.filter((item: any) => (orderQuantities[item.id] || 0) > 0);
     const validExtraItems = extraItems.filter(item => item.name && item.quantity > 0);
@@ -108,75 +106,50 @@ export default function ShoppingList() {
       return;
     }
 
-    try {
-      toast.loading("Generazione PDF in corso...");
-      
-      // Combina articoli ordinati + articoli extra
-      const allItems = [
-        ...(orderedItems?.map((item: any) => ({
-          id: item.id,
-          itemName: item.itemName,
-          itemType: item.itemType || 'INGREDIENT',
-          supplier: item.supplier,
-          quantityToOrder: orderQuantities[item.id] || 0,
-          unitType: item.unitType,
-          pricePerUnit: item.pricePerUnit,
-          totalCost: (orderQuantities[item.id] || 0) * item.pricePerUnit,
-        })) || []),
-        ...validExtraItems.map((item, index) => ({
-          id: `extra-${index}`,
-          itemName: item.name,
-          itemType: 'EXTRA',
-          supplier: item.supplier,
-          quantityToOrder: item.quantity,
-          unitType: item.unit === 'kg' ? 'k' : 'u',
-          pricePerUnit: item.price,
-          totalCost: item.quantity * item.price,
-        }))
-      ];
-
-      const result = await generateSupplierOrderMutation.mutateAsync({
-        shoppingList: allItems,
-        weekId: undefined,
+    // Raggruppa per fornitore
+    const supplierGroups: Record<string, any[]> = {};
+    orderedItems?.forEach((item: any) => {
+      const supplier = item.supplier || 'Senza Fornitore';
+      if (!supplierGroups[supplier]) supplierGroups[supplier] = [];
+      supplierGroups[supplier].push({
+        name: item.itemName,
+        qty: orderQuantities[item.id] || 0,
+        unit: item.unitType === 'k' ? 'kg' : 'pz',
+        price: item.pricePerUnit,
       });
+    });
+    
+    // Aggiungi articoli extra
+    validExtraItems.forEach(item => {
+      const supplier = item.supplier || 'Senza Fornitore';
+      if (!supplierGroups[supplier]) supplierGroups[supplier] = [];
+      supplierGroups[supplier].push({
+        name: item.name,
+        qty: item.quantity,
+        unit: item.unit,
+        price: item.price,
+      });
+    });
 
-      // Scarica PDF
-      const pdfBlob = new Blob(
-        [Uint8Array.from(atob(result.pdf), c => c.charCodeAt(0))],
-        { type: 'application/pdf' }
-      );
-      const pdfUrl = URL.createObjectURL(pdfBlob);
-      const a = document.createElement('a');
-      a.href = pdfUrl;
-      a.download = `ordine_fornitori_${new Date().toISOString().split('T')[0]}.pdf`;
-      a.click();
+    // Prepara messaggio WhatsApp
+    const orderSummary = Object.entries(supplierGroups)
+      .map(([supplier, items]) => {
+        const itemsList = items.map(item => 
+          `- ${item.name}: ${item.qty.toFixed(2)} ${item.unit}`
+        ).join('\n');
+        const total = items.reduce((sum, item) => sum + (item.qty * item.price), 0);
+        return `*${supplier}*\n${itemsList}\n_Totale: €${total.toFixed(2)}_`;
+      })
+      .join('\n\n');
 
-      // Prepara messaggio WhatsApp
-      const orderSummary = result.supplierOrders
-        .map((order: any) => 
-          `*${order.supplierName}*\n` +
-          order.items.map((item: any) => 
-            `- ${item.itemName}: ${item.quantityToOrder.toFixed(2)} ${item.unitType === 'k' ? 'kg' : 'pz'}`
-          ).join('\n') +
-          `\n_Totale: €${order.totalCost.toFixed(2)}_`
-        )
-        .join('\n\n');
-
-      const totalCost = result.supplierOrders.reduce((sum: number, order: any) => sum + order.totalCost, 0);
-      const whatsappMessage = encodeURIComponent(
-        `🛒 *ORDINE FORNITORI*\n\n${orderSummary}\n\n*TOTALE GENERALE: €${totalCost.toFixed(2)}*`
-      );
-      const whatsappUrl = `https://wa.me/393274750599?text=${whatsappMessage}`;
-      
-      // Apri WhatsApp
-      window.open(whatsappUrl, '_blank');
-      
-      toast.dismiss();
-      toast.success("PDF generato e WhatsApp aperto!");
-    } catch (error: any) {
-      toast.dismiss();
-      toast.error(error.message || "Errore durante la generazione dell'ordine");
-    }
+    const whatsappMessage = encodeURIComponent(
+      `🛒 *ORDINE FORNITORI*\n\n${orderSummary}\n\n*TOTALE GENERALE: €${totalOrderCost.toFixed(2)}*`
+    );
+    const whatsappUrl = `https://wa.me/?text=${whatsappMessage}`;
+    
+    // Apri WhatsApp
+    window.open(whatsappUrl, '_blank');
+    toast.success("Ordine pronto per WhatsApp!");
   };
 
   // Esporta lista ordini

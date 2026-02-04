@@ -18,9 +18,7 @@ import Waste from "./pages/Waste";
 import HACCP from "./pages/HACCP";
 import Storage from "./pages/Storage";
 import Assistant from "./pages/Assistant";
-import MigrateSuppliers from "./pages/MigrateSuppliers";
 import Suppliers from "./pages/Suppliers";
-import OrderHistory from "./pages/OrderHistory";
 import CostAnalysisDashboard from "./pages/CostAnalysisDashboard";
 
 function Router() {
@@ -41,9 +39,7 @@ function Router() {
       <Route path={"/storage"} component={Storage} />
       <Route path={"/shopping-list"} component={ShoppingList} />
       <Route path={"/assistant"} component={Assistant} />
-      <Route path={"/migrate-suppliers"} component={MigrateSuppliers} />
       <Route path={"/suppliers"} component={Suppliers} />
-      <Route path={"/order-history"} component={OrderHistory} />
       <Route path={"/cost-analysis"} component={CostAnalysisDashboard} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />

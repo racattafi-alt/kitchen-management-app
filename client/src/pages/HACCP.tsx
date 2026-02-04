@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 export default function HACCP() {
   const { data: batches, isLoading: loadingBatches } = trpc.haccp.listBatches.useQuery();
-  const { data: haccpRecords, isLoading: loadingHACCP } = trpc.haccp.listHACCP.useQuery();
+  const { data: haccpRecords, isLoading: loadingHACCP } = trpc.haccp.listRecords.useQuery();
 
   return (
     <DashboardLayout>
