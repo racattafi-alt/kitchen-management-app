@@ -616,3 +616,8 @@
 - [x] Estrarre componenti ricette da Excel/PDF tramite chat
 - [x] Importare componenti mancanti (11 salse + 6 spezie/BBQ)
 - [x] Impostare BBQ_RIBS come semilavorato non vendibile
+
+## BUG PAGINA PRODUZIONE
+- [x] Correggere errore "No procedure found on path production.list" (aggiunto alias list)
+- [x] Correggere validazione productionType (passato "final" invece di valori errati)
+- [x] Correggere campo quantity undefined (passato quantity invece di desiredQuantity)

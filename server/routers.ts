@@ -232,6 +232,13 @@ const operationsRouter = router({
 
 // ============ PROCEDURE PRODUZIONI SETTIMANALI ============
 const productionRouter = router({
+  // Alias per compatibilità con codice esistente
+  list: protectedProcedure
+    .input(z.object({ weekStartDate: z.date().optional() }).optional())
+    .query(async ({ input }) => {
+      return db.getWeeklyProductions(input?.weekStartDate);
+    }),
+
   listWeekly: protectedProcedure
     .input(z.object({ weekStartDate: z.date().optional() }).optional())
     .query(async ({ input }) => {

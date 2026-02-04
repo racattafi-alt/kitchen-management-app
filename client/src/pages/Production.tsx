@@ -98,8 +98,8 @@ export default function Production() {
     createMutation.mutate({
       weekStartDate: new Date(formData.weekStartDate),
       recipeFinalId: formData.recipeFinalId,
-      desiredQuantity: Number(formData.desiredQuantity),
-      unitType: formData.unitType,
+      productionType: "final",
+      quantity: Number(formData.desiredQuantity),
     });
   };
 
