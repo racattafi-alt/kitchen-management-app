@@ -146,11 +146,12 @@ export default function Ingredients() {
     if (!editingIngredient) return;
     updateMutation.mutate({
       id: editingIngredient.id,
-      data: {
-        ...editFormData,
-        packageQuantity: parseFloat(editFormData.packageQuantity as any) || 0,
-        packagePrice: parseFloat(editFormData.packagePrice as any) || 0,
-      },
+      ...editFormData,
+      packageQuantity: parseFloat(editFormData.packageQuantity as any) || 0,
+      packagePrice: parseFloat(editFormData.packagePrice as any) || 0,
+      pricePerKgOrUnit: parseFloat(editFormData.pricePerKgOrUnit as any) || 0,
+      minOrderQuantity: parseFloat(editFormData.minOrderQuantity as any) || 0,
+      packageSize: parseFloat(editFormData.packageSize as any) || 0,
     });
   };
 

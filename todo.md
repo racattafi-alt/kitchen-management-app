@@ -753,3 +753,4 @@
 
 ## BUG MUTATION INGREDIENTI
 - [x] Correggere errore "No values to set" in update ingredienti
+- [x] Bug persiste: verificare chiamata frontend e aggiungere validazione (corretto: rimosso wrapper data)
