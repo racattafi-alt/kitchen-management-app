@@ -511,18 +511,6 @@ export default function Ingredients() {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label>Ordine</Label>
-                <Select value={sortOrder} onValueChange={(value: any) => setSortOrder(value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="asc">Crescente (A-Z)</SelectItem>
-                    <SelectItem value="desc">Decrescente (Z-A)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
           </CardContent>
         </Card>

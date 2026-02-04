@@ -743,3 +743,6 @@
 - [x] Implementare calcolo automatico allergeni per ricette finali
 - [x] Implementare procedura backend getAllergens per calcolo automatico
 - [x] Sistema completo allergeni pronto per visualizzazione frontend
+
+## BUG PAGINA INGREDIENTI
+- [x] Correggere errore "sortOrder is not defined" in Ingredients.tsx
