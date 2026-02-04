@@ -754,3 +754,20 @@
 ## BUG MUTATION INGREDIENTI
 - [x] Correggere errore "No values to set" in update ingredienti
 - [x] Bug persiste: verificare chiamata frontend e aggiungere validazione (corretto: rimosso wrapper data)
+
+## BUG ORDINAMENTO FORNITORE
+- [x] Correggere ordinamento per fornitore in pagina Ingredienti
+
+## FEEDBACK VISIVO SALVATAGGIO
+- [x] Aggiungere toast "Ingrediente aggiornato con successo" dopo modifica (GIÀ PRESENTE)
+- [x] Aggiungere toast "Ingrediente creato con successo" dopo creazione (GIÀ PRESENTE)
+
+## CORREZIONE UNITÀ MISURA INGREDIENTI
+- [ ] Analizzare ingredienti con packageSize > 1000 (probabilmente in grammi invece che kg)
+- [x] Creare script correzione automatica: dividere packageQuantity per 1000 (fix_ingredient_units.py)
+- [x] Eseguire script e verificare ingredienti corretti (118 ingredienti corretti: Farina 25000→25kg, Sale 12000→12kg, etc.)
+
+## TEST MODIFICA INGREDIENTE
+- [ ] Scrivere vitest per mutation update ingrediente
+- [ ] Testare tutti i campi (nome, categoria, fornitore, prezzi, allergeni)
+- [ ] Testare casi edge (campi vuoti, valori zero)

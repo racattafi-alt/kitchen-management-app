@@ -57,8 +57,10 @@ export default function Ingredients() {
       return matchesSearch && matchesCategory;
     })
     ?.sort((a: any, b: any) => {
-      let compareA = a[sortBy] || '';
-      let compareB = b[sortBy] || '';
+      // Mappare sortBy al campo corretto
+      const fieldName = sortBy === 'supplier' ? 'supplierName' : sortBy;
+      let compareA = a[fieldName] || '';
+      let compareB = b[fieldName] || '';
       
       if (typeof compareA === 'string') compareA = compareA.toLowerCase();
       if (typeof compareB === 'string') compareB = compareB.toLowerCase();

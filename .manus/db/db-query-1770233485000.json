@@ -1,0 +1,32 @@
+{
+  "query": "SELECT * FROM ingredients WHERE name LIKE '%nutella%' OR name LIKE '%Nutella%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT * FROM ingredients WHERE name LIKE '%nutella%' OR name LIKE '%Nutella%';",
+  "rows": [
+    {
+      "id": "LPEaucbkK1FCgY7w6I1vd",
+      "name": "\"Nutella\"",
+      "supplier": "LM alimentare",
+      "category": "Altro",
+      "unitType": "k",
+      "packageQuantity": "13.000",
+      "packagePrice": "67.28",
+      "pricePerKgOrUnit": "0.00",
+      "minOrderQuantity": "0.000",
+      "packageSize": "0.000",
+      "brand": "",
+      "notes": "",
+      "isActive": "1",
+      "createdAt": "2026-02-03 10:47:02",
+      "updatedAt": "2026-02-04 19:25:26",
+      "supplierId": "BDuKexgaaoPr8x9UyYt2z",
+      "is_food": "1",
+      "isOrderable": "1",
+      "isSellable": "1",
+      "allergens": "[]"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tsupplier\tcategory\tunitType\tpackageQuantity\tpackagePrice\tpricePerKgOrUnit\tminOrderQuantity\tpackageSize\tbrand\tnotes\tisActive\tcreatedAt\tupdatedAt\tsupplierId\tis_food\tisOrderable\tisSellable\tallergens\nLPEaucbkK1FCgY7w6I1vd\t\"Nutella\"\tLM alimentare\tAltro\tk\t13.000\t67.28\t0.00\t0.000\t0.000\t\t\t1\t2026-02-03 10:47:02\t2026-02-04 19:25:26\tBDuKexgaaoPr8x9UyYt2z\t1\t1\t1\t[]\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}
