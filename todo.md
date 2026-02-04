@@ -565,3 +565,6 @@
 - [x] Implementare salvataggio automatico snapshot versioni prima modifiche ricette
 - [x] Creare UI storico versioni con visualizzazione diff componenti
 - [x] Implementare funzionalità rollback versioni ricette
+
+## BUG CRITICO SEGNALATO
+- [x] Correggere salvataggio modifiche ricette che non funziona (hook call in callback)

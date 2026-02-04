@@ -80,12 +80,14 @@ export default function FinalRecipes() {
       setIsEditOpen(false);
       setEditFormData(null);
       setEditComponents([]);
-      trpc.useUtils().finalRecipes.list.invalidate();
+      utils.finalRecipes.list.invalidate();
     },
     onError: (error) => {
       toast.error(error.message || "Errore durante l'aggiornamento della ricetta");
     },
   });
+
+  const utils = trpc.useUtils();
 
   const { data: recipeDetails } = trpc.finalRecipes.getDetails.useQuery(
     { id: selectedRecipeId! },
@@ -96,8 +98,6 @@ export default function FinalRecipes() {
   const { data: ingredients } = trpc.ingredients.list.useQuery();
   const { data: semiFinished } = trpc.semiFinished.list.useQuery();
   const { data: operations } = trpc.operations.list.useQuery();
-
-  const utils = trpc.useUtils();
 
   // Filtra componenti in base alla ricerca
   const filteredComponents = useMemo(() => {
@@ -1194,7 +1194,7 @@ export default function FinalRecipes() {
         }}
         recipeId={selectedRecipeForHistory}
         onRollback={() => {
-          trpc.useUtils().finalRecipes.list.invalidate();
+          utils.finalRecipes.list.invalidate();
           setIsVersionHistoryOpen(false);
         }}
       />
