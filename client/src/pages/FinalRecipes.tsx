@@ -432,15 +432,15 @@ export default function FinalRecipes() {
 
       {/* Dialog Modifica Ricetta */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] w-[1400px] max-h-[95vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Modifica Ricetta</DialogTitle>
+            <DialogTitle className="text-2xl">Modifica Ricetta</DialogTitle>
             <DialogDescription>
               Modifica categoria, resa produzione, scarto al servizio e componenti
             </DialogDescription>
           </DialogHeader>
           {editFormData && (
-            <div className="space-y-6">
+            <div className="flex-1 overflow-y-auto space-y-6 pr-2">
               {/* Categoria */}
               <div className="space-y-2">
                 <Label htmlFor="category">Categoria</Label>
@@ -493,16 +493,16 @@ export default function FinalRecipes() {
               </div>
 
               {/* Gestione Componenti */}
-              <div className="space-y-4">
+              <div className="space-y-4 bg-slate-50 p-6 rounded-lg">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-lg">Componenti</h3>
-                  <div className="text-sm text-slate-600">
-                    Costo totale: <span className="font-semibold text-green-600">€ {calculateTotalCost().toFixed(2)}</span>
+                  <h3 className="font-semibold text-xl">Componenti</h3>
+                  <div className="text-base text-slate-700 bg-white px-4 py-2 rounded-lg border-2 border-green-500">
+                    Costo totale: <span className="font-bold text-green-600 text-lg">€ {calculateTotalCost().toFixed(2)}</span>
                   </div>
                 </div>
 
                 {/* Lista componenti attuali */}
-                <div className="border rounded-lg overflow-hidden">
+                <div className="border rounded-lg overflow-hidden bg-white max-h-[300px] overflow-y-auto">
                   <table className="w-full">
                     <thead className="bg-slate-50">
                       <tr>
@@ -558,9 +558,9 @@ export default function FinalRecipes() {
                 </div>
 
                 {/* Ricerca e aggiunta componenti */}
-                <div className="space-y-3 p-4 bg-slate-50 rounded-lg">
-                  <Label>Aggiungi Componente</Label>
-                  <div className="flex gap-2">
+                <div className="space-y-3 p-5 bg-white border-2 border-dashed border-slate-300 rounded-lg">
+                  <Label className="text-base font-semibold">Aggiungi Componente</Label>
+                  <div className="flex gap-3">
                     <Select value={searchType} onValueChange={(v: any) => setSearchType(v)}>
                       <SelectTrigger className="w-40">
                         <SelectValue />
@@ -625,14 +625,14 @@ export default function FinalRecipes() {
 
       {/* Dialog Creazione Nuova Ricetta */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] w-[1400px] max-h-[95vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Crea Nuova Ricetta</DialogTitle>
+            <DialogTitle className="text-2xl">Crea Nuova Ricetta</DialogTitle>
             <DialogDescription>
               Compila i campi e aggiungi i componenti per creare una nuova ricetta
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-6">
+          <div className="flex-1 overflow-y-auto space-y-6 pr-2">
             {/* Informazioni Base */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -723,17 +723,17 @@ export default function FinalRecipes() {
             </div>
 
             {/* Gestione Componenti */}
-            <div className="space-y-4">
+            <div className="space-y-4 bg-slate-50 p-6 rounded-lg">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-lg">Componenti</h3>
-                <div className="text-sm text-slate-600">
-                  Costo totale: <span className="font-semibold text-green-600">€ {createComponents.reduce((sum, comp) => sum + (comp.quantity * comp.pricePerUnit), 0).toFixed(2)}</span>
+                <h3 className="font-semibold text-xl">Componenti</h3>
+                <div className="text-base text-slate-700 bg-white px-4 py-2 rounded-lg border-2 border-green-500">
+                  Costo totale: <span className="font-bold text-green-600 text-lg">€ {createComponents.reduce((sum, comp) => sum + (comp.quantity * comp.pricePerUnit), 0).toFixed(2)}</span>
                 </div>
               </div>
 
               {/* Lista componenti */}
               {createComponents.length > 0 ? (
-                <div className="border rounded-lg overflow-hidden">
+                <div className="border rounded-lg overflow-hidden bg-white max-h-[300px] overflow-y-auto">
                   <table className="w-full">
                     <thead className="bg-slate-50">
                       <tr>
@@ -798,9 +798,9 @@ export default function FinalRecipes() {
               )}
 
               {/* Ricerca e aggiunta componenti */}
-              <div className="space-y-3 p-4 bg-slate-50 rounded-lg">
-                <Label>Aggiungi Componente</Label>
-                <div className="flex gap-2">
+              <div className="space-y-3 p-5 bg-white border-2 border-dashed border-slate-300 rounded-lg">
+                <Label className="text-base font-semibold">Aggiungi Componente</Label>
+                <div className="flex gap-3">
                   <Select value={searchType} onValueChange={(v: any) => setSearchType(v)}>
                     <SelectTrigger className="w-40">
                       <SelectValue />

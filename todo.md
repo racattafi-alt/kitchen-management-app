@@ -465,3 +465,13 @@
 - [x] Implementare mutation backend updateSemiFinished con gestione componenti
 - [x] Ricalcolare finalPricePerKg quando si modificano componenti
 - [ ] Testare creazione e modifica semilavorati con database
+
+## MIGLIORAMENTI UI DIALOG RICETTE (NUOVA RICHIESTA)
+- [x] Aumentare dimensioni dialog creazione ricetta (95vw, max 1400px)
+- [x] Aumentare dimensioni dialog modifica ricetta (95vw, max 1400px)
+- [x] Rendere elementi responsive con flex-col e overflow-y-auto
+- [x] Migliorare layout e spaziatura per UX professionale
+- [x] Ottimizzare tabelle componenti con max-height e scroll
+- [x] Aggiungere background colorati e bordi per sezioni componenti
+- [x] Aumentare dimensioni titoli e badge costo totale
+- [x] Testare responsività - tutti i 24 test passano
