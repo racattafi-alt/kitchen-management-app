@@ -676,3 +676,6 @@
 - [x] Aggiungere colonna "Unità" in tabella produzioni con badge colorati (blu=Solo kg, arancione=Solo pezzi, indigo=kg+pezzi)
 - [x] Aggiungere tooltip quantità convertita per ricette both (es. "20kg ≈ 300 pezzi")
 - [x] Creare utility batch import Excel (batch_import_measurement_types.py)
+
+## UX IMPROVEMENT FORM PRODUZIONE
+- [x] Rimuovere menu a tendina "Tipo Unità" (ridondante con pulsanti kg/pezzi)

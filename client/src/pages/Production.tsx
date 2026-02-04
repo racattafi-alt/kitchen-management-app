@@ -17,7 +17,6 @@ export default function Production() {
     recipeFinalId: "",
     recipeName: "",
     desiredQuantity: "",
-    unitType: "k" as "k" | "u",
   });
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -70,7 +69,6 @@ export default function Production() {
       recipeFinalId: "",
       recipeName: "",
       desiredQuantity: "",
-      unitType: "k",
     });
     setShowSuggestions(false);
     setEditingId(null);
@@ -159,7 +157,7 @@ export default function Production() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Data Lunedì Settimana */}
                 <div className="space-y-2">
                   <Label htmlFor="weekStartDate">
@@ -287,19 +285,6 @@ export default function Production() {
                   )}
                 </div>
 
-                {/* Unità */}
-                <div className="space-y-2">
-                  <Label htmlFor="unitType">Unità</Label>
-                  <select
-                    id="unitType"
-                    value={formData.unitType}
-                    onChange={(e) => setFormData({ ...formData, unitType: e.target.value as "k" | "u" })}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  >
-                    <option value="k">Kg</option>
-                    <option value="u">Unità</option>
-                  </select>
-                </div>
               </div>
 
               <div className="flex gap-2">
