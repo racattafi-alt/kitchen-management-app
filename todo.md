@@ -687,3 +687,9 @@
 - [x] Correggere calculations.ts: rimossa divisione per 1000
 - [x] Correggere routers.ts generateShoppingList: aggiunta normalizzazione per unitWeight
 - [x] Testare calcolo lista acquisti: 100kg RIBS ora richiede 112.7kg costolette (corretto!)
+
+## CORREZIONE CLASSIFICAZIONE INGREDIENTI E SALSE
+- [x] Impostare isOrderable=false per tutte le spezie (non si ordinano dai fornitori)
+- [x] Verificare salse: tutte le 6 salse rimangono semilavorati (mayo, bbq, bbqribs, ketchup, senape, memphis)
+- [x] Aggiornare router shopping list per filtrare ingredienti con isOrderable=false
+- [x] Testare lista acquisti: spezie non devono apparire (143 articoli invece di 167, spezie escluse)

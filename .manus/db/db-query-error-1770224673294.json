@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, name, category, isOrderable FROM ingredients WHERE category LIKE '%spez%' OR category LIKE '%Spez%' OR name LIKE '%pepe%' OR name LIKE '%paprica%' OR name LIKE '%cumino%' OR name LIKE '%cannella%' OR name LIKE '%curcuma%' ORDER BY name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT id, name, category, isOrderable FROM ingredients WHERE category LIKE '%spez%' OR category LIKE '%Spez%' OR name LIKE '%pepe%' OR name LIKE '%paprica%' OR name LIKE '%cumino%' OR name LIKE '%cannella%' OR name LIKE '%curcuma%' ORDER BY name;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'isorderable' in 'field list'"
+  ]
+}

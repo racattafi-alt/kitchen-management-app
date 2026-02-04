@@ -1,0 +1,40 @@
+{
+  "query": "SELECT id, code, name FROM semi_finished_recipes WHERE category = 'SALSE' ORDER BY name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT id, code, name FROM semi_finished_recipes WHERE category = 'SALSE' ORDER BY name;",
+  "rows": [
+    {
+      "id": "RGWcTRMmWqsa_sSvU4NBc",
+      "code": "SALSA_MAYO",
+      "name": "Maionese"
+    },
+    {
+      "id": "zVjTg9YiyZFb6FFeZz9mX",
+      "code": "SL_BBQ",
+      "name": "Salsa bbq"
+    },
+    {
+      "id": "OIomHXSLd1C-AUy7Hq3a4",
+      "code": "SL_BBQRIBS",
+      "name": "Salsa bbqRibs"
+    },
+    {
+      "id": "2rF5VwzkcOtanlqhNrv4Y",
+      "code": "SL_KETCHUP",
+      "name": "Salsa ketchup"
+    },
+    {
+      "id": "gGZum3Lm5oJfubi8cT9bP",
+      "code": "SL_MEMPHIS",
+      "name": "Salsa memphis"
+    },
+    {
+      "id": "grQJp_NtNrlirQhrixbwB",
+      "code": "SL_SENAPE",
+      "name": "Salsa senape"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcode\tname\nRGWcTRMmWqsa_sSvU4NBc\tSALSA_MAYO\tMaionese\nzVjTg9YiyZFb6FFeZz9mX\tSL_BBQ\tSalsa bbq\nOIomHXSLd1C-AUy7Hq3a4\tSL_BBQRIBS\tSalsa bbqRibs\n2rF5VwzkcOtanlqhNrv4Y\tSL_KETCHUP\tSalsa ketchup\ngGZum3Lm5oJfubi8cT9bP\tSL_MEMPHIS\tSalsa memphis\ngrQJp_NtNrlirQhrixbwB\tSL_SENAPE\tSalsa senape\n",
+  "stderr": "",
+  "execution_time_ms": 64
+}

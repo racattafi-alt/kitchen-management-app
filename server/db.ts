@@ -154,6 +154,7 @@ export async function getIngredients() {
       pricePerKgOrUnit: ingredients.pricePerKgOrUnit,
       minOrderQuantity: ingredients.minOrderQuantity,
       isActive: ingredients.isActive,
+      isOrderable: ingredients.isOrderable,
       createdAt: ingredients.createdAt,
       updatedAt: ingredients.updatedAt,
     })

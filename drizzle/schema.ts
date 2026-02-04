@@ -74,6 +74,7 @@ export const ingredients = mysqlTable("ingredients", {
   notes: text("notes"),
   isActive: boolean("isActive").default(true).notNull(),
   isFood: boolean("is_food").default(true).notNull(),
+  isOrderable: boolean("isOrderable").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

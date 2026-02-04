@@ -1,0 +1,130 @@
+{
+  "query": "SELECT id, name, category FROM ingredients WHERE category = 'Spezie' ORDER BY name LIMIT 30;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT id, name, category FROM ingredients WHERE category = 'Spezie' ORDER BY name LIMIT 30;",
+  "rows": [
+    {
+      "id": "WLPIceY1gvMNqtIEEKVNp",
+      "name": "Aglio in polvere",
+      "category": "Spezie"
+    },
+    {
+      "id": "VFgASYBb_x7Kzs4BEJjBv",
+      "name": "Asafetida",
+      "category": "Spezie"
+    },
+    {
+      "id": "NlyFJyxttv5mMlErPDPRy",
+      "name": "Cannella",
+      "category": "Spezie"
+    },
+    {
+      "id": "bjcVTbl3-2R7oGCJ-y4De",
+      "name": "Chile pasilla in polvere",
+      "category": "Spezie"
+    },
+    {
+      "id": "xCDgzSspWgCcfTiItj_5I",
+      "name": "Coriandolo in polvere",
+      "category": "Spezie"
+    },
+    {
+      "id": "HJqq-P8q91nc9QaK7wGBc",
+      "name": "Cumino",
+      "category": "Spezie"
+    },
+    {
+      "id": "_tSyC5bKEKeC47iti_ZYZ",
+      "name": "Curcuma",
+      "category": "Spezie"
+    },
+    {
+      "id": "VphgGa_ws7aBsRRMHEKfc",
+      "name": "Fava tonka",
+      "category": "Spezie"
+    },
+    {
+      "id": "Vkgsrbf5Lge520sm3xUml",
+      "name": "Galangal",
+      "category": "Spezie"
+    },
+    {
+      "id": "rJmQdW8weRTOdfIEgdRhl",
+      "name": "Nigella",
+      "category": "Spezie"
+    },
+    {
+      "id": "-eBrJDJmFHyvvmUV_T9gC",
+      "name": "Paprica affumicata",
+      "category": "Spezie"
+    },
+    {
+      "id": "PLbpgh1c6WaeycGdmaf5M",
+      "name": "Paprica dolce",
+      "category": "Spezie"
+    },
+    {
+      "id": "Hz8vWuFoVCSTjbq-pM_My",
+      "name": "Pasta di vaniglia",
+      "category": "Spezie"
+    },
+    {
+      "id": "Ui034rKABg7d7q6RNt7V-",
+      "name": "Pepe",
+      "category": "Spezie"
+    },
+    {
+      "id": "VCngIqZQgNShQ_FOmtp57",
+      "name": "Pepe bianco",
+      "category": "Spezie"
+    },
+    {
+      "id": "OCLsME-xN-9RgKpkUvd3-",
+      "name": "Pepe di sichuan",
+      "category": "Spezie"
+    },
+    {
+      "id": "-WmtKNxbHF3obD2lQS_sS",
+      "name": "Rabarbaro",
+      "category": "Spezie"
+    },
+    {
+      "id": "8MGqTFeya9c3GcAyp7n0B",
+      "name": "Radice di angelica",
+      "category": "Spezie"
+    },
+    {
+      "id": "x5do5mlhu9S2doS12_u25",
+      "name": "Semi di fieno greco",
+      "category": "Spezie"
+    },
+    {
+      "id": "Pm9owjv3SFys2fnqIC7KI",
+      "name": "Semi di senape gialla",
+      "category": "Spezie"
+    },
+    {
+      "id": "u9koIMrudTKp8A5DmBiK-",
+      "name": "Semi di senape nera",
+      "category": "Spezie"
+    },
+    {
+      "id": "pN0SB3tv2ZqDFO_y8oDxH",
+      "name": "Senape in polvere",
+      "category": "Spezie"
+    },
+    {
+      "id": "MOH6ORoElpEhkH-GALSos",
+      "name": "Sumac",
+      "category": "Spezie"
+    },
+    {
+      "id": "HKo1g2fIm23siqoxMe2qe",
+      "name": "Thè affumicato",
+      "category": "Spezie"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcategory\nWLPIceY1gvMNqtIEEKVNp\tAglio in polvere\tSpezie\nVFgASYBb_x7Kzs4BEJjBv\tAsafetida\tSpezie\nNlyFJyxttv5mMlErPDPRy\tCannella\tSpezie\nbjcVTbl3-2R7oGCJ-y4De\tChile pasilla in polvere\tSpezie\nxCDgzSspWgCcfTiItj_5I\tCoriandolo in polvere\tSpezie\nHJqq-P8q91nc9QaK7wGBc\tCumino\tSpezie\n_tSyC5bKEKeC47iti_ZYZ\tCurcuma\tSpezie\nVphgGa_ws7aBsRRMHEKfc\tFava tonka\tSpezie\nVkgsrbf5Lge520sm3xUml\tGalangal\tSpezie\nrJmQdW8weRTOdfIEgdRhl\tNigella\tSpezie\n-eBrJDJmFHyvvmUV_T9gC\tPaprica affumicata\tSpezie\nPLbpgh1c6WaeycGdmaf5M\tPaprica dolce\tSpezie\nHz8vWuFoVCSTjbq-pM_My\tPasta di vaniglia\tSpezie\nUi034rKABg7d7q6RNt7V-\tPepe\tSpezie\nVCngIqZQgNShQ_FOmtp57\tPepe bianco\tSpezie\nOCLsME-xN-9RgKpkUvd3-\tPepe di sichuan\tSpezie\n-WmtKNxbHF3obD2lQS_sS\tRabarbaro\tSpezie\n8MGqTFeya9c3GcAyp7n0B\tRadice di angelica\tSpezie\nx5do5mlhu9S2doS12_u25\tSemi di fieno greco\tSpezie\nPm9owjv3SFys2fnqIC7KI\tSemi di senape gialla\tSpezie\nu9koIMrudTKp8A5DmBiK-\tSemi di senape nera\tSpezie\npN0SB3tv2ZqDFO_y8oDxH\tSenape in polvere\tSpezie\nMOH6ORoElpEhkH-GALSos\tSumac\tSpezie\nHKo1g2fIm23siqoxMe2qe\tThè affumicato\tSpezie\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}
