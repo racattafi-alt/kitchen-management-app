@@ -414,9 +414,25 @@
 - [x] Aggiornare schema ricette per distinguere operations da semilavorati
 - [x] Aggiornare backend per recuperare dettagli operations dalla tabella
 - [x] Aggiungere funzione getOperationByName nel db.ts
-- [ ] Implementare sezione gestione componenti nel dialog modifica:
+- [x] Implementare sezione gestione componenti nel dialog modifica:
   * Barra ricerca per aggiungere ingredienti/semilavorati/operations
   * Pulsante elimina per ogni componente
   * Input quantità modificabili
   * Ricalcolo automatico costo totale
+- [x] Aggiungere badge distintivo "Operazione" per operations (arancione)
+- [x] Distinguere visualmente operations da semilavorati nella tabella
+- [x] Creare operationsRouter nel backend con procedura list
+- [x] Aggiungere query trpc.operations.list per frontend
 - [ ] Testare modifica completa ricetta e verifica aggiornamento database
+
+## CREAZIONE NUOVE RICETTE (NUOVA RICHIESTA)
+- [x] Attivare pulsante "Nuova Ricetta" nella pagina Ricette Finali
+- [x] Creare dialog/wizard per nuova ricetta
+- [x] Implementare form con campi: nome, codice, categoria
+- [x] Aggiungere sezione selezione componenti con ricerca multipla
+- [x] Implementare input quantità per ogni componente selezionato
+- [x] Calcolare automaticamente costo totale durante composizione
+- [x] Aggiungere campi resa produzione e scarto al servizio
+- [x] Aggiungere campi metodo conservazione e tempo max conservazione
+- [ ] Implementare procedura backend createFinalRecipe (collegare al pulsante Crea)
+- [ ] Testare creazione ricetta completa e verifica database

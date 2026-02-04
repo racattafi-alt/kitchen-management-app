@@ -434,6 +434,13 @@ const finalRecipesRouter = router({
     }),
 });
 
+// ============ PROCEDURE OPERATIONS ============
+const operationsRouter = router({
+  list: protectedProcedure.query(async () => {
+    return db.getOperations();
+  }),
+});
+
 // ============ PROCEDURE FOOD MATRIX ============
 const foodMatrixRouter = router({
   list: protectedProcedure
@@ -1061,6 +1068,7 @@ export const appRouter = router({
   ingredients: ingredientsRouter,
   semiFinished: semiFinishedRouter,
   finalRecipes: finalRecipesRouter,
+  operations: operationsRouter,
   foodMatrix: foodMatrixRouter,
   production: productionRouter,
   menu: menuRouter,
