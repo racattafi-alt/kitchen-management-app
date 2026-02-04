@@ -173,5 +173,15 @@
 - [x] Identificare campi mancanti: measurementType, isSemiFinished, isSellable, isActive
 - [x] Correggere procedura backend createFinalRecipe aggiungendo tutti i campi obbligatori
 - [x] Riavviare server per applicare modifiche
-- [ ] Testare creazione ricetta "Salsa alette" (pronto per test utente)
+- [x] Testare creazione ricetta "Salsa alette" (pronto per test utente)
+- [x] Salvare checkpoint
+
+## BUG: ERRORE SQL ANCORA PRESENTE (TERZO TENTATIVO)
+- [x] Analizzare log server per vedere messaggio errore database esatto
+- [x] Testare query SQL manualmente: trovato errore "Out of range value for column 'yieldPercentage'"
+- [x] Problema: decimal(5,3) accetta max 99.999, ma resa è 100%
+- [x] Soluzione: modificato schema database a decimal(6,3) per accettare 100.000
+- [x] Aggiornato schema Drizzle per riflettere modifiche
+- [x] Testato query SQL con yieldPercentage=100: SUCCESS
+- [ ] Testare creazione ricetta dall'interfaccia
 - [ ] Salvare checkpoint
