@@ -63,7 +63,12 @@ export default function ShoppingList() {
   const filteredList = shoppingList?.filter((item: any) =>
     item.itemName?.toLowerCase().includes(searchQuery.toLowerCase()) &&
     (!selectedSupplier || item.supplier === selectedSupplier)
-  );
+  ).sort((a: any, b: any) => {
+    // Ordina prima per fornitore, poi per nome articolo
+    const supplierCompare = (a.supplier || '').localeCompare(b.supplier || '');
+    if (supplierCompare !== 0) return supplierCompare;
+    return (a.itemName || '').localeCompare(b.itemName || '');
+  });
 
   // Fornitori unici
   const suppliers = Array.from(new Set(shoppingList?.map((item: any) => item.supplier) || []));
@@ -182,6 +187,60 @@ export default function ShoppingList() {
     toast.success("Lista ordini esportata");
   };
 
+  // Esporta ordine per email (senza prezzi)
+  const handleEmailExport = () => {
+    const orderedItems = filteredList?.filter((item: any) => (orderQuantities[item.id] || 0) > 0);
+    const validExtraItems = extraItems.filter(item => item.name && item.quantity > 0);
+    
+    if ((!orderedItems || orderedItems.length === 0) && validExtraItems.length === 0) {
+      toast.error("Nessun articolo da ordinare");
+      return;
+    }
+
+    // Raggruppa per fornitore
+    const supplierGroups: Record<string, Array<{ name: string; qty: number; unit: string }>> = {};
+    
+    orderedItems?.forEach((item: any) => {
+      const supplier = item.supplier || 'Senza Fornitore';
+      if (!supplierGroups[supplier]) supplierGroups[supplier] = [];
+      supplierGroups[supplier].push({
+        name: item.itemName,
+        qty: orderQuantities[item.id] || 0,
+        unit: item.unitType === 'k' ? 'kg' : 'pz',
+      });
+    });
+    
+    validExtraItems.forEach(item => {
+      const supplier = item.supplier || 'Senza Fornitore';
+      if (!supplierGroups[supplier]) supplierGroups[supplier] = [];
+      supplierGroups[supplier].push({
+        name: item.name,
+        qty: item.quantity,
+        unit: item.unit,
+      });
+    });
+
+    // Genera testo email
+    let emailBody = `ORDINE SETTIMANALE\n`;
+    emailBody += `Settimana: ${selectedWeekGroup || 'Tutte le settimane'}\n\n`;
+    
+    Object.entries(supplierGroups).forEach(([supplier, items]) => {
+      emailBody += `=== ${supplier.toUpperCase()} ===\n`;
+      items.forEach(item => {
+        emailBody += `- ${item.name}: ${item.qty.toFixed(3)} ${item.unit}\n`;
+      });
+      emailBody += `\n`;
+    });
+
+    // Crea mailto link
+    const subject = encodeURIComponent(`Ordine Settimanale - ${selectedWeekGroup || 'Tutte'}`);
+    const body = encodeURIComponent(emailBody);
+    const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
+    
+    window.location.href = mailtoLink;
+    toast.success("Email ordine preparata!");
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -197,6 +256,10 @@ export default function ShoppingList() {
             <Button onClick={handleSupplierOrder} disabled={totalOrderCost === 0} variant="default">
               <MessageCircle className="mr-2 h-4 w-4" />
               Ordine per Fornitore
+            </Button>
+            <Button onClick={handleEmailExport} disabled={totalOrderCost === 0} variant="outline">
+              <FileText className="mr-2 h-4 w-4" />
+              Esporta Email
             </Button>
             <Button onClick={handleExport} disabled={totalOrderCost === 0} variant="outline">
               <Download className="mr-2 h-4 w-4" />

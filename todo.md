@@ -113,4 +113,12 @@
 - [x] Rimuovere value={orderQty} e usare value={orderQty || ""}
 - [x] Impostare placeholder="0" per indicare valore vuoto
 - [x] Testare funzionalità lista acquisti (caselle ora vuote con placeholder)
+- [x] Salvare checkpoint
+
+## MIGLIORAMENTI LISTA ACQUISTI
+- [x] Ordinare ingredienti per fornitore nella visualizzazione
+- [x] Aggiungere pulsante "Esporta Ordine per Email"
+- [x] Creare formato ordine senza prezzi (solo articolo, quantità, unità)
+- [x] Generare testo email con ordini raggruppati per fornitore
+- [x] Testare export email (funzionante: apre client email con ordine formattato)
 - [ ] Salvare checkpoint
