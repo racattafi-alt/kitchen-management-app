@@ -32,4 +32,32 @@
 - [x] Creare dialog upload file Excel per import
 - [x] Validare formato Excel e mostrare preview prima dell'import
 - [ ] Testare export/import con dati reali
-- [ ] Salvare checkpoint finale
+- [x] Salvare checkpoint finale
+
+## IMPORT COMPLETO INGREDIENTI DA PDF
+- [x] Analizzare PDF MENUUNION2026 pagina per pagina per estrarre tutti gli ingredienti
+- [x] Creare mapping completo: nome → prezzo, quantità, unità, categoria, isFood
+- [x] Creare script Python per import massivo con gestione errori
+- [x] Creare file Excel con tutti i 147 ingredienti estratti dal PDF
+- [ ] Importare file Excel tramite interfaccia web
+- [ ] Verificare numero ingredienti aggiornati
+- [ ] Verificare prezzi corretti per campione di ingredienti
+- [ ] Verificare categorie assegnate correttamente
+- [ ] Verificare flag isFood per ingredienti non-food
+- [ ] Testare interfaccia con ingredienti aggiornati
+- [ ] Salvare checkpoint con database completo
+
+## BUG: ERRORE REQUIRE NOT DEFINED
+- [x] Identificare dove viene usato require() nelle procedure export/import Excel
+- [x] Sostituire require() con script Python standalone
+- [x] Creare script export_excel.py e import_excel.py
+- [x] Testare script Python standalone funzionanti
+- [ ] Testare export Excel da interfaccia web
+- [ ] Testare import Excel da interfaccia web
+
+## BUG: CALCOLO PREZZO ERRATO QUANDO SI MODIFICA QUANTITÀ
+- [x] Riprodurre bug con shopper bio: modificare quantità e verificare prezzo errato
+- [x] Identificare logica di ricalcolo pricePerKgOrUnit nel form modifica
+- [x] Correggere formula: pricePerKgOrUnit = packagePrice / packageQuantity
+- [x] Testare correzione con shopper bio (ora calcola correttamente €0.04/pz)
+- [ ] Salvare checkpoint con bug corretto
