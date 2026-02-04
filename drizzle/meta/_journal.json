@@ -127,6 +127,13 @@
       "when": 1770231257360,
       "tag": "0017_fixed_nomad",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1770232399272,
+      "tag": "0018_flimsy_rocket_racer",
+      "breakpoints": true
     }
   ]
 }

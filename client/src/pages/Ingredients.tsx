@@ -11,6 +11,8 @@ import { trpc } from "@/lib/trpc";
 import { Plus, Package, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+import { STANDARD_ALLERGENS } from "../../../shared/allergens";
 
 export default function Ingredients() {
   const { user } = useAuth();
@@ -20,7 +22,6 @@ export default function Ingredients() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"name" | "category" | "supplier">("name");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [formData, setFormData] = useState({
     name: "",
     supplier: "",
@@ -30,6 +31,7 @@ export default function Ingredients() {
     packagePrice: 0,
     brand: "",
     notes: "",
+    allergens: [] as string[],
   });
   const [editFormData, setEditFormData] = useState({
     name: "",
@@ -41,6 +43,7 @@ export default function Ingredients() {
     brand: "",
     notes: "",
     isFood: true,
+    allergens: [] as string[],
   });
 
   const utils = trpc.useUtils();
@@ -54,14 +57,15 @@ export default function Ingredients() {
       return matchesSearch && matchesCategory;
     })
     ?.sort((a: any, b: any) => {
-      let compareA = a[sortBy];
-      let compareB = b[sortBy];
+      let compareA = a[sortBy] || '';
+      let compareB = b[sortBy] || '';
       
       if (typeof compareA === 'string') compareA = compareA.toLowerCase();
       if (typeof compareB === 'string') compareB = compareB.toLowerCase();
       
-      if (compareA < compareB) return sortOrder === "asc" ? -1 : 1;
-      if (compareA > compareB) return sortOrder === "asc" ? 1 : -1;
+      // Sempre ordinamento alfabetico ascendente
+      if (compareA < compareB) return -1;
+      if (compareA > compareB) return 1;
       return 0;
     });
   const createMutation = trpc.ingredients.create.useMutation({
@@ -132,6 +136,7 @@ export default function Ingredients() {
       brand: ingredient.brand || "",
       notes: ingredient.notes || "",
       isFood: ingredient.isFood !== false,
+      allergens: ingredient.allergens || [],
     });
     setIsEditOpen(true);
   };
@@ -263,6 +268,29 @@ export default function Ingredients() {
                         value={formData.notes}
                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                       />
+                    </div>
+                    <div className="col-span-2">
+                      <Label>Allergeni</Label>
+                      <div className="grid grid-cols-2 gap-2 mt-2 p-4 border rounded-lg max-h-48 overflow-y-auto">
+                        {STANDARD_ALLERGENS.map((allergen) => (
+                          <div key={allergen} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`allergen-${allergen}`}
+                              checked={formData.allergens.includes(allergen)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setFormData({ ...formData, allergens: [...formData.allergens, allergen] });
+                                } else {
+                                  setFormData({ ...formData, allergens: formData.allergens.filter(a => a !== allergen) });
+                                }
+                              }}
+                            />
+                            <label htmlFor={`allergen-${allergen}`} className="text-sm cursor-pointer">
+                              {allergen}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                   <div className="flex justify-end gap-2">
@@ -399,6 +427,30 @@ export default function Ingredients() {
                     <Label htmlFor="edit-isFood" className="cursor-pointer">
                       Ingrediente Food (deseleziona per packaging/materiali non-food)
                     </Label>
+                  </div>
+                </div>
+                <div className="col-span-2">
+                  <Label>Allergeni</Label>
+                  <div className="grid grid-cols-2 gap-2 mt-2 p-4 border rounded-lg max-h-48 overflow-y-auto">
+                    {STANDARD_ALLERGENS.map((allergen) => (
+                      <div key={allergen} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`edit-allergen-${allergen}`}
+                          checked={editFormData.allergens?.includes(allergen) || false}
+                          onCheckedChange={(checked) => {
+                            const currentAllergens = editFormData.allergens || [];
+                            if (checked) {
+                              setEditFormData({ ...editFormData, allergens: [...currentAllergens, allergen] });
+                            } else {
+                              setEditFormData({ ...editFormData, allergens: currentAllergens.filter(a => a !== allergen) });
+                            }
+                          }}
+                        />
+                        <label htmlFor={`edit-allergen-${allergen}`} className="text-sm cursor-pointer">
+                          {allergen}
+                        </label>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

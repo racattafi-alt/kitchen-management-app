@@ -155,6 +155,8 @@ export async function getIngredients() {
       minOrderQuantity: ingredients.minOrderQuantity,
       isActive: ingredients.isActive,
       isOrderable: ingredients.isOrderable,
+      isSellable: ingredients.isSellable,
+      allergens: ingredients.allergens,
       createdAt: ingredients.createdAt,
       updatedAt: ingredients.updatedAt,
     })

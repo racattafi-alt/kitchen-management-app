@@ -728,3 +728,18 @@
 - [x] Implementare filtro automatico in tempo reale mentre si digita
 - [x] Filtrare per nome, codice, categoria ricetta
 - [x] Mostrare contatore "X ricette trovate su Y totali"
+
+## ORDINAMENTO ALFABETICO INGREDIENTI
+- [x] Aggiungere dropdown ordinamento con 3 opzioni: Nome, Fornitore, Tipologia (GIÀ PRESENTE)
+- [x] Implementare ordinamento alfabetico per nome ingrediente
+- [x] Implementare ordinamento alfabetico per fornitore
+- [x] Implementare ordinamento alfabetico per tipologia
+- [x] Salvare preferenza ordinamento in stato locale
+
+## GESTIONE ALLERGENI
+- [x] Aggiungere campo allergeni (JSON array) alla tabella ingredients
+- [x] Definire lista allergeni standard (14 allergeni EU 1169/2011)
+- [x] Aggiungere multi-select allergeni nel form creazione/modifica ingrediente
+- [x] Implementare calcolo automatico allergeni per ricette finali
+- [x] Implementare procedura backend getAllergens per calcolo automatico
+- [x] Sistema completo allergeni pronto per visualizzazione frontend

@@ -35,6 +35,7 @@ const ingredientsRouter = router({
         brand: z.string().optional(),
         notes: z.string().optional(),
         isFood: z.boolean().optional(),
+        allergens: z.array(z.string()).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -50,6 +51,7 @@ const ingredientsRouter = router({
         packageSize: input.packageSize?.toString() || null,
         isActive: true,
         isFood: input.isFood ?? true,
+        allergens: input.allergens || [],
       } as any);
     }),
   update: protectedProcedure
@@ -68,6 +70,7 @@ const ingredientsRouter = router({
         brand: z.string().optional(),
         notes: z.string().optional(),
         isFood: z.boolean().optional(),
+        allergens: z.array(z.string()).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -684,6 +687,13 @@ const finalRecipesRouter = router({
         conservationMethod: snapshot.conservationMethod,
         maxConservationTime: snapshot.maxConservationTime,
       });
+    }),
+
+  getAllergens: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input }) => {
+      const { calculateRecipeAllergens } = await import("./allergens");
+      return calculateRecipeAllergens(input.id);
     }),
 
   toggleActive: protectedProcedure
