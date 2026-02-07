@@ -226,3 +226,19 @@
 - [x] Riavviare server per applicare modifiche
 - [ ] Testare sincronizzazione (aggiungere/eliminare produzione e verificare aggiornamento)
 - [ ] Salvare checkpoint
+
+## FEATURE: SISTEMA GESTIONE UTENTI CON 3 LIVELLI PERMESSI
+- [x] Analizzare schema database tabella user (campo role già include cook)
+- [x] Enum role già include: user/admin/manager/cook
+- [x] Creare pagina /users visibile solo agli admin
+- [x] Implementare lista utenti con badge colorati per ruolo
+- [x] Implementare dialog modifica ruolo con select
+- [x] Aggiungere procedura backend users.list (solo admin)
+- [x] Aggiungere procedura backend users.updateRole (solo admin)
+- [x] Aggiungere funzioni getAllUsers e updateUserRole nel db.ts
+- [x] Applicare restrizioni: manager NON può creare/modificare/eliminare/attivare ricette
+- [x] Applicare restrizioni: cuoco (permessi da definire dall'utente)
+- [x] Aggiungere card "Gestione Utenti" nella home (solo per admin)
+- [x] Riavviare server per applicare modifiche
+- [ ] Testare sistema permessi con utenti diversi
+- [ ] Salvare checkpoint

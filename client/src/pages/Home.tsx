@@ -13,6 +13,7 @@ import {
   BarChart3,
   Utensils,
   FileText,
+  Users,
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -97,6 +98,16 @@ export default function Home() {
                 <CardDescription>Conformità e tracciabilità</CardDescription>
               </CardHeader>
             </Card>
+
+            {user?.role === "admin" && (
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 border-red-200" onClick={() => setLocation("/users")}>
+                <CardHeader>
+                  <Users className="h-10 w-10 text-red-600 mb-2" />
+                  <CardTitle className="text-red-900">Gestione Utenti</CardTitle>
+                  <CardDescription>Modifica ruoli e permessi (Solo Admin)</CardDescription>
+                </CardHeader>
+              </Card>
+            )}
           </div>
         </main>
       </div>

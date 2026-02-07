@@ -129,6 +129,35 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getAllUsers() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  return db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      role: users.role,
+      loginMethod: users.loginMethod,
+      lastSignedIn: users.lastSignedIn,
+      createdAt: users.createdAt,
+    })
+    .from(users)
+    .orderBy(users.createdAt);
+}
+
+export async function updateUserRole(userId: number, role: "user" | "admin" | "manager" | "cook") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(users)
+    .set({ role })
+    .where(eq(users.id, userId));
+  
+  return { success: true };
+}
+
 // ============ INGREDIENTI (Livello 0) ============
 
 export async function createIngredient(data: Omit<Ingredient, "createdAt" | "updatedAt">) {

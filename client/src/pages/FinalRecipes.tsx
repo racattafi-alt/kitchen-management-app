@@ -1599,7 +1599,7 @@ function VersionHistoryDialog({
     { enabled: !!recipeId && isOpen }
   );
 
-  const rollbackMutation = trpc.finalRecipes.rollbackToVersion.useMutation({
+  const rollbackMutation = trpc.finalRecipes.rollbackVersion.useMutation({
     onSuccess: () => {
       toast.success("Versione ripristinata con successo!");
       onRollback();

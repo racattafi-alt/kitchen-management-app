@@ -609,8 +609,9 @@ const finalRecipesRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
-        throw new Error("Unauthorized");
+      // Solo admin può creare ricette
+      if (ctx.user?.role !== "admin") {
+        throw new Error("Unauthorized: Only admins can create recipes");
       }
 
       // Verifica unicità codice
@@ -680,8 +681,9 @@ const finalRecipesRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
-        throw new Error("Unauthorized");
+      // Solo admin può modificare ricette
+      if (ctx.user?.role !== "admin") {
+        throw new Error("Unauthorized: Only admins can update recipes");
       }
 
       // Salva versione corrente prima di modificare
@@ -795,17 +797,18 @@ const finalRecipesRouter = router({
       return db.getRecipeVersions(input.id, "final");
     }),
 
-  rollbackToVersion: protectedProcedure
-    .input(z.object({ 
+  rollbackVersion: protectedProcedure
+    .input(z.object({
       recipeId: z.string(),
       versionId: z.number()
     }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
-        throw new Error("Unauthorized");
+      // Solo admin può ripristinare versioni precedenti
+      if (ctx.user?.role !== "admin") {
+        throw new Error("Unauthorized: Only admins can rollback recipe versions");
       }
 
-      // Recupera la versione richiesta
+      // Recupera la versione richiestasta
       const versions = await db.getRecipeVersions(input.recipeId, "final");
       const targetVersion = versions.find(v => v.id === input.versionId);
       
@@ -854,8 +857,9 @@ const finalRecipesRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
-        throw new Error("Unauthorized");
+      // Solo admin può eliminare ricette
+      if (ctx.user?.role !== "admin") {
+        throw new Error("Unauthorized: Only admins can delete recipes");
       }
       return db.deleteFinalRecipe(input.id);
     }),
@@ -866,8 +870,9 @@ const finalRecipesRouter = router({
       isActive: z.boolean()
     }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
-        throw new Error("Unauthorized");
+      // Solo admin può attivare/disattivare ricette
+      if (ctx.user?.role !== "admin") {
+        throw new Error("Unauthorized: Only admins can toggle recipe visibility");
       }
 
       return db.updateFinalRecipe(input.id, {
@@ -1125,8 +1130,30 @@ const systemRouter = router({
     }),
 });
 
+// ============ PROCEDURE GESTIONE UTENTI ============
+const usersRouter = router({  list: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user?.role !== "admin") {
+      throw new Error("Unauthorized: Only admins can view users");
+    }
+    return db.getAllUsers();
+  }),
+
+  updateRole: protectedProcedure
+    .input(z.object({
+      userId: z.number(),
+      role: z.enum(["user", "admin", "manager", "cook"])
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin") {
+        throw new Error("Unauthorized: Only admins can change user roles");
+      }
+      return db.updateUserRole(input.userId, input.role);
+    }),
+});
+
 export const appRouter = router({
   auth: authRouter,
+  users: usersRouter,
   ingredients: ingredientsRouter,
   semiFinished: semiFinishedRouter,
   finalRecipes: finalRecipesRouter,

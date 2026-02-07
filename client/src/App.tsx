@@ -20,6 +20,7 @@ import Storage from "./pages/Storage";
 import Assistant from "./pages/Assistant";
 import Suppliers from "./pages/Suppliers";
 import CostAnalysisDashboard from "./pages/CostAnalysisDashboard";
+import Users from "./pages/Users";
 
 function Router() {
   return (
@@ -41,6 +42,7 @@ function Router() {
       <Route path={"/assistant"} component={Assistant} />
       <Route path={"/suppliers"} component={Suppliers} />
       <Route path={"/cost-analysis"} component={CostAnalysisDashboard} />
+      <Route path={"/users"} component={Users} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
