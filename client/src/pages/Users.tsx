@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
 import {
   Dialog,
   DialogContent,
@@ -16,10 +17,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Users as UsersIcon, Shield, UserCog, ChefHat } from "lucide-react";
+import { Users as UsersIcon, Shield, UserCog, ChefHat, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Users() {
+  const [, setLocation] = useLocation();
   const { data: users, isLoading } = trpc.users.list.useQuery();
   const utils = trpc.useUtils();
   
@@ -87,16 +89,31 @@ export default function Users() {
   }
 
   return (
-    <div className="container py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-          <UsersIcon className="h-8 w-8 text-emerald-600" />
-          Gestione Utenti
-        </h1>
-        <p className="text-slate-600 mt-2">
-          Gestisci i ruoli e i permessi degli utenti del sistema
-        </p>
-      </div>
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div className="container flex items-center justify-between h-16">
+          <Button
+            variant="ghost"
+            onClick={() => setLocation("/")}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Torna Indietro
+          </Button>
+          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <UsersIcon className="h-6 w-6 text-emerald-600" />
+            Gestione Utenti
+          </h1>
+          <div className="w-32" /> {/* Spacer per centrare il titolo */}
+        </div>
+      </header>
+
+      <div className="container py-8">
+        <div className="mb-6">
+          <p className="text-slate-600">
+            Gestisci i ruoli e i permessi degli utenti del sistema
+          </p>
+        </div>
 
       <Card>
         <CardHeader>
@@ -159,6 +176,7 @@ export default function Users() {
           </div>
         </CardContent>
       </Card>
+      </div>
 
       {/* Dialog Modifica Ruolo */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

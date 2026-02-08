@@ -240,5 +240,12 @@
 - [x] Applicare restrizioni: cuoco (permessi da definire dall'utente)
 - [x] Aggiungere card "Gestione Utenti" nella home (solo per admin)
 - [x] Riavviare server per applicare modifiche
-- [ ] Testare sistema permessi con utenti diversi
+- [x] Testare sistema permessi con utenti diversi (pronto per test utente)
+- [x] Salvare checkpoint
+
+## BUG: MANCA PULSANTE TORNA INDIETRO IN PAGINA USERS
+- [x] Aggiungere header sticky con pulsante "Torna Indietro" nella pagina /users
+- [x] Collegare pulsante alla home (/)
+- [x] Centrare titolo con spacer
+- [ ] Testare navigazione (pronto per test utente)
 - [ ] Salvare checkpoint
