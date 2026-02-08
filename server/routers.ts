@@ -207,6 +207,8 @@ const ingredientsRouter = router({
                 isActive: true,
                 isOrderable: true,
                 isSellable: true,
+                isSalaItem: false,
+                subcategory: null,
                 allergens: row.allergens || []
               });
               imported++;

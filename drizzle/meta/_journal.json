@@ -148,6 +148,20 @@
       "when": 1770248266227,
       "tag": "0020_cheerful_ser_duncan",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1770594109000,
+      "tag": "0021_chubby_baron_zemo",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "5",
+      "when": 1770594583236,
+      "tag": "0022_wealthy_winter_soldier",
+      "breakpoints": true
     }
   ]
 }

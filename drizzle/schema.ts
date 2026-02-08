@@ -10,6 +10,7 @@ import {
   json,
   datetime,
 } from "drizzle-orm/mysql-core";
+import { relations } from "drizzle-orm";
 
 /**
  * Core user table backing auth flow with role-based access control.
@@ -81,6 +82,8 @@ export const ingredients = mysqlTable("ingredients", {
   isFood: boolean("is_food").default(true).notNull(),
   isOrderable: boolean("isOrderable").default(true).notNull(),
   isSellable: boolean("isSellable").default(true).notNull(),
+  isSalaItem: boolean("isSalaItem").default(false).notNull(),
+  subcategory: varchar("subcategory", { length: 100 }),
   allergens: json("allergens").$type<string[]>().default([]),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -384,3 +387,64 @@ export const recipeVersions = mysqlTable("recipe_versions", {
 
 export type RecipeVersion = typeof recipeVersions.$inferSelect;
 export type InsertRecipeVersion = typeof recipeVersions.$inferInsert;
+
+
+// =============================================================================
+// TABELLE ORDINI MULTI-UTENTE
+// =============================================================================
+
+/**
+ * UserOrderSessions: Carrello persistente per ogni utente
+ */
+export const userOrderSessions = mysqlTable("user_order_sessions", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  ingredientId: varchar("ingredientId", { length: 36 }).notNull().references(() => ingredients.id, { onDelete: "cascade" }),
+  quantity: decimal("quantity", { precision: 10, scale: 3 }).notNull().default("0"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+/**
+ * OrderHistory: Storico ordini inviati
+ */
+export const orderHistory = mysqlTable("order_history", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userName: varchar("userName", { length: 255 }).notNull(),
+  orderData: json("orderData").$type<Array<{
+    ingredientId: string;
+    ingredientName: string;
+    quantity: string;
+    unit: string;
+  }>>().notNull(),
+  pdfUrl: text("pdfUrl"),
+  totalItems: int("totalItems").notNull().default(0),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+// Relazioni
+export const userOrderSessionsRelations = relations(userOrderSessions, ({ one }) => ({
+  user: one(users, {
+    fields: [userOrderSessions.userId],
+    references: [users.id],
+  }),
+  ingredient: one(ingredients, {
+    fields: [userOrderSessions.ingredientId],
+    references: [ingredients.id],
+  }),
+}));
+
+export const orderHistoryRelations = relations(orderHistory, ({ one }) => ({
+  user: one(users, {
+    fields: [orderHistory.userId],
+    references: [users.id],
+  }),
+}));
+
+// Tipi TypeScript
+export type UserOrderSession = typeof userOrderSessions.$inferSelect;
+export type NewUserOrderSession = typeof userOrderSessions.$inferInsert;
+export type OrderHistory = typeof orderHistory.$inferSelect;
+export type NewOrderHistory = typeof orderHistory.$inferInsert;

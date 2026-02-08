@@ -247,5 +247,70 @@
 - [x] Aggiungere header sticky con pulsante "Torna Indietro" nella pagina /users
 - [x] Collegare pulsante alla home (/)
 - [x] Centrare titolo con spacer
-- [ ] Testare navigazione (pronto per test utente)
+- [x] Testare navigazione (pronto per test utente)
+- [x] Salvare checkpoint
+
+## FEATURE: SISTEMA PRODUZIONE CON LISTA RICETTE E CONFERMA
+- [x] Analizzare file inventario_sala_completo.json
+- [x] Creare prompt dettagliato per implementazione (PROMPT 3)
+- [ ] Implementare: lista ricette scorrevole con quantità
+- [ ] Implementare: pulsante "Conferma Produzioni"
+- [ ] Implementare: pagina "Storico Produzioni"
+
+## FEATURE: SCHEDA HACCP SETTIMANALE CON CONTROLLI AUTOMATICI
+- [ ] Creare schema database per haccp_weekly_checks
+- [ ] Ogni settimana ha lista produzioni con campi: item, quantità, HACCP OK
+- [ ] Aggiungere controlli automatici: abbattuto 4°C, abbattuto -20°C, temperatura cottura OK
+- [ ] Implementare modulo inadempienza per ogni ricetta (descrizione problema + soluzione)
+- [ ] Collegare scheda HACCP a settimana produzione
+
+## FEATURE: GESTIONE ORDINI MULTI-UTENTE CON SESSIONI PERSISTENTI
+- [ ] Creare schema database per user_order_sessions (userId, items, quantities)
+- [ ] Salvare sessioni ordini per ogni utente (persistenti fino a invio)
+- [ ] Ordini separati: ogni utente vede solo il proprio
+- [ ] PDF/WhatsApp senza prezzi (solo nome, quantità, unità)
+- [ ] Solo admin vede prezzi ingredienti nel carrello
+- [ ] Dopo invio ordine: cancellare sessione utente e salvare in storico
+
+## FEATURE: IMPORTAZIONE INVENTARIO SALA
+- [ ] Leggere file inventario_sala_completo.json
+- [ ] Importare prodotti sala con prezzo=null, unità=null
+- [ ] Aggiungere flag is_sala_item per distinguere da ingredienti cucina
+
+## FEATURE: DATABASE FRIGHI CON STORICO TEMPERATURE
+- [ ] Creare schema database frighi (id, descrizione, tipo frigo/freezer, tag sala/cucina, categoria)
+- [ ] Creare schema database temperature_log (frigoId, data, temperatura, userId)
+- [ ] Implementare pagina gestione frighi (CRUD)
+- [ ] Implementare storico temperature giornaliere per ogni frigo
+- [ ] Alert rosso se fuori range (frigo: 0-4°C, freezer: -20/-17°C)
+- [ ] Pulsante emergenza admin: completare automaticamente temperature fino a oggi
+
+## TESTING E DEPLOYMENT
+- [ ] Testare lista ricette in produzione
+- [ ] Testare conferma produzioni e storico
+- [ ] Testare scheda HACCP con controlli
+- [ ] Testare ordini multi-utente con sessioni
+- [ ] Testare importazione inventario sala
+- [ ] Testare gestione frighi e temperature
+- [ ] Salvare checkpoint
+
+## TASK CORRENTE: IMPLEMENTAZIONE ORDINI MULTI-UTENTE (PRIORITÀ 1)
+- [x] Aggiornare schema database con campi isSalaItem e subcategory
+- [x] Creare tabelle user_order_sessions e order_history manualmente con SQL
+- [x] Estrarre inventario sala da PDF (~122 prodotti)
+- [ ] Importare 122 prodotti sala nel database
+- [ ] Installare dipendenze jspdf e jspdf-autotable
+- [ ] Implementare backend router tRPC per ordini (sessioni per utente)
+- [ ] Implementare frontend pagina Orders con carrello persistente
+- [ ] Implementare generazione PDF ordini
+- [ ] Implementare pagina OrderHistory
+- [ ] Testare sessioni separate per utente
+- [ ] Testare persistenza quantità dopo refresh
+- [ ] Testare generazione PDF
+- [ ] Salvare checkpoint finale
+
+## TASK FUTURO: IMPORTAZIONE INVENTARIO SALA
+- [ ] Importare ~150 prodotti sala da inventario_sala_completo.json
+- [ ] Aggiungere campi isSalaItem e subcategory a tabella ingredients (GIÀ FATTO)
+- [ ] Testare importazione
 - [ ] Salvare checkpoint

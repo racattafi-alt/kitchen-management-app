@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS order_history (\n  id VARCHAR(36) PRIMARY KEY,\n  userId INT NOT NULL,\n  userName VARCHAR(255) NOT NULL,\n  orderData JSON NOT NULL,\n  pdfUrl TEXT,\n  totalItems INT NOT NULL DEFAULT 0,\n  notes TEXT,\n  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute CREATE TABLE IF NOT EXISTS order_history (\n  id VARCHAR(36) PRIMARY KEY,\n  userId INT NOT NULL,\n  userName VARCHAR(255) NOT NULL,\n  orderData JSON NOT NULL,\n  pdfUrl TEXT,\n  totalItems INT NOT NULL DEFAULT 0,\n  notes TEXT,\n  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 369
+}
