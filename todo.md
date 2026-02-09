@@ -667,3 +667,12 @@
 - [x] Completare import dei 114 ingredienti sala mancanti (batch 00-05)
 - [x] Verificare import completo (114 ingredienti sala totali)
 - [x] Salvare checkpoint
+
+## BUG: RE-IMPORT INGREDIENTI SALA CON DATI COMPLETI
+- [x] Analizzare file Excel InventarioSala(1).xlsx per estrarre TUTTI i campi
+- [x] Rigenerare JSON con fornitore, prezzi, packageType, brand completi
+- [x] Copiare JSON sala_complete_data.json in client/public/sala_data.json
+- [x] Creare funzione handleImportSalaData in Ingredients.tsx
+- [x] Aggiungere pulsante "Importa Dati Sala" che legge JSON e aggiorna via tRPC
+- [x] Testare import massivo e verificare dati
+- [ ] Salvare checkpoint

@@ -20,6 +20,7 @@ export default function Ingredients() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isImportingSala, setIsImportingSala] = useState(false);
   const [editingIngredient, setEditingIngredient] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -157,6 +158,45 @@ export default function Ingredients() {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFile(file);
+    }
+  };
+
+  const handleImportSalaData = async () => {
+    setIsImportingSala(true);
+    try {
+      const response = await fetch('/sala_data.json');
+      const salaData = await response.json();
+      
+      let updated = 0;
+      for (const item of salaData) {
+        try {
+          await updateMutation.mutateAsync({
+            id: item.id,
+            name: item.name,
+            supplierId: item.supplier || undefined,
+            category: item.category,
+            unitType: item.unitType,
+            packageType: item.packageType || undefined,
+            packageQuantity: item.packageQuantity,
+            packagePrice: item.packagePrice,
+            pricePerKgOrUnit: item.pricePerKgOrUnit,
+            minOrderQuantity: item.minOrderQuantity,
+            brand: item.brand || undefined,
+            notes: item.notes || undefined,
+          });
+          updated++;
+        } catch (err) {
+          console.error(`Errore aggiornamento ${item.id}:`, err);
+        }
+      }
+      
+      toast.success(`Importati ${updated}/${salaData.length} ingredienti sala!`);
+      utils.ingredients.list.invalidate();
+    } catch (error) {
+      toast.error('Errore durante l\'import dei dati sala');
+      console.error(error);
+    } finally {
+      setIsImportingSala(false);
     }
   };
 
@@ -314,6 +354,15 @@ export default function Ingredients() {
           <div className="flex gap-2">
             {canEdit && (
               <>
+                <Button 
+                  variant="outline" 
+                  onClick={handleImportSalaData}
+                  disabled={isImportingSala}
+                  className="bg-blue-50 hover:bg-blue-100 border-blue-200"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  {isImportingSala ? 'Importazione...' : 'Importa Dati Sala'}
+                </Button>
                 <Button 
                   variant="outline" 
                   onClick={handleExportExcel}

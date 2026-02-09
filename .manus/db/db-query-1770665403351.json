@@ -1,0 +1,90 @@
+{
+  "query": "SELECT id, name, supplier, category, packageType, packagePrice FROM ingredients WHERE department='Sala' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT id, name, supplier, category, packageType, packagePrice FROM ingredients WHERE department='Sala' LIMIT 10;",
+  "rows": [
+    {
+      "id": "SAL001",
+      "name": "Pepsi Lattina",
+      "supplier": "Allegro",
+      "category": "Bevande",
+      "packageType": "NULL",
+      "packagePrice": "0.00"
+    },
+    {
+      "id": "SAL002",
+      "name": "Pepsi Zero lattina",
+      "supplier": "Allegro",
+      "category": "Bevande",
+      "packageType": "NULL",
+      "packagePrice": "0.00"
+    },
+    {
+      "id": "SAL003",
+      "name": "Lipton Limone lattina",
+      "supplier": "Allegro",
+      "category": "Bevande",
+      "packageType": "NULL",
+      "packagePrice": "0.00"
+    },
+    {
+      "id": "SAL004",
+      "name": "Lipton Pesca lattina",
+      "supplier": "Allegro",
+      "category": "Bevande",
+      "packageType": "NULL",
+      "packagePrice": "0.00"
+    },
+    {
+      "id": "SAL005",
+      "name": "Mirinda lattina",
+      "supplier": "Allegro",
+      "category": "Bevande",
+      "packageType": "NULL",
+      "packagePrice": "0.00"
+    },
+    {
+      "id": "SAL006",
+      "name": "7up lattina",
+      "supplier": "Allegro",
+      "category": "Bevande",
+      "packageType": "NULL",
+      "packagePrice": "0.00"
+    },
+    {
+      "id": "SAL007",
+      "name": "RedBull lattina",
+      "supplier": "Allegro",
+      "category": "Bevande",
+      "packageType": "NULL",
+      "packagePrice": "0.00"
+    },
+    {
+      "id": "SAL008",
+      "name": "Acqua Naturale lattina",
+      "supplier": "Allegro",
+      "category": "Bevande",
+      "packageType": "NULL",
+      "packagePrice": "0.00"
+    },
+    {
+      "id": "SAL009",
+      "name": "Acqua Frizzante lattina",
+      "supplier": "Allegro",
+      "category": "Bevande",
+      "packageType": "NULL",
+      "packagePrice": "0.00"
+    },
+    {
+      "id": "SAL010",
+      "name": "BIB Pepsi",
+      "supplier": "Allegro",
+      "category": "Bevande",
+      "packageType": "NULL",
+      "packagePrice": "0.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tsupplier\tcategory\tpackageType\tpackagePrice\nSAL001\tPepsi Lattina\tAllegro\tBevande\tNULL\t0.00\nSAL002\tPepsi Zero lattina\tAllegro\tBevande\tNULL\t0.00\nSAL003\tLipton Limone lattina\tAllegro\tBevande\tNULL\t0.00\nSAL004\tLipton Pesca lattina\tAllegro\tBevande\tNULL\t0.00\nSAL005\tMirinda lattina\tAllegro\tBevande\tNULL\t0.00\nSAL006\t7up lattina\tAllegro\tBevande\tNULL\t0.00\nSAL007\tRedBull lattina\tAllegro\tBevande\tNULL\t0.00\nSAL008\tAcqua Naturale lattina\tAllegro\tBevande\tNULL\t0.00\nSAL009\tAcqua Frizzante lattina\tAllegro\tBevande\tNULL\t0.00\nSAL010\tBIB Pepsi\tAllegro\tBevande\tNULL\t0.00\n",
+  "stderr": "",
+  "execution_time_ms": 124
+}
