@@ -69,9 +69,14 @@ export default function Ingredients() {
     })
     ?.sort((a: any, b: any) => {
       // Mappare sortBy al campo corretto
-      const fieldName = sortBy === 'supplier' ? 'supplierName' : sortBy;
-      let compareA = a[fieldName] || '';
-      let compareB = b[fieldName] || '';
+      let compareA, compareB;
+      if (sortBy === 'supplier') {
+        compareA = a.supplier || a.supplierName || '';
+        compareB = b.supplier || b.supplierName || '';
+      } else {
+        compareA = a[sortBy] || '';
+        compareB = b[sortBy] || '';
+      }
       
       if (typeof compareA === 'string') compareA = compareA.toLowerCase();
       if (typeof compareB === 'string') compareB = compareB.toLowerCase();
@@ -920,7 +925,7 @@ export default function Ingredients() {
                           {ingredient.category}
                         </span>
                       </TableCell>
-                      <TableCell>{ingredient.supplierName || 'Non specificato'}</TableCell>
+                      <TableCell>{ingredient.supplier || ingredient.supplierName || 'Non specificato'}</TableCell>
                       <TableCell>{ingredient.unitType === "k" ? "kg" : "pz"}</TableCell>
                       {canViewPrices && (
                         <TableCell className="font-semibold text-emerald-600">

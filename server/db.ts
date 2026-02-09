@@ -174,6 +174,7 @@ export async function getIngredients() {
     .select({
       id: ingredients.id,
       name: ingredients.name,
+      supplier: ingredients.supplier,
       supplierId: ingredients.supplierId,
       supplierName: suppliers.name,
       category: ingredients.category,

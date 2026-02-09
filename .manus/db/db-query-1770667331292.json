@@ -1,0 +1,70 @@
+{
+  "query": "SELECT id, name, supplier, supplierId FROM ingredients WHERE department='Sala' ORDER BY id LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT id, name, supplier, supplierId FROM ingredients WHERE department='Sala' ORDER BY id LIMIT 10;",
+  "rows": [
+    {
+      "id": "SAL001",
+      "name": "BIB Pepsi",
+      "supplier": "Allegro",
+      "supplierId": "NULL"
+    },
+    {
+      "id": "SAL002",
+      "name": "Pepsi Lattina",
+      "supplier": "Allegro",
+      "supplierId": "NULL"
+    },
+    {
+      "id": "SAL003",
+      "name": "Pepsi Zero lattina",
+      "supplier": "Allegro",
+      "supplierId": "NULL"
+    },
+    {
+      "id": "SAL004",
+      "name": "Lipton Limone lattina",
+      "supplier": "Allegro",
+      "supplierId": "NULL"
+    },
+    {
+      "id": "SAL005",
+      "name": "Lipton Pesca lattina",
+      "supplier": "Allegro",
+      "supplierId": "NULL"
+    },
+    {
+      "id": "SAL006",
+      "name": "Mirinda lattina",
+      "supplier": "Allegro",
+      "supplierId": "NULL"
+    },
+    {
+      "id": "SAL007",
+      "name": "7up lattina",
+      "supplier": "Allegro",
+      "supplierId": "NULL"
+    },
+    {
+      "id": "SAL008",
+      "name": "RedBull lattina",
+      "supplier": "Allegro",
+      "supplierId": "NULL"
+    },
+    {
+      "id": "SAL009",
+      "name": "Acqua Naturale lattina",
+      "supplier": "Soplaya",
+      "supplierId": "NULL"
+    },
+    {
+      "id": "SAL010",
+      "name": "Acqua Frizzante lattina",
+      "supplier": "Soplaya",
+      "supplierId": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tsupplier\tsupplierId\nSAL001\tBIB Pepsi\tAllegro\tNULL\nSAL002\tPepsi Lattina\tAllegro\tNULL\nSAL003\tPepsi Zero lattina\tAllegro\tNULL\nSAL004\tLipton Limone lattina\tAllegro\tNULL\nSAL005\tLipton Pesca lattina\tAllegro\tNULL\nSAL006\tMirinda lattina\tAllegro\tNULL\nSAL007\t7up lattina\tAllegro\tNULL\nSAL008\tRedBull lattina\tAllegro\tNULL\nSAL009\tAcqua Naturale lattina\tSoplaya\tNULL\nSAL010\tAcqua Frizzante lattina\tSoplaya\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 62
+}
