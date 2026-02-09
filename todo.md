@@ -489,3 +489,9 @@
 - [x] Aggiornare routing in App.tsx
 - [x] Testare navigazione tra sezioni HACCP
 - [ ] Salvare checkpoint
+
+## BUG: ERRORE VALIDAZIONE LOCATION FRIGHI
+- [x] Correggere form frighi: aggiungere valore default "kitchen" per campo location
+- [x] Sostituire Input con Select per campo location (valori: Cucina/Sala)
+- [x] Testare creazione frigo (errore risolto)
+- [ ] Salvare checkpoint

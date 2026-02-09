@@ -22,7 +22,7 @@ export default function Fridges() {
   // Form states
   const [name, setName] = useState("");
   const [type, setType] = useState<"fridge" | "freezer">("fridge");
-  const [location, setLocation] = useState("");
+  const [location, setLocation] = useState<"kitchen" | "sala">("kitchen");
   const [minTemp, setMinTemp] = useState("");
   const [maxTemp, setMaxTemp] = useState("");
   const [temperature, setTemperature] = useState("");
@@ -39,7 +39,7 @@ export default function Fridges() {
   const resetForm = () => {
     setName("");
     setType("fridge");
-    setLocation("");
+    setLocation("kitchen");
     setMinTemp("");
     setMaxTemp("");
     setTemperature("");
@@ -203,13 +203,16 @@ export default function Fridges() {
                         </div>
 
                         <div>
-                          <Label htmlFor="location">Posizione</Label>
-                          <Input
-                            id="location"
-                            value={location}
-                            onChange={(e) => setLocation(e.target.value)}
-                            placeholder="es. Cucina principale"
-                          />
+                          <Label htmlFor="location">Posizione *</Label>
+                          <Select value={location} onValueChange={(val) => setLocation(val as "kitchen" | "sala")}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="kitchen">Cucina</SelectItem>
+                              <SelectItem value="sala">Sala</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
