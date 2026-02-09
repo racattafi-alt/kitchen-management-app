@@ -2,6 +2,8 @@ import { router, protectedProcedure, publicProcedure } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
 import { orderSessionsRouter } from "./orderSessionsRouter";
+import { haccpRouter as haccpSheetRouter } from "./haccpRouter";
+import { fridgesRouter } from "./fridgesRouter";
 import crypto from "crypto";
 import { execSync } from "child_process";
 import fs from "fs";
@@ -447,10 +449,26 @@ const productionRouter = router({
         throw new Error("Unauthorized");
       }
 
+      // Ottieni o crea scheda HACCP per la settimana
+      const { getCurrentWeekHaccpSheet, createHaccpWeeklySheet, createProductionCheck } = await import("./haccpDb.js");
+      let haccpSheet = await getCurrentWeekHaccpSheet();
+      
+      if (!haccpSheet) {
+        const weekEnd = new Date(input.weekStartDate);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        const sheetId = await createHaccpWeeklySheet({
+          weekStartDate: input.weekStartDate,
+          weekEndDate: weekEnd,
+        });
+        haccpSheet = { id: sheetId } as any;
+      }
+      
       const results = [];
       for (const prod of input.productions) {
+        // Crea produzione
+        const productionId = crypto.randomUUID();
         const result = await db.createWeeklyProduction({
-          id: crypto.randomUUID(),
+          id: productionId,
           recipeFinalId: prod.recipeFinalId,
           semiFinishedId: null,
           productionType: "final",
@@ -460,6 +478,20 @@ const productionRouter = router({
         
         // Aggiorna la quantità totale prodotta nella ricetta
         await db.updateProducedQuantity(prod.recipeFinalId);
+        
+        // Ottieni nome ricetta
+        const recipe = await db.getFinalRecipeById(prod.recipeFinalId);
+        
+        // Crea controllo HACCP automaticamente
+        if (recipe && haccpSheet) {
+          await createProductionCheck({
+            haccpSheetId: haccpSheet.id,
+            productionId: productionId,
+            recipeName: recipe.name,
+            quantityProduced: prod.quantity.toString(),
+            isCompliant: true,
+          });
+        }
         
         results.push(result);
       }
@@ -1203,6 +1235,8 @@ export const appRouter = router({
   menu: menuRouter,
   waste: wasteRouter,
   haccp: haccpRouter,
+  haccpSheets: haccpSheetRouter,
+  fridges: fridgesRouter,
   storage: storageRouter,
   suppliers: suppliersRouter,
   orders: ordersRouter,

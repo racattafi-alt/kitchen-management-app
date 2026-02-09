@@ -453,11 +453,12 @@
 - [x] Progettare schema database fridge_temperature_logs (fridgeId, date, temperature, userId)
 - [x] Aggiungere tabelle allo schema Drizzle
 - [x] Creare tabelle nel database via SQL
-- [ ] Implementare backend router HACCP (list, create, update, delete)
-- [ ] Implementare backend router Fridges (CRUD + temperature logs)
-- [ ] Implementare frontend pagina HACCP con lista produzioni settimanali
-- [ ] Implementare controlli HACCP per ogni produzione (temperatura, conformità)
-- [ ] Implementare gestione frighi con storico temperature
-- [ ] Implementare alert temperature fuori range
+- [x] Implementare backend router HACCP (list, create, update, delete)
+- [x] Implementare backend router Fridges (CRUD + temperature logs)
+- [x] Implementare frontend pagina HACCP con lista produzioni settimanali
+- [x] Implementare controlli HACCP per ogni produzione (temperatura, conformità)
+- [x] Integrazione automatica: conferma produzioni → crea controlli HACCP
+- [ ] Implementare gestione frighi con storico temperature (frontend)
+- [ ] Implementare alert temperature fuori range (frontend)
 - [ ] Testare tutte le funzionalità HACCP
 - [ ] Salvare checkpoint
