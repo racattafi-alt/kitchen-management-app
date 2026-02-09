@@ -29,7 +29,7 @@ export default function Fridges() {
   const [batchTemps, setBatchTemps] = useState<Record<string, string>>({});
   
   // Filtri storico temperature
-  const [filterFridgeId, setFilterFridgeId] = useState<string>("");
+  const [filterFridgeId, setFilterFridgeId] = useState<string>("all");
   const [filterStartDate, setFilterStartDate] = useState("");
   const [filterEndDate, setFilterEndDate] = useState("");
 
@@ -39,7 +39,7 @@ export default function Fridges() {
   
   // Query storico temperature con filtri
   const { data: allTemperatures = [], isLoading: loadingTemps } = trpc.fridges.getAllTemperatures.useQuery({
-    fridgeId: filterFridgeId || undefined,
+    fridgeId: filterFridgeId === "all" ? undefined : filterFridgeId,
     startDate: filterStartDate ? new Date(filterStartDate) : undefined,
     endDate: filterEndDate ? new Date(filterEndDate) : undefined,
   });
@@ -296,7 +296,7 @@ export default function Fridges() {
                         <SelectValue placeholder="Tutti" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Tutti</SelectItem>
+                        <SelectItem value="all">Tutti</SelectItem>
                         {fridges.map((fridge: any) => (
                           <SelectItem key={fridge.id} value={fridge.id}>
                             {fridge.name}

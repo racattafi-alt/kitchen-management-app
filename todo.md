@@ -513,3 +513,9 @@
 - [x] Rimuovere tab Statistiche (non necessario)
 - [x] Testare filtri e export (implementato)
 - [ ] Salvare checkpoint
+
+## BUG: ERRORE SELECT.ITEM VALUE VUOTO
+- [x] Correggere Select filtro frighi: sostituire value="" con valore speciale "all"
+- [x] Aggiornare logica filtro per gestire "all" come tutti i frighi
+- [x] Testare pagina Fridges (errore risolto)
+- [ ] Salvare checkpoint
