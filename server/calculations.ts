@@ -129,7 +129,9 @@ export async function aggregateProductionRequirements(
   }
 
   for (const production of productions) {
-    const effectiveMultiplier = production.desiredQuantity / production.yieldPercentage;
+    // Evita divisione per zero: se yieldPercentage è 0, usa 1 (100%) come fallback
+    const safeYield = production.yieldPercentage > 0 ? production.yieldPercentage : 1;
+    const effectiveMultiplier = production.desiredQuantity / safeYield;
     extractComponents(production.components, effectiveMultiplier);
   }
 

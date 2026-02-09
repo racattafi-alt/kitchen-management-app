@@ -162,6 +162,13 @@
       "when": 1770594583236,
       "tag": "0022_wealthy_winter_soldier",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1770598555420,
+      "tag": "0023_late_professor_monster",
+      "breakpoints": true
     }
   ]
 }

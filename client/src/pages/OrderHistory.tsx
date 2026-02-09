@@ -70,6 +70,11 @@ export default function OrderHistory() {
                             })}
                           </span>
                         </div>
+                        {order.userName && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            Ordinato da: <span className="font-medium">{order.userName}</span>
+                          </p>
+                        )}
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold text-green-600">

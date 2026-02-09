@@ -448,3 +448,126 @@ export type UserOrderSession = typeof userOrderSessions.$inferSelect;
 export type NewUserOrderSession = typeof userOrderSessions.$inferInsert;
 export type OrderHistory = typeof orderHistory.$inferSelect;
 export type NewOrderHistory = typeof orderHistory.$inferInsert;
+
+/**
+ * Fridges: Anagrafica frighi e freezer
+ */
+export const fridges = mysqlTable("fridges", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  type: mysqlEnum("type", ["fridge", "freezer"]).notNull(),
+  location: mysqlEnum("location", ["kitchen", "sala"]).notNull(),
+  category: varchar("category", { length: 100 }),
+  minTemp: decimal("minTemp", { precision: 4, scale: 1 }).notNull(),
+  maxTemp: decimal("maxTemp", { precision: 4, scale: 1 }).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+/**
+ * FridgeTemperatureLogs: Storico temperature frighi
+ */
+export const fridgeTemperatureLogs = mysqlTable("fridge_temperature_logs", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  fridgeId: varchar("fridgeId", { length: 36 }).notNull().references(() => fridges.id, { onDelete: "cascade" }),
+  date: datetime("date").notNull(),
+  temperature: decimal("temperature", { precision: 4, scale: 1 }).notNull(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  isOutOfRange: boolean("isOutOfRange").default(false).notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+/**
+ * HaccpWeeklySheets: Schede HACCP settimanali
+ */
+export const haccpWeeklySheets = mysqlTable("haccp_weekly_sheets", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  weekStartDate: datetime("weekStartDate").notNull(),
+  weekEndDate: datetime("weekEndDate").notNull(),
+  status: mysqlEnum("status", ["draft", "completed", "approved"]).default("draft").notNull(),
+  completedBy: int("completedBy").references(() => users.id),
+  completedAt: timestamp("completedAt"),
+  approvedBy: int("approvedBy").references(() => users.id),
+  approvedAt: timestamp("approvedAt"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+/**
+ * HaccpProductionChecks: Controlli HACCP per ogni produzione
+ */
+export const haccpProductionChecks = mysqlTable("haccp_production_checks", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  haccpSheetId: varchar("haccpSheetId", { length: 36 }).notNull().references(() => haccpWeeklySheets.id, { onDelete: "cascade" }),
+  productionId: varchar("productionId", { length: 36 }).notNull().references(() => weeklyProductions.id, { onDelete: "cascade" }),
+  recipeName: varchar("recipeName", { length: 255 }).notNull(),
+  quantityProduced: decimal("quantityProduced", { precision: 10, scale: 3 }).notNull(),
+  chillTemp4C: boolean("chillTemp4C").default(false),
+  chillTempMinus20C: boolean("chillTempMinus20C").default(false),
+  cookingTempOk: boolean("cookingTempOk").default(false),
+  isCompliant: boolean("isCompliant").default(true).notNull(),
+  nonComplianceReason: text("nonComplianceReason"),
+  correctiveAction: text("correctiveAction"),
+  checkedBy: int("checkedBy").references(() => users.id),
+  checkedAt: timestamp("checkedAt"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+// Relazioni HACCP e Frighi
+export const fridgesRelations = relations(fridges, ({ many }) => ({
+  temperatureLogs: many(fridgeTemperatureLogs),
+}));
+
+export const fridgeTemperatureLogsRelations = relations(fridgeTemperatureLogs, ({ one }) => ({
+  fridge: one(fridges, {
+    fields: [fridgeTemperatureLogs.fridgeId],
+    references: [fridges.id],
+  }),
+  user: one(users, {
+    fields: [fridgeTemperatureLogs.userId],
+    references: [users.id],
+  }),
+}));
+
+export const haccpWeeklySheetsRelations = relations(haccpWeeklySheets, ({ many, one }) => ({
+  productionChecks: many(haccpProductionChecks),
+  completedByUser: one(users, {
+    fields: [haccpWeeklySheets.completedBy],
+    references: [users.id],
+  }),
+  approvedByUser: one(users, {
+    fields: [haccpWeeklySheets.approvedBy],
+    references: [users.id],
+  }),
+}));
+
+export const haccpProductionChecksRelations = relations(haccpProductionChecks, ({ one }) => ({
+  haccpSheet: one(haccpWeeklySheets, {
+    fields: [haccpProductionChecks.haccpSheetId],
+    references: [haccpWeeklySheets.id],
+  }),
+  production: one(weeklyProductions, {
+    fields: [haccpProductionChecks.productionId],
+    references: [weeklyProductions.id],
+  }),
+  checkedByUser: one(users, {
+    fields: [haccpProductionChecks.checkedBy],
+    references: [users.id],
+  }),
+}));
+
+// Tipi TypeScript HACCP e Frighi
+export type Fridge = typeof fridges.$inferSelect;
+export type NewFridge = typeof fridges.$inferInsert;
+export type FridgeTemperatureLog = typeof fridgeTemperatureLogs.$inferSelect;
+export type NewFridgeTemperatureLog = typeof fridgeTemperatureLogs.$inferInsert;
+export type HaccpWeeklySheet = typeof haccpWeeklySheets.$inferSelect;
+export type NewHaccpWeeklySheet = typeof haccpWeeklySheets.$inferInsert;
+export type HaccpProductionCheck = typeof haccpProductionChecks.$inferSelect;
+export type NewHaccpProductionCheck = typeof haccpProductionChecks.$inferInsert;

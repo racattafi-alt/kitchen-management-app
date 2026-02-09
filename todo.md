@@ -430,3 +430,34 @@
 - [ ] Aggiornare ShoppingList.tsx per usare nuova procedura invece di submitOrder
 - [ ] Testare salvataggio ordine con quantità dalla lista acquisti
 - [ ] Verificare che l'ordine appaia nello storico ordini
+
+## BUG: QUANTITÀ "INFINITY" NELLA LISTA ACQUISTI
+- [x] Analizzare perché alcuni ingredienti mostrano "Infinity" come quantità necessaria
+- [x] Verificare calcolo quantità nella procedura generateShoppingList
+- [x] Identificare ingredienti problematici (es. quelli con yieldPercentage=0 o divisioni per zero)
+- [x] Correggere logica calcolo quantità (aggiunto controllo safeYield in calculations.ts)
+- [ ] Testare con produzione che causa Infinity
+- [ ] Salvare checkpoint
+
+## FEATURE: NOME UTENTE NELLO STORICO ORDINI
+- [x] Aggiungere campo userName nella tabella order_history (già presente)
+- [x] Modificare procedura saveShoppingListOrder per salvare nome utente (già implementato)
+- [x] Aggiornare query getMyHistory per includere userName (già implementato)
+- [x] Modificare frontend OrderHistory per mostrare nome utente
+- [x] Testare visualizzazione nome utente negli ordini
+- [x] Salvare checkpoint
+
+## FEATURE: SEZIONE HACCP CON DATABASE FRIGHI
+- [x] Progettare schema database haccp_weekly_sheets (collegato a weekly_productions)
+- [x] Progettare schema database fridges (id, name, type, location, minTemp, maxTemp)
+- [x] Progettare schema database fridge_temperature_logs (fridgeId, date, temperature, userId)
+- [x] Aggiungere tabelle allo schema Drizzle
+- [x] Creare tabelle nel database via SQL
+- [ ] Implementare backend router HACCP (list, create, update, delete)
+- [ ] Implementare backend router Fridges (CRUD + temperature logs)
+- [ ] Implementare frontend pagina HACCP con lista produzioni settimanali
+- [ ] Implementare controlli HACCP per ogni produzione (temperatura, conformità)
+- [ ] Implementare gestione frighi con storico temperature
+- [ ] Implementare alert temperature fuori range
+- [ ] Testare tutte le funzionalità HACCP
+- [ ] Salvare checkpoint
