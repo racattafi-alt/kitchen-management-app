@@ -1,6 +1,7 @@
 import { router, protectedProcedure, publicProcedure } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
+import { orderSessionsRouter } from "./orderSessionsRouter";
 import crypto from "crypto";
 import { execSync } from "child_process";
 import fs from "fs";
@@ -1168,6 +1169,7 @@ export const appRouter = router({
   storage: storageRouter,
   suppliers: suppliersRouter,
   orders: ordersRouter,
+  orderSessions: orderSessionsRouter,
   system: systemRouter,
 });
 

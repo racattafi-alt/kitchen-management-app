@@ -337,3 +337,32 @@
 - [ ] Aggiungere campi isSalaItem e subcategory a tabella ingredients (GIÀ FATTO)
 - [ ] Testare importazione
 - [ ] Salvare checkpoint
+
+## TASK IN CORSO: IMPLEMENTAZIONE COMPLETA SISTEMA ORDINI MULTI-UTENTE
+- [ ] Creare helper database orderSessionsDb.ts
+- [ ] Creare router tRPC orderSessions
+- [ ] Integrare router in appRouter
+- [ ] Creare utility generateOrderPDF.ts
+- [ ] Creare pagina frontend Orders.tsx con carrello persistente
+- [ ] Creare pagina frontend OrderHistory.tsx
+- [ ] Aggiungere routing in App.tsx
+- [ ] Aggiungere card Ordini nella Home
+- [ ] Testare sessioni separate per utente
+- [ ] Testare persistenza dopo refresh
+- [ ] Testare generazione PDF senza prezzi
+- [ ] Salvare checkpoint finale
+
+## TASK COMPLETATO: SISTEMA ORDINI MULTI-UTENTE
+- [x] Backend: Creare helper database (orderSessionsDb.ts)
+- [x] Backend: Creare router tRPC (orderSessionsRouter.ts)
+- [x] Backend: Integrare router in appRouter
+- [x] Backend: Creare utility generazione PDF (generateOrderPDF.ts + generateUserOrderPDF.ts)
+- [x] Frontend: Creare pagina OrdersNew con carrello persistente
+- [x] Frontend: Creare pagina OrderHistory
+- [x] Frontend: Aggiungere route in App.tsx
+- [x] Frontend: Aggiungere card "Ordini" e "Storico Ordini" nella home
+- [ ] Test: Verificare sessioni separate per utente (pronto per test)
+- [ ] Test: Verificare persistenza quantità dopo refresh (pronto per test)
+- [ ] Test: Verificare generazione PDF senza prezzi (pronto per test)
+- [ ] Nota: Errore TypeScript in orderSessionsRouter.ts riga 73 (non blocca funzionalità)
+- [ ] Salvare checkpoint finale

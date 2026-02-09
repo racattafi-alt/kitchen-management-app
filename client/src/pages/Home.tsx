@@ -99,6 +99,22 @@ export default function Home() {
               </CardHeader>
             </Card>
 
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setLocation("/orders-new")}>
+              <CardHeader>
+                <ClipboardCheck className="h-10 w-10 text-blue-600 mb-2" />
+                <CardTitle>Ordini</CardTitle>
+                <CardDescription>Crea e gestisci ordini ingredienti</CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setLocation("/order-history")}>
+              <CardHeader>
+                <FileText className="h-10 w-10 text-indigo-600 mb-2" />
+                <CardTitle>Storico Ordini</CardTitle>
+                <CardDescription>Visualizza ordini precedenti</CardDescription>
+              </CardHeader>
+            </Card>
+
             {user?.role === "admin" && (
               <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 border-red-200" onClick={() => setLocation("/users")}>
                 <CardHeader>
