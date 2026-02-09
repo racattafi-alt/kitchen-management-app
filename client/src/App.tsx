@@ -12,7 +12,7 @@ import Ingredients from "./pages/Ingredients";
 
 import FinalRecipes from "./pages/FinalRecipes";
 import FoodMatrix from "./pages/FoodMatrix";
-import Production from "./pages/Production";
+import ProductionNew from "./pages/ProductionNew";
 import Menu from "./pages/Menu";
 import Waste from "./pages/Waste";
 import HACCP from "./pages/HACCP";
@@ -35,7 +35,7 @@ function Router() {
 
       <Route path={"/final-recipes"} component={FinalRecipes} />
       <Route path={"/food-matrix"} component={FoodMatrix} />
-      <Route path={"/production"} component={Production} />
+      <Route path={"/production"} component={ProductionNew} />
       <Route path={"/menu"} component={Menu} />
       <Route path={"/waste"} component={Waste} />
       <Route path={"/haccp"} component={HACCP} />

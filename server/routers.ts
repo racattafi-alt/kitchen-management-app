@@ -430,6 +430,43 @@ const productionRouter = router({
       return result;
     }),
 
+  confirmWeeklyProduction: protectedProcedure
+    .input(
+      z.object({
+        weekStartDate: z.date(),
+        productions: z.array(
+          z.object({
+            recipeFinalId: z.string(),
+            quantity: z.number(),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+
+      const results = [];
+      for (const prod of input.productions) {
+        const result = await db.createWeeklyProduction({
+          id: crypto.randomUUID(),
+          recipeFinalId: prod.recipeFinalId,
+          semiFinishedId: null,
+          productionType: "final",
+          quantity: prod.quantity,
+          weekStartDate: input.weekStartDate,
+        } as any);
+        
+        // Aggiorna la quantità totale prodotta nella ricetta
+        await db.updateProducedQuantity(prod.recipeFinalId);
+        
+        results.push(result);
+      }
+      
+      return { success: true, count: results.length };
+    }),
+
   generateShoppingList: protectedProcedure
     .input(z.object({ weekStartDate: z.date().optional() }).optional())
     .query(async ({ input }) => {

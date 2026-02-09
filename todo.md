@@ -366,3 +366,38 @@
 - [ ] Test: Verificare generazione PDF senza prezzi (pronto per test)
 - [ ] Nota: Errore TypeScript in orderSessionsRouter.ts riga 73 (non blocca funzionalità)
 - [ ] Salvare checkpoint finale
+
+## SISTEMA ORDINI MULTI-UTENTE
+- [x] Creare tabelle database: user_order_sessions e order_history
+- [x] Aggiungere campi isSalaItem e subcategory a ingredienti
+- [x] Installare dipendenze PDF (pdfkit, @types/pdfkit)
+- [x] Implementare backend tRPC router: orderSessionsRouter.ts
+- [x] Creare procedure: getSession, updateSession, clearSession, submitOrder, getHistory
+- [x] Implementare generazione PDF ordini senza prezzi (generateOrderPDF.ts)
+- [x] Creare pagina frontend OrdersNew.tsx (carrello persistente)
+- [x] Creare pagina frontend OrderHistory.tsx (storico ordini)
+- [x] Aggiungere routes in App.tsx e card nella home
+- [x] Risolvere errori TypeScript (cast ctx.user.name as string)
+- [x] Testare persistenza carrello (refresh pagina mantiene quantità) ✅
+- [ ] Testare separazione sessioni multi-utente (accedere con secondo utente)
+- [ ] Testare invio ordine e generazione PDF
+- [ ] Verificare che manager/cook NON vedano i prezzi
+
+## PAGINA PRODUZIONE CON LISTA RICETTE SCORREVOLE
+- [x] Creare nuova pagina ProductionNew.tsx
+- [x] Implementare lista ricette scorrevole (max-height 600px)
+- [x] Aggiungere input quantità per ogni ricetta
+- [x] Implementare contatore ricette selezionate nel badge pulsante
+- [x] Evidenziare card ricette con bordo verde quando quantità > 0
+- [x] Aggiungere campo data settimana produzione
+- [x] Aggiungere barra ricerca ricette
+- [x] Implementare procedura backend confirmWeeklyProduction
+- [x] Creare record multipli in weekly_productions
+- [x] Aggiornare automaticamente producedQuantity per ogni ricetta
+- [x] Sostituire route /production con ProductionNew in App.tsx
+- [x] Testare UI e inserimento quantità ✅
+- [x] Testare pulsante Conferma Produzioni (reset quantità funzionante) ✅
+- [ ] Verificare salvataggio record nel database
+- [ ] Verificare aggiornamento producedQuantity nelle ricette
+- [ ] Testare ricerca ricette
+- [ ] Testare con utente manager
