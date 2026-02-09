@@ -553,24 +553,24 @@ export default function FinalRecipes() {
 
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between mb-4">
+            <div className="space-y-4 mb-4">
               <CardTitle className="flex items-center gap-2">
                 <ChefHat className="h-5 w-5 text-orange-600" />
                 Lista Ricette
               </CardTitle>
-              <div className="flex gap-2">
-                <div className="relative w-64">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
                     type="text"
-                    placeholder="Cerca per nome, codice o categoria..."
+                    placeholder="Cerca ricetta..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 h-10"
                   />
                 </div>
                 <Select value={filterStatus} onValueChange={(value: any) => setFilterStatus(value)}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px] h-10">
                   <SelectValue placeholder="Filtra per stato" />
                 </SelectTrigger>
                 <SelectContent>
@@ -593,10 +593,10 @@ export default function FinalRecipes() {
             ) : recipes && recipes.length > 0 ? (
               <div className="space-y-4">
                 {recipes.map((item: any) => (
-                  <div key={item.id} className="p-4 border rounded-lg flex items-center justify-between hover:bg-slate-50">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold">{item.name}</h3>
+                  <div key={item.id} className="p-3 md:p-4 border rounded-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:bg-slate-50">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-sm md:text-base truncate">{item.name}</h3>
                         {item.isSemiFinished && (
                           <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
                             Semilavorato
@@ -631,23 +631,23 @@ export default function FinalRecipes() {
                         {/* Badge Allergeni */}
                         <RecipeAllergensBadge recipeId={item.id} />
                       </div>
-                      <p className="text-sm text-slate-500">Codice: {item.code}</p>
-                      <p className="text-sm text-slate-600 mt-1">
+                      <p className="text-xs md:text-sm text-slate-500">Codice: {item.code}</p>
+                      <p className="text-xs md:text-sm text-slate-600 mt-1">
                         Categoria: <span className="font-medium">{item.category}</span>
                       </p>
                       {item.totalCost && (
-                        <div className="text-sm text-slate-600 mt-2 space-y-1">
+                        <div className="text-xs md:text-sm text-slate-600 mt-2 space-y-1">
                           <div>
-                            <span className="text-slate-500">Costo Totale:</span>{' '}
+                            <span className="text-slate-500">Costo:</span>{' '}
                             <span className="font-medium text-green-600">€ {parseFloat(item.totalCost).toFixed(2)}</span>
                           </div>
                           {item.unitWeight && (
                             <div>
-                              <span className="text-slate-500">Prezzo al kg:</span>{' '}
+                              <span className="text-slate-500">€/kg:</span>{' '}
                               <span className="font-medium text-blue-600">
                                 € {(parseFloat(item.totalCost) / parseFloat(item.unitWeight)).toFixed(2)}/kg
                               </span>
-                              <span className="text-slate-400 ml-2">(peso finale: {parseFloat(item.unitWeight).toFixed(2)} kg)</span>
+                              <span className="text-slate-400 ml-1 text-xs">(peso: {parseFloat(item.unitWeight).toFixed(2)} kg)</span>
                             </div>
                           )}
                           {item.producedQuantity && (
@@ -662,22 +662,24 @@ export default function FinalRecipes() {
                         </div>
                       )}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setSelectedRecipeId(item.id)}
+                        className="h-9"
                       >
-                        <Eye className="h-4 w-4 mr-2" />
-                        Dettagli
+                        <Eye className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Dettagli</span>
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleEdit(item)}
+                        className="h-9"
                       >
-                        <Pencil className="h-4 w-4 mr-2" />
-                        Modifica
+                        <Pencil className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Modifica</span>
                       </Button>
                       <Button
                         variant="outline"
@@ -686,8 +688,9 @@ export default function FinalRecipes() {
                           setSelectedRecipeForHistory(item.id);
                           setIsVersionHistoryOpen(true);
                         }}
+                        className="h-9"
                       >
-                        <History className="h-4 w-4 mr-2" />
+                        <History className="h-4 w-4 sm:mr-2" />
                         Storico
                       </Button>
                       <Button
@@ -744,7 +747,7 @@ export default function FinalRecipes() {
 
           {recipeDetails && (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm font-medium text-slate-700">Resa Produzione</p>
                   <p className="text-lg font-semibold text-slate-900">
@@ -876,7 +879,7 @@ export default function FinalRecipes() {
               </div>
 
               {/* Flag Semilavorato e Vendibile */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex items-center space-x-2">
                   <input
                     type="checkbox"
@@ -1185,7 +1188,7 @@ export default function FinalRecipes() {
           </DialogHeader>
           <div className="flex-1 overflow-y-auto space-y-6 pr-2">
             {/* Informazioni Base */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="create-name">Nome Ricetta *</Label>
                 <Input
@@ -1228,7 +1231,7 @@ export default function FinalRecipes() {
             </div>
 
             {/* Peso Finale e Quantita */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="create-weight">Peso Finale Prodotto (kg)</Label>
                 <Input
@@ -1266,7 +1269,7 @@ export default function FinalRecipes() {
             </div>
 
             {/* Conservazione */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="create-conservation">Metodo Conservazione *</Label>
                 <Input
@@ -1288,7 +1291,7 @@ export default function FinalRecipes() {
             </div>
 
             {/* Flags Vendibile e Semilavorato */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex items-center space-x-2">
                 <input
                   type="checkbox"

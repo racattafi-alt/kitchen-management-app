@@ -549,3 +549,24 @@
 - [ ] Implementare upload PDF e immagini con S3
 - [ ] Testare upload e visualizzazione documenti
 - [ ] Salvare checkpoint
+
+## OTTIMIZZAZIONE UX MOBILE
+- [x] Creare knowledge per ottimizzazione mobile layout
+- [x] Analizzare pagina Ricette Finali per problemi mobile
+- [x] Sistemare layout Ricette Finali: card responsive, testo non overflow, pulsanti icon-only mobile
+- [x] Ottimizzare grid dialog (grid-cols-1 sm:grid-cols-2)
+- [ ] Verificare e sistemare altre sezioni: Ingredienti, Produzione, HACCP, Ordini, Lista Acquisti
+- [ ] Testare su viewport mobile (375px, 768px)
+- [ ] Salvare checkpoint
+
+## BUG: INFINITY LISTA ACQUISTI - FILTRARE SOLO SETTIMANA SUCCESSIVA
+- [ ] Analizzare logica calcolo quantità necessarie in lista acquisti
+- [ ] Modificare backend per filtrare solo produzioni dalla domenica successiva
+- [ ] Testare lista acquisti con produzioni passate e future
+- [ ] Salvare checkpoint
+
+## FEATURE: RIMUOVERE QUANTITÀ PRODOTTA DA SEZIONE PRODUZIONI
+- [ ] Rimuovere campo quantità prodotta dalla pagina Produzione
+- [ ] Mantenere solo input quantità da produrre
+- [ ] Testare conferma produzioni
+- [ ] Salvare checkpoint
