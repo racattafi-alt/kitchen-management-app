@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ShoppingCart, Download, Filter, Search, Calendar, MessageCircle, FileText, CheckCircle } from "lucide-react";
+import { ShoppingCart, Download, Filter, Search, Calendar, MessageCircle, FileText, CheckCircle, Copy, Mail } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 // Funzione per calcolare il lunedì della settimana (in UTC)
@@ -35,6 +36,10 @@ export default function ShoppingList() {
     if (saved) return JSON.parse(saved);
     return Array.from({ length: 10 }, () => ({ name: '', supplier: '', quantity: 0, unit: 'kg', price: 0 }));
   });
+  const [showOrderDialog, setShowOrderDialog] = useState(false);
+  const [orderText, setOrderText] = useState("");
+  
+  const submitOrderMutation = trpc.orderSessions.submitOrder.useMutation();
 
   // Salva articoli extra in localStorage
   useEffect(() => {
@@ -101,7 +106,7 @@ export default function ShoppingList() {
     return sum + (qty * item.pricePerUnit);
   }, 0) || 0;
 
-  // Genera ordine per fornitore con WhatsApp (senza PDF per ora)
+  // Genera ordine per fornitore (apre dialog con opzioni)
   const handleSupplierOrder = async () => {
     const orderedItems = filteredList?.filter((item: any) => (orderQuantities[item.id] || 0) > 0);
     const validExtraItems = extraItems.filter(item => item.name && item.quantity > 0);
@@ -120,7 +125,6 @@ export default function ShoppingList() {
         name: item.itemName,
         qty: orderQuantities[item.id] || 0,
         unit: item.unitType === 'k' ? 'kg' : 'pz',
-        price: item.pricePerUnit,
       });
     });
     
@@ -132,29 +136,67 @@ export default function ShoppingList() {
         name: item.name,
         qty: item.quantity,
         unit: item.unit,
-        price: item.price,
       });
     });
 
-    // Prepara messaggio WhatsApp
+    // Prepara testo ordine (senza prezzi)
     const orderSummary = Object.entries(supplierGroups)
       .map(([supplier, items]) => {
         const itemsList = items.map(item => 
           `- ${item.name}: ${item.qty.toFixed(2)} ${item.unit}`
         ).join('\n');
-        const total = items.reduce((sum, item) => sum + (item.qty * item.price), 0);
-        return `*${supplier}*\n${itemsList}\n_Totale: €${total.toFixed(2)}_`;
+        return `*${supplier}*\n${itemsList}`;
       })
       .join('\n\n');
 
-    const whatsappMessage = encodeURIComponent(
-      `🛒 *ORDINE FORNITORI*\n\n${orderSummary}\n\n*TOTALE GENERALE: €${totalOrderCost.toFixed(2)}*`
-    );
-    const whatsappUrl = `https://wa.me/?text=${whatsappMessage}`;
+    const fullOrderText = `🛒 ORDINE FORNITORI\n\n${orderSummary}`;
     
-    // Apri WhatsApp
+    setOrderText(fullOrderText);
+    setShowOrderDialog(true);
+  };
+  
+  // Salva ordine nel database
+  const saveOrder = async () => {
+    const orderedItems = filteredList?.filter((item: any) => (orderQuantities[item.id] || 0) > 0);
+    if (!orderedItems || orderedItems.length === 0) return;
+    
+    try {
+      await submitOrderMutation.mutateAsync({
+        notes: `Ordine settimana ${selectedWeekGroup || 'tutte'}`,
+      });
+      toast.success("Ordine salvato nello storico!");
+    } catch (error) {
+      console.error("Errore salvataggio ordine:", error);
+    }
+  };
+  
+  // Copia testo ordine
+  const handleCopyText = async () => {
+    await navigator.clipboard.writeText(orderText);
+    await saveOrder();
+    toast.success("Testo copiato!");
+    setShowOrderDialog(false);
+  };
+  
+  // Apri WhatsApp
+  const handleWhatsApp = async () => {
+    const whatsappMessage = encodeURIComponent(orderText);
+    const whatsappUrl = `https://wa.me/?text=${whatsappMessage}`;
+    await saveOrder();
     window.open(whatsappUrl, '_blank');
-    toast.success("Ordine pronto per WhatsApp!");
+    toast.success("Ordine aperto in WhatsApp!");
+    setShowOrderDialog(false);
+  };
+  
+  // Apri Email
+  const handleEmail = async () => {
+    const subject = encodeURIComponent(`Ordine Settimanale - ${selectedWeekGroup || 'Tutte'}`);
+    const body = encodeURIComponent(orderText);
+    const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
+    await saveOrder();
+    window.location.href = mailtoLink;
+    toast.success("Email preparata!");
+    setShowOrderDialog(false);
   };
 
   // Esporta lista ordini
@@ -686,6 +728,52 @@ export default function ShoppingList() {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Dialog Opzioni Invio Ordine */}
+      <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Come vuoi inviare l'ordine?</DialogTitle>
+            <DialogDescription>
+              Scegli come condividere l'ordine. L'ordine verrà salvato automaticamente nello storico.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Anteprima ordine */}
+            <div className="bg-muted p-4 rounded-lg max-h-60 overflow-y-auto">
+              <pre className="text-sm whitespace-pre-wrap font-mono">{orderText}</pre>
+            </div>
+            
+            {/* Pulsanti opzioni */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <Button onClick={handleCopyText} variant="outline" className="h-auto py-4 flex-col gap-2">
+                <Copy className="h-6 w-6" />
+                <div className="text-center">
+                  <div className="font-semibold">Copia Testo</div>
+                  <div className="text-xs text-muted-foreground">Incolla dove vuoi</div>
+                </div>
+              </Button>
+              
+              <Button onClick={handleWhatsApp} variant="outline" className="h-auto py-4 flex-col gap-2">
+                <MessageCircle className="h-6 w-6" />
+                <div className="text-center">
+                  <div className="font-semibold">WhatsApp</div>
+                  <div className="text-xs text-muted-foreground">Apri in WhatsApp</div>
+                </div>
+              </Button>
+              
+              <Button onClick={handleEmail} variant="outline" className="h-auto py-4 flex-col gap-2">
+                <Mail className="h-6 w-6" />
+                <div className="text-center">
+                  <div className="font-semibold">Email</div>
+                  <div className="text-xs text-muted-foreground">Apri client email</div>
+                </div>
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

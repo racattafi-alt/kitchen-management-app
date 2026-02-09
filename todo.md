@@ -401,3 +401,25 @@
 - [ ] Verificare aggiornamento producedQuantity nelle ricette
 - [ ] Testare ricerca ricette
 - [ ] Testare con utente manager
+
+## AGGIORNAMENTO FRONTEND PRODUZIONE CON TAB STORICO
+- [x] Integrare storico produzioni nella pagina ProductionNew.tsx
+- [x] Implementare tab "Pianifica Produzione" e "Storico Produzioni"
+- [x] Riutilizzare tabella storico da Production.tsx originale
+- [x] Testare switch tra tab e funzionalità elimina produzione
+
+## BUG: STORICO ORDINI VUOTO
+- [x] Verificare procedura backend getHistory in orderSessionsRouter.ts
+- [x] Controllare query database order_history
+- [x] Testare se gli ordini vengono salvati correttamente in submitOrder
+- [x] Verificare visualizzazione in OrderHistory.tsx
+- [x] Correggere bug e testare con ordine reale (funzionava già, era vuoto perché nessun ordine salvato)
+
+## MIGLIORAMENTO: DIALOG OPZIONI INVIO ORDINE
+- [x] Sostituire pulsante "Ordina per fornitore" con dialog opzioni
+- [x] Implementare opzioni: Copia testo / WhatsApp / Email
+- [x] Salvare ordine automaticamente quando si clicca una opzione
+- [x] Implementare copia testo in clipboard
+- [x] Generare link WhatsApp con testo pre-compilato
+- [x] Aprire client email con ordine formattato
+- [x] Testare tutte le opzioni di invio
