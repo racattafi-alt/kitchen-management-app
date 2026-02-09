@@ -601,6 +601,7 @@ const productionRouter = router({
           itemName: semi.name,
           itemType: 'SEMI_FINISHED',
           supplier: 'Produzione Interna',
+          category: semi.category || 'ALTRO',
           quantityNeeded,
           quantityToOrder: 0,
           unitType: 'k',

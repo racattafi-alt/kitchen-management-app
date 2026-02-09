@@ -732,3 +732,9 @@
 - [x] Analizzare errore React: chiavi duplicate supplier-Soplaya, supplier-Allegro, supplier-Atoms
 - [x] Correggere array suppliers per rimuovere duplicati
 - [x] Testare che errori console React sono risolti
+
+## BUG: ORDINAMENTO CATEGORIA NON FUNZIONA
+- [x] Analizzare logica ordinamento per categoria in filteredList
+- [x] Verificare quale campo viene usato per ordinare (category vs ingredientType)
+- [x] Correggere sort per usare campo categoria corretto
+- [x] Testare ordinamento categoria con filtri attivi
