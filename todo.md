@@ -661,3 +661,9 @@
 - [x] Importare ingredienti sala tramite interfaccia web (file Excel pronto)
 - [x] Testare filtro OrdersNew con ingredienti cucina e sala
 - [ ] Salvare checkpoint
+
+## BUG: IMPORT INGREDIENTI SALA INCOMPLETO
+- [x] Verificare quanti ingredienti sala sono presenti nel database (erano solo 10)
+- [x] Completare import dei 114 ingredienti sala mancanti (batch 00-05)
+- [x] Verificare import completo (114 ingredienti sala totali)
+- [x] Salvare checkpoint

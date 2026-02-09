@@ -1,0 +1,18 @@
+{
+  "query": "SELECT department, COUNT(*) as total FROM ingredients GROUP BY department;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT department, COUNT(*) as total FROM ingredients GROUP BY department;",
+  "rows": [
+    {
+      "department": "Sala",
+      "total": "114"
+    },
+    {
+      "department": "Cucina",
+      "total": "154"
+    }
+  ],
+  "messages": [],
+  "stdout": "department\ttotal\nSala\t114\nCucina\t154\n",
+  "stderr": "",
+  "execution_time_ms": 64
+}
