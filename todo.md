@@ -519,3 +519,31 @@
 - [x] Aggiornare logica filtro per gestire "all" come tutti i frighi
 - [x] Testare pagina Fridges (errore risolto)
 - [ ] Salvare checkpoint
+
+## FEATURE: SISTEMA NON CONFORMITÀ HACCP BASATO SU PDF MODELLO
+- [x] Analizzare PDF modello non conformità per capire campi necessari
+- [x] Progettare database non_conformities (collegato a production_checks)
+- [x] Creare tabella database per non conformità
+- [x] Implementare funzioni database nonConformitiesDb.ts
+- [ ] Implementare backend router non conformità (CRUD)
+- [ ] Riorganizzare frontend controlli produzioni: lista settimane espandibile
+- [ ] Aggiungere pulsante "Apri Non Conformità" per ogni preparazione
+- [ ] Implementare frontend scheda non conformità basata su PDF
+- [ ] Testare workflow completo
+- [ ] Salvare checkpoint
+
+## FEATURE: SEMPLIFICARE STORICO ORDINI
+- [ ] Modificare frontend storico ordini: lista compatta con nome utente cliccabile
+- [ ] Implementare dialog dettagli ordine quando si clicca nome utente
+- [ ] Testare navigazione storico ordini
+- [ ] Salvare checkpoint
+
+## FEATURE: ARCHIVIO DOCUMENTI NORMATIVI
+- [x] Progettare database documents con cartelle (Sanitari, Permessi, Storico Controlli)
+- [x] Creare tabella database per documenti
+- [x] Implementare funzioni database documentsDb.ts
+- [ ] Implementare backend router documenti (upload, list, delete)
+- [ ] Implementare frontend pagina Archivio con cartelle
+- [ ] Implementare upload PDF e immagini con S3
+- [ ] Testare upload e visualizzazione documenti
+- [ ] Salvare checkpoint
