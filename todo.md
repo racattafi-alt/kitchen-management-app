@@ -555,13 +555,15 @@
 - [x] Analizzare pagina Ricette Finali per problemi mobile
 - [x] Sistemare layout Ricette Finali: card responsive, testo non overflow, pulsanti icon-only mobile
 - [x] Ottimizzare grid dialog (grid-cols-1 sm:grid-cols-2)
-- [ ] Verificare e sistemare altre sezioni: Ingredienti, Produzione, HACCP, Ordini, Lista Acquisti
+- [x] Sistemare Ingredients.tsx: grid responsive per form e allergeni
+- [ ] Verificare e sistemare altre sezioni: Produzione, HACCP, Ordini, Lista Acquisti
 - [ ] Testare su viewport mobile (375px, 768px)
 - [ ] Salvare checkpoint
 
 ## BUG: INFINITY LISTA ACQUISTI - FILTRARE SOLO SETTIMANA SUCCESSIVA
-- [ ] Analizzare logica calcolo quantità necessarie in lista acquisti
-- [ ] Modificare backend per filtrare solo produzioni dalla domenica successiva
+- [x] Analizzare logica calcolo quantità necessarie in lista acquisti
+- [x] Modificare getWeeklyProductions per filtrare solo produzioni dalla domenica successiva
+- [x] Aggiungere import gte in db.ts
 - [ ] Testare lista acquisti con produzioni passate e future
 - [ ] Salvare checkpoint
 

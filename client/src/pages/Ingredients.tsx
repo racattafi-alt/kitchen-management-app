@@ -367,7 +367,7 @@ export default function Ingredients() {
                   <DialogTitle>Aggiungi Ingrediente</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="name">Nome</Label>
                       <Input
@@ -466,7 +466,7 @@ export default function Ingredients() {
                     </div>
                     <div className="col-span-2">
                       <Label>Allergeni</Label>
-                      <div className="grid grid-cols-2 gap-2 mt-2 p-4 border rounded-lg max-h-48 overflow-y-auto">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 p-4 border rounded-lg max-h-48 overflow-y-auto">
                         {STANDARD_ALLERGENS.map((allergen) => (
                           <div key={allergen} className="flex items-center space-x-2">
                             <Checkbox
@@ -510,7 +510,7 @@ export default function Ingredients() {
               <DialogTitle>Modifica Ingrediente</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleUpdateSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="edit-name">Nome</Label>
                   <Input

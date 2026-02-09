@@ -1,4 +1,4 @@
-import { eq, and, desc, like } from "drizzle-orm";
+import { eq, and, desc, like, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,
@@ -412,6 +412,16 @@ export async function getWeeklyProductions(weekStartDate?: Date) {
   
   if (weekStartDate) {
     query = query.where(eq(weeklyProductions.weekStartDate, weekStartDate));
+  } else {
+    // Se non specificata una settimana, filtra solo produzioni future (da prossima domenica)
+    const now = new Date();
+    const nextSunday = new Date(now);
+    const dayOfWeek = now.getDay(); // 0 = domenica, 1 = lunedì, ..., 6 = sabato
+    const daysUntilNextSunday = dayOfWeek === 0 ? 7 : (7 - dayOfWeek);
+    nextSunday.setDate(now.getDate() + daysUntilNextSunday);
+    nextSunday.setHours(0, 0, 0, 0);
+    
+    query = query.where(gte(weeklyProductions.weekStartDate, nextSunday));
   }
   
   return query;

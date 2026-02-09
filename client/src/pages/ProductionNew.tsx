@@ -214,11 +214,6 @@ export default function ProductionNew() {
                             {recipe.pieceWeight && (
                               <span>• Peso pezzo: {Number(recipe.pieceWeight).toFixed(3)} kg</span>
                             )}
-                            {recipe.producedQuantity && Number(recipe.producedQuantity) > 0 && (
-                              <span className="text-green-600 font-medium">
-                                • Già prodotto: {Number(recipe.producedQuantity).toFixed(3)} kg
-                              </span>
-                            )}
                           </div>
                         </div>
 
