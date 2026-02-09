@@ -579,7 +579,7 @@ const productionRouter = router({
           id: ing.id,
           itemName: ing.name,
           itemType: 'INGREDIENT',
-          supplier: ing.supplierName || 'N/A',
+          supplier: ing.supplier || ing.supplierName || 'N/A',
           category: ing.category,
           quantityNeeded,
           quantityToOrder: 0,
