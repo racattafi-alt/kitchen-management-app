@@ -86,6 +86,53 @@ export const orderSessionsRouter = router({
       };
     }),
 
+  // Salva ordine dalla lista acquisti (senza svuotare carrello)
+  saveShoppingListOrder: protectedProcedure
+    .input(
+      z.object({
+        items: z.array(
+          z.object({
+            ingredientId: z.string(),
+            name: z.string(),
+            quantity: z.number(),
+            unit: z.string(),
+            category: z.string().optional(),
+            supplier: z.string().optional(),
+          })
+        ),
+        notes: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (input.items.length === 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Nessun articolo da ordinare",
+        });
+      }
+
+      // Prepara dati ordine
+      const orderData = {
+        items: input.items,
+        date: new Date(),
+      };
+
+      // Salva nello storico
+      const orderId = await saveOrderToHistory(
+        ctx.user.id,
+        ctx.user.name as string,
+        orderData,
+        null,
+        input.notes || null
+      );
+
+      return {
+        success: true,
+        orderId,
+        orderData,
+      };
+    }),
+
   // Ottiene storico ordini dell'utente
   getMyHistory: protectedProcedure.query(async ({ ctx }) => {
     const history = await getUserOrderHistory(ctx.user.id);

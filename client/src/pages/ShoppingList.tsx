@@ -39,7 +39,7 @@ export default function ShoppingList() {
   const [showOrderDialog, setShowOrderDialog] = useState(false);
   const [orderText, setOrderText] = useState("");
   
-  const submitOrderMutation = trpc.orderSessions.submitOrder.useMutation();
+  const saveShoppingListOrderMutation = trpc.orderSessions.saveShoppingListOrder.useMutation();
 
   // Salva articoli extra in localStorage
   useEffect(() => {
@@ -161,7 +161,18 @@ export default function ShoppingList() {
     if (!orderedItems || orderedItems.length === 0) return;
     
     try {
-      await submitOrderMutation.mutateAsync({
+      // Prepara items per salvataggio
+      const items = orderedItems.map((item: any) => ({
+        ingredientId: item.id,
+        name: item.itemName,
+        quantity: orderQuantities[item.id],
+        unit: item.unitType,
+        category: item.category,
+        supplier: item.supplier,
+      }));
+
+      await saveShoppingListOrderMutation.mutateAsync({
+        items,
         notes: `Ordine settimana ${selectedWeekGroup || 'tutte'}`,
       });
       toast.success("Ordine salvato nello storico!");

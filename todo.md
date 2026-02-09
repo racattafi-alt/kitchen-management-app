@@ -423,3 +423,10 @@
 - [x] Generare link WhatsApp con testo pre-compilato
 - [x] Aprire client email con ordine formattato
 - [x] Testare tutte le opzioni di invio
+
+## BUG: ERRORE SALVATAGGIO ORDINE DA LISTA ACQUISTI
+- [ ] Analizzare errore "Il carrello è vuoto" quando si clicca "Ordina per Fornitore"
+- [ ] Creare nuova procedura backend saveShoppingListOrder per salvare ordini dalla lista acquisti
+- [ ] Aggiornare ShoppingList.tsx per usare nuova procedura invece di submitOrder
+- [ ] Testare salvataggio ordine con quantità dalla lista acquisti
+- [ ] Verificare che l'ordine appaia nello storico ordini
