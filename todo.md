@@ -686,3 +686,11 @@
 - [x] Correggere handleImportSalaData per usare campo supplier
 - [x] Testare import e verificare visualizzazione fornitore
 - [ ] Salvare checkpoint
+
+## BUG: CATEGORIE INVALIDE IMPORT SALA
+- [x] Analizzare file Excel sala per identificare categorie non presenti nello schema
+- [x] Identificare problema: colonna "Categoria" contiene nomi fornitori invece di categorie
+- [x] Creare mapping fornitore → categoria logica (Allegro→Bevande, Luxardo→Alcolici, ecc.)
+- [x] Rigenerare sala_data.json con categorie corrette (114 articoli)
+- [x] Testare import completo senza errori validazione
+- [ ] Salvare checkpoint
