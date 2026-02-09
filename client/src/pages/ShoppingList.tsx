@@ -612,6 +612,18 @@ export default function ShoppingList() {
                                 <Badge variant={item.itemType === 'INGREDIENT' ? 'default' : 'secondary'} className="text-xs">
                                   {item.itemType === 'INGREDIENT' ? 'Ingrediente' : 'Semilavorato'}
                                 </Badge>
+                                {item.department && (
+                                  <Badge 
+                                    variant="outline" 
+                                    className={`text-xs ${
+                                      item.department === 'Cucina' 
+                                        ? 'bg-green-50 text-green-700 border-green-300 dark:bg-green-950 dark:text-green-400 dark:border-green-800' 
+                                        : 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800'
+                                    }`}
+                                  >
+                                    {item.department}
+                                  </Badge>
+                                )}
                                 <span>•</span>
                                 <span>{item.unitType === 'k' ? 'kg' : 'pz'}</span>
                                 <span>•</span>
@@ -712,9 +724,23 @@ export default function ShoppingList() {
                         >
                           <TableCell className="font-medium">{item.itemName}</TableCell>
                           <TableCell>
-                            <Badge variant={item.itemType === 'INGREDIENT' ? 'default' : 'secondary'}>
-                              {item.itemType === 'INGREDIENT' ? 'Ingrediente' : 'Semilavorato'}
-                            </Badge>
+                            <div className="flex flex-wrap gap-2">
+                              <Badge variant={item.itemType === 'INGREDIENT' ? 'default' : 'secondary'}>
+                                {item.itemType === 'INGREDIENT' ? 'Ingrediente' : 'Semilavorato'}
+                              </Badge>
+                              {item.department && (
+                                <Badge 
+                                  variant="outline" 
+                                  className={`${
+                                    item.department === 'Cucina' 
+                                      ? 'bg-green-50 text-green-700 border-green-300 dark:bg-green-950 dark:text-green-400 dark:border-green-800' 
+                                      : 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800'
+                                  }`}
+                                >
+                                  {item.department}
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell>{item.supplier}</TableCell>
                           <TableCell className="text-right font-semibold">
@@ -752,7 +778,21 @@ export default function ShoppingList() {
                                 )}
                               </div>
                             ) : (
-                              <span className="text-muted-foreground text-xs">-</span>
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.001"
+                                value={orderQty || ""}
+                                placeholder="0"
+                                onFocus={(e) => {
+                                  e.target.select();
+                                  if (!orderQty && item.quantityNeeded > 0) {
+                                    handleQuantityChange(item.id, item.quantityNeeded);
+                                  }
+                                }}
+                                onChange={(e) => handleQuantityChange(item.id, parseFloat(e.target.value) || 0)}
+                                className="w-20 text-right"
+                              />
                             )}
                           </TableCell>
                           <TableCell className="text-right font-semibold">

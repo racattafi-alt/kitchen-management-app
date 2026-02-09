@@ -703,3 +703,15 @@
 - [x] Aggiungere campo department all'update
 - [x] Testare import completo senza errori
 - [ ] Salvare checkpoint
+
+## BUG: CASELLE INPUT MANCANTI PER INGREDIENTI CON UNITÀ KG
+- [x] Analizzare codice ShoppingList.tsx per trovare condizione che nasconde input
+- [x] Correggere logica visualizzazione per mostrare caselle anche per unitType 'k'
+- [x] Testare con ingredienti kg (es: farina, zucchero, sale)
+- [x] Verificare tutti gli ingredienti mostrano casella input
+
+## FEATURE: BADGE REPARTO CUCINA/SALA
+- [x] Aggiungere badge colorati "Cucina"/"Sala" nelle card ingredienti
+- [x] Usare colori distintivi (es: verde per Cucina, blu per Sala)
+- [x] Implementare badge anche in Lista Acquisti per identificazione rapida
+- [x] Testare visualizzazione badge su mobile e desktop
