@@ -1,0 +1,13 @@
+{
+  "query": "SELECT COUNT(*) as total_sala FROM ingredients WHERE department = 'Sala';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT COUNT(*) as total_sala FROM ingredients WHERE department = 'Sala';",
+  "rows": [
+    {
+      "total_sala": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_sala\n0\n",
+  "stderr": "",
+  "execution_time_ms": 64
+}

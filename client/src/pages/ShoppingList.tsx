@@ -23,6 +23,7 @@ function getMondayOfWeek(date: Date): string {
 export default function ShoppingList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
+  const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
   const [selectedWeekGroup, setSelectedWeekGroup] = useState<string | null>(null);
   const [orderQuantities, setOrderQuantities] = useState<Record<string, number>>({});
   const [orderPackages, setOrderPackages] = useState<Record<string, number>>({});
@@ -68,7 +69,8 @@ export default function ShoppingList() {
 
   const filteredList = shoppingList?.filter((item: any) =>
     item.itemName?.toLowerCase().includes(searchQuery.toLowerCase()) &&
-    (!selectedSupplier || item.supplier === selectedSupplier)
+    (!selectedSupplier || item.supplier === selectedSupplier) &&
+    (!selectedDepartment || item.department === selectedDepartment)
   ).sort((a: any, b: any) => {
     // Ordina prima per fornitore, poi per nome articolo
     const supplierCompare = (a.supplier || '').localeCompare(b.supplier || '');
@@ -428,7 +430,7 @@ export default function ShoppingList() {
         {/* Filtri */}
         <Card>
           <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Ricerca */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -463,6 +465,31 @@ export default function ShoppingList() {
                     </Badge>
                   </Button>
                 ))}
+              </div>
+
+              {/* Filtro Reparto */}
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  variant={selectedDepartment === null ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedDepartment(null)}
+                >
+                  Tutti i Reparti
+                </Button>
+                <Button
+                  variant={selectedDepartment === "Cucina" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedDepartment("Cucina")}
+                >
+                  Cucina
+                </Button>
+                <Button
+                  variant={selectedDepartment === "Sala" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedDepartment("Sala")}
+                >
+                  Sala
+                </Button>
               </div>
 
               {/* Filtro Fornitore */}

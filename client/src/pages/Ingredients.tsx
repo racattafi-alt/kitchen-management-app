@@ -31,6 +31,7 @@ export default function Ingredients() {
     category: "Altro" as const,
     unitType: "k" as const,
     packageType: "" as "Sacco" | "Busta" | "Brick" | "Cartone" | "Scatola" | "Bottiglia" | "Barattolo" | "Sfuso" | "",
+    department: "Cucina" as "Cucina" | "Sala",
     packageQuantity: 0,
     packagePrice: 0,
     brand: "",
@@ -43,6 +44,7 @@ export default function Ingredients() {
     category: "Altro" as const,
     unitType: "k" as const,
     packageType: "" as "Sacco" | "Busta" | "Brick" | "Cartone" | "Scatola" | "Bottiglia" | "Barattolo" | "Sfuso" | "",
+    department: "Cucina" as "Cucina" | "Sala",
     packageQuantity: 0,
     packagePrice: 0,
     brand: "",
@@ -187,6 +189,7 @@ export default function Ingredients() {
       category: "Altro" as const,
       unitType: "k" as const,
       packageType: "",
+      department: "Cucina" as "Cucina" | "Sala",
       packageQuantity: 0,
       packagePrice: 0,
       brand: "",
@@ -225,6 +228,7 @@ export default function Ingredients() {
       category: formData.category,
       unitType: formData.unitType,
       packageType: formData.packageType || undefined,
+      department: formData.department,
       packageQuantity: formData.packageQuantity,
       packagePrice: formData.packagePrice,
       pricePerKgOrUnit: pricePerUnit,
@@ -242,6 +246,7 @@ export default function Ingredients() {
       category: ingredient.category,
       unitType: ingredient.unitType,
       packageType: ingredient.packageType || "",
+      department: ingredient.department || "Cucina",
       packageQuantity: parseFloat(ingredient.packageQuantity) || 0,
       packagePrice: parseFloat(ingredient.packagePrice) || 0,
       brand: ingredient.brand || "",
@@ -286,6 +291,7 @@ export default function Ingredients() {
       category: editFormData.category,
       unitType: editFormData.unitType,
       packageType: editFormData.packageType || undefined,
+      department: editFormData.department,
       packageQuantity: pkgQty,
       packagePrice: pkgPrice,
       brand: editFormData.brand || undefined,
@@ -450,6 +456,21 @@ export default function Ingredients() {
                           <SelectItem value="Bottiglia">Bottiglia</SelectItem>
                           <SelectItem value="Barattolo">Barattolo</SelectItem>
                           <SelectItem value="Sfuso">Sfuso (peso variabile)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="department">Reparto</Label>
+                      <Select
+                        value={formData.department}
+                        onValueChange={(value: any) => setFormData({ ...formData, department: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleziona reparto" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Cucina">Cucina</SelectItem>
+                          <SelectItem value="Sala">Sala</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -623,6 +644,21 @@ export default function Ingredients() {
                       <SelectItem value="Bottiglia">Bottiglia</SelectItem>
                       <SelectItem value="Barattolo">Barattolo</SelectItem>
                       <SelectItem value="Sfuso">Sfuso (peso variabile)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="edit-department">Reparto</Label>
+                  <Select
+                    value={editFormData.department}
+                    onValueChange={(value: any) => setEditFormData({ ...editFormData, department: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleziona reparto" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Cucina">Cucina</SelectItem>
+                      <SelectItem value="Sala">Sala</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

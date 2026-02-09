@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE ingredients ADD COLUMN department ENUM('Cucina', 'Sala') NOT NULL DEFAULT 'Cucina' AFTER packageType;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute ALTER TABLE ingredients ADD COLUMN department ENUM('Cucina', 'Sala') NOT NULL DEFAULT 'Cucina' AFTER packageType;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 492
+}

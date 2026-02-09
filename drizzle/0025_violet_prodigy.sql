@@ -1,0 +1,1 @@
+ALTER TABLE `ingredients` ADD `department` enum('Cucina','Sala') DEFAULT 'Cucina' NOT NULL;

@@ -632,3 +632,23 @@
 - [x] Aggiornare export ordini per mostrare tipo confezione (es: "2 sacchi da 3kg")
 - [x] Testare con prodotti confezionati (aglio, farina) e sfusi (carni, formaggi)
 - [ ] Salvare checkpoint
+
+## TASK: GENERAZIONE EXCEL INGREDIENTI
+- [x] Estrarre tutti gli ingredienti esistenti dal database
+- [x] Generare Excel ingredienti esistenti con colonne: ID, Nome, Fornitore, Categoria, UnitType, PackageType (vuoto), PackageQuantity, PackagePrice
+- [x] Generare Excel template nuovi ingredienti con colonne: Nome, Fornitore, Categoria, UnitType, PackageType, PackageQuantity, PackagePrice, Brand, Notes
+- [x] Consegnare entrambi i file all'utente
+
+## FEATURE: REPARTO CUCINA/SALA
+- [x] Analizzare file Excel InventarioSala(1).xlsx (115 ingredienti sala)
+- [x] Aggiungere campo department allo schema ingredients (enum: Cucina, Sala)
+- [x] Migrare tutti ingredienti esistenti a department="Cucina" (via ALTER TABLE DEFAULT)
+- [x] Aggiornare backend routers.ts per includere department in create/update/list
+- [x] Aggiornare generateShoppingList per restituire department
+- [x] Aggiornare db.ts getIngredients per includere department nel select
+- [x] Aggiornare form Ingredients.tsx con dropdown department (create + edit)
+- [x] Aggiungere filtro Cucina/Sala in ShoppingList.tsx
+- [x] Creare file Excel formattato per import ingredienti sala (ingredienti_sala_import.xlsx)
+- [x] Importare ingredienti sala tramite interfaccia web (file Excel pronto)
+- [x] Testare filtri Cucina/Sala
+- [ ] Salvare checkpoint
