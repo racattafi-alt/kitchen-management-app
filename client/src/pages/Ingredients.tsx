@@ -167,26 +167,45 @@ export default function Ingredients() {
       const response = await fetch('/sala_data.json');
       const salaData = await response.json();
       
+      // Ottieni lista ingredienti esistenti
+      const existingIngredients = ingredients || [];
+      
       let updated = 0;
       for (const item of salaData) {
         try {
+          // Cerca ingrediente esistente tramite code (campo code nel JSON corrisponde a name nel DB)
+          const existing = existingIngredients.find(ing => ing.name === item.name);
+          
+          if (!existing) {
+            console.warn(`Ingrediente ${item.code} non trovato, skip`);
+            continue;
+          }
+          
+          // Valida e mappa unitType
+          const validUnitType = item.unitType === 'u' || item.unitType === 'k' ? item.unitType : 'u';
+          
+          // Valida e mappa packageType
+          const validPackageTypes = ["Sacco", "Busta", "Brick", "Cartone", "Scatola", "Bottiglia", "Barattolo", "Sfuso"];
+          const validPackageType = validPackageTypes.includes(item.packageType) ? item.packageType : undefined;
+          
           await updateMutation.mutateAsync({
-            id: item.id,
+            id: existing.id,
             name: item.name,
             supplier: item.supplier || undefined,
             category: item.category,
-            unitType: item.unitType,
-            packageType: item.packageType || undefined,
-            packageQuantity: item.packageQuantity,
-            packagePrice: item.packagePrice,
-            pricePerKgOrUnit: item.pricePerKgOrUnit,
-            minOrderQuantity: item.minOrderQuantity,
+            unitType: validUnitType,
+            packageType: validPackageType,
+            packageQuantity: item.packageQuantity || 1,
+            packagePrice: item.packagePrice || 0,
+            pricePerKgOrUnit: item.pricePerKgOrUnit || 0,
+            minOrderQuantity: item.minOrderQuantity || 1,
             brand: item.brand || undefined,
             notes: item.notes || undefined,
+            department: item.department || 'Sala',
           });
           updated++;
         } catch (err) {
-          console.error(`Errore aggiornamento ${item.id}:`, err);
+          console.error(`Errore aggiornamento ${item.code}:`, err);
         }
       }
       

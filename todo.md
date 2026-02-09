@@ -694,3 +694,12 @@
 - [x] Rigenerare sala_data.json con categorie corrette (114 articoli)
 - [x] Testare import completo senza errori validazione
 - [ ] Salvare checkpoint
+
+## BUG: ERRORI VALIDAZIONE IMPORT SALA (ID/UNITTYPE/PACKAGETYPE)
+- [x] Analizzare errori: ID undefined, unitType invalido, packageType invalido
+- [x] Correggere handleImportSalaData: cercare ingrediente per name invece che code
+- [x] Validare unitType prima di inviare (default 'u' se invalido)
+- [x] Validare packageType prima di inviare (undefined se invalido)
+- [x] Aggiungere campo department all'update
+- [x] Testare import completo senza errori
+- [ ] Salvare checkpoint
