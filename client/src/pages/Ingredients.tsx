@@ -31,7 +31,7 @@ export default function Ingredients() {
     supplier: "",
     category: "Altro" as const,
     unitType: "k" as const,
-    packageType: "" as "Sacco" | "Busta" | "Brick" | "Cartone" | "Scatola" | "Bottiglia" | "Barattolo" | "Sfuso" | "",
+    packageType: "" as "Sacco" | "Busta" | "Brick" | "Cartone" | "Scatola" | "Bottiglia" | "Barattolo" | "Lattina" | "Sfuso" | "",
     department: "Cucina" as "Cucina" | "Sala",
     packageQuantity: 0,
     packagePrice: 0,
@@ -44,7 +44,7 @@ export default function Ingredients() {
     supplierId: "",
     category: "Altro" as const,
     unitType: "k" as const,
-    packageType: "" as "Sacco" | "Busta" | "Brick" | "Cartone" | "Scatola" | "Bottiglia" | "Barattolo" | "Sfuso" | "",
+    packageType: "" as "Sacco" | "Busta" | "Brick" | "Cartone" | "Scatola" | "Bottiglia" | "Barattolo" | "Lattina" | "Sfuso" | "",
     department: "Cucina" as "Cucina" | "Sala",
     packageQuantity: 0,
     packagePrice: 0,
@@ -185,7 +185,7 @@ export default function Ingredients() {
           const validUnitType = item.unitType === 'u' || item.unitType === 'k' ? item.unitType : 'u';
           
           // Valida e mappa packageType
-          const validPackageTypes = ["Sacco", "Busta", "Brick", "Cartone", "Scatola", "Bottiglia", "Barattolo", "Sfuso"];
+          const validPackageTypes = ["Sacco", "Busta", "Brick", "Cartone", "Scatola", "Bottiglia", "Barattolo", "Lattina", "Sfuso"];
           const validPackageType = validPackageTypes.includes(item.packageType) ? item.packageType : undefined;
           
           await updateMutation.mutateAsync({
@@ -523,6 +523,7 @@ export default function Ingredients() {
                           <SelectItem value="Scatola">Scatola</SelectItem>
                           <SelectItem value="Bottiglia">Bottiglia</SelectItem>
                           <SelectItem value="Barattolo">Barattolo</SelectItem>
+                          <SelectItem value="Lattina">Lattina</SelectItem>
                           <SelectItem value="Sfuso">Sfuso (peso variabile)</SelectItem>
                         </SelectContent>
                       </Select>
@@ -711,6 +712,7 @@ export default function Ingredients() {
                       <SelectItem value="Scatola">Scatola</SelectItem>
                       <SelectItem value="Bottiglia">Bottiglia</SelectItem>
                       <SelectItem value="Barattolo">Barattolo</SelectItem>
+                      <SelectItem value="Lattina">Lattina</SelectItem>
                       <SelectItem value="Sfuso">Sfuso (peso variabile)</SelectItem>
                     </SelectContent>
                   </Select>

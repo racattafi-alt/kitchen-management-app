@@ -1,0 +1,40 @@
+{
+  "query": "SELECT name FROM ingredients WHERE department='Sala' ORDER BY name LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT name FROM ingredients WHERE department='Sala' ORDER BY name LIMIT 10;",
+  "rows": [
+    {
+      "name": "7up lattina"
+    },
+    {
+      "name": "Aceto Balsamico (sala)"
+    },
+    {
+      "name": "Acqua Frizzante lattina"
+    },
+    {
+      "name": "Acqua Naturale lattina"
+    },
+    {
+      "name": "Albume in polvere"
+    },
+    {
+      "name": "Amaro Averna"
+    },
+    {
+      "name": "Amaro Branca Menta"
+    },
+    {
+      "name": "Amaro Braulio"
+    },
+    {
+      "name": "Amaro Fernet Branca"
+    },
+    {
+      "name": "Amaro Jefferson"
+    }
+  ],
+  "messages": [],
+  "stdout": "name\n7up lattina\nAceto Balsamico (sala)\nAcqua Frizzante lattina\nAcqua Naturale lattina\nAlbume in polvere\nAmaro Averna\nAmaro Branca Menta\nAmaro Braulio\nAmaro Fernet Branca\nAmaro Jefferson\n",
+  "stderr": "",
+  "execution_time_ms": 65
+}

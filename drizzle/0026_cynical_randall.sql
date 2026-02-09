@@ -1,0 +1,1 @@
+ALTER TABLE `ingredients` MODIFY COLUMN `packageType` enum('Sacco','Busta','Brick','Cartone','Scatola','Bottiglia','Barattolo','Lattina','Sfuso');

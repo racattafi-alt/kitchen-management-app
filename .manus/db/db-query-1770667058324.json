@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE ingredients MODIFY packageType ENUM('Sacco', 'Busta', 'Brick', 'Cartone', 'Scatola', 'Bottiglia', 'Barattolo', 'Lattina', 'Sfuso');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute ALTER TABLE ingredients MODIFY packageType ENUM('Sacco', 'Busta', 'Brick', 'Cartone', 'Scatola', 'Bottiglia', 'Barattolo', 'Lattina', 'Sfuso');",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 583
+}

@@ -1,0 +1,80 @@
+{
+  "query": "SELECT id, name, supplier, supplierId, department FROM ingredients WHERE department='Sala' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT id, name, supplier, supplierId, department FROM ingredients WHERE department='Sala' LIMIT 10;",
+  "rows": [
+    {
+      "id": "SAL001",
+      "name": "Pepsi Lattina",
+      "supplier": "Allegro",
+      "supplierId": "NULL",
+      "department": "Sala"
+    },
+    {
+      "id": "SAL002",
+      "name": "Pepsi Zero lattina",
+      "supplier": "Allegro",
+      "supplierId": "NULL",
+      "department": "Sala"
+    },
+    {
+      "id": "SAL003",
+      "name": "Lipton Limone lattina",
+      "supplier": "Allegro",
+      "supplierId": "NULL",
+      "department": "Sala"
+    },
+    {
+      "id": "SAL004",
+      "name": "Lipton Pesca lattina",
+      "supplier": "Allegro",
+      "supplierId": "NULL",
+      "department": "Sala"
+    },
+    {
+      "id": "SAL005",
+      "name": "Mirinda lattina",
+      "supplier": "Allegro",
+      "supplierId": "NULL",
+      "department": "Sala"
+    },
+    {
+      "id": "SAL006",
+      "name": "7up lattina",
+      "supplier": "Allegro",
+      "supplierId": "NULL",
+      "department": "Sala"
+    },
+    {
+      "id": "SAL007",
+      "name": "RedBull lattina",
+      "supplier": "Allegro",
+      "supplierId": "NULL",
+      "department": "Sala"
+    },
+    {
+      "id": "SAL008",
+      "name": "Acqua Naturale lattina",
+      "supplier": "Soplaya",
+      "supplierId": "NULL",
+      "department": "Sala"
+    },
+    {
+      "id": "SAL009",
+      "name": "Acqua Frizzante lattina",
+      "supplier": "Soplaya",
+      "supplierId": "NULL",
+      "department": "Sala"
+    },
+    {
+      "id": "SAL010",
+      "name": "BIB Pepsi",
+      "supplier": "Allegro",
+      "supplierId": "NULL",
+      "department": "Sala"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tsupplier\tsupplierId\tdepartment\nSAL001\tPepsi Lattina\tAllegro\tNULL\tSala\nSAL002\tPepsi Zero lattina\tAllegro\tNULL\tSala\nSAL003\tLipton Limone lattina\tAllegro\tNULL\tSala\nSAL004\tLipton Pesca lattina\tAllegro\tNULL\tSala\nSAL005\tMirinda lattina\tAllegro\tNULL\tSala\nSAL006\t7up lattina\tAllegro\tNULL\tSala\nSAL007\tRedBull lattina\tAllegro\tNULL\tSala\nSAL008\tAcqua Naturale lattina\tSoplaya\tNULL\tSala\nSAL009\tAcqua Frizzante lattina\tSoplaya\tNULL\tSala\nSAL010\tBIB Pepsi\tAllegro\tNULL\tSala\n",
+  "stderr": "",
+  "execution_time_ms": 93
+}

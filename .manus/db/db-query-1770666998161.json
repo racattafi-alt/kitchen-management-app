@@ -1,0 +1,55 @@
+{
+  "query": "SELECT name, packageQuantity, packageType FROM ingredients WHERE department='Sala' AND (packageQuantity IS NULL OR packageQuantity = 0 OR packageType IS NULL) LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT name, packageQuantity, packageType FROM ingredients WHERE department='Sala' AND (packageQuantity IS NULL OR packageQuantity = 0 OR packageType IS NULL) LIMIT 10;",
+  "rows": [
+    {
+      "name": "Pepsi Lattina",
+      "packageQuantity": "1.000",
+      "packageType": "NULL"
+    },
+    {
+      "name": "Pepsi Zero lattina",
+      "packageQuantity": "1.000",
+      "packageType": "NULL"
+    },
+    {
+      "name": "Lipton Limone lattina",
+      "packageQuantity": "1.000",
+      "packageType": "NULL"
+    },
+    {
+      "name": "Lipton Pesca lattina",
+      "packageQuantity": "1.000",
+      "packageType": "NULL"
+    },
+    {
+      "name": "Mirinda lattina",
+      "packageQuantity": "1.000",
+      "packageType": "NULL"
+    },
+    {
+      "name": "7up lattina",
+      "packageQuantity": "1.000",
+      "packageType": "NULL"
+    },
+    {
+      "name": "RedBull lattina",
+      "packageQuantity": "1.000",
+      "packageType": "NULL"
+    },
+    {
+      "name": "Acqua Naturale lattina",
+      "packageQuantity": "1.000",
+      "packageType": "NULL"
+    },
+    {
+      "name": "Acqua Frizzante lattina",
+      "packageQuantity": "1.000",
+      "packageType": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "name\tpackageQuantity\tpackageType\nPepsi Lattina\t1.000\tNULL\nPepsi Zero lattina\t1.000\tNULL\nLipton Limone lattina\t1.000\tNULL\nLipton Pesca lattina\t1.000\tNULL\nMirinda lattina\t1.000\tNULL\n7up lattina\t1.000\tNULL\nRedBull lattina\t1.000\tNULL\nAcqua Naturale lattina\t1.000\tNULL\nAcqua Frizzante lattina\t1.000\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 64
+}
