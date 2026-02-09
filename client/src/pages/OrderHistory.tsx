@@ -22,15 +22,17 @@ export default function OrderHistory() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white border-b shadow-sm">
-        <div className="container py-4 flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => setLocation("/")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">Storico Ordini</h1>
-            <p className="text-sm text-gray-600">
-              {orders.length} ordini inviati
-            </p>
+        <div className="container py-3 md:py-4">
+          <div className="flex items-center gap-2 md:gap-4">
+            <Button variant="ghost" size="icon" onClick={() => setLocation("/")}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl md:text-2xl font-bold truncate">Storico Ordini</h1>
+              <p className="text-xs md:text-sm text-gray-600 truncate">
+                {orders.length} ordini inviati
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -44,7 +46,7 @@ export default function OrderHistory() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 md:space-y-4">
             {orders.map((order) => {
               const orderData = typeof order.orderData === "string" 
                 ? JSON.parse(order.orderData) 
@@ -52,18 +54,18 @@ export default function OrderHistory() {
               
               return (
                 <Card key={order.id}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg">
+                  <CardHeader className="pb-3 md:pb-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-base md:text-lg truncate">
                           Ordine #{order.id.slice(0, 8)}
                         </CardTitle>
-                        <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>
+                        <div className="flex items-center gap-1 md:gap-2 text-xs md:text-sm text-gray-600 mt-1">
+                          <Calendar className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
+                          <span className="truncate">
                             {new Date(order.createdAt).toLocaleDateString("it-IT", {
                               year: "numeric",
-                              month: "long",
+                              month: "short",
                               day: "numeric",
                               hour: "2-digit",
                               minute: "2-digit",
@@ -71,13 +73,13 @@ export default function OrderHistory() {
                           </span>
                         </div>
                         {order.userName && (
-                          <p className="text-sm text-gray-500 mt-1">
-                            Ordinato da: <span className="font-medium">{order.userName}</span>
+                          <p className="text-xs md:text-sm text-gray-500 mt-1 truncate">
+                            Da: <span className="font-medium">{order.userName}</span>
                           </p>
                         )}
                       </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-green-600">
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-xl md:text-2xl font-bold text-green-600">
                           {order.totalItems}
                         </p>
                         <p className="text-xs text-gray-600">articoli</p>
@@ -87,8 +89,8 @@ export default function OrderHistory() {
                   <CardContent>
                     {/* Note */}
                     {order.notes && (
-                      <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
-                        <p className="text-sm">
+                      <div className="mb-3 md:mb-4 p-2 md:p-3 bg-yellow-50 border border-yellow-200 rounded">
+                        <p className="text-xs md:text-sm">
                           <strong>Note:</strong> {order.notes}
                         </p>
                       </div>
@@ -96,22 +98,22 @@ export default function OrderHistory() {
 
                     {/* Lista articoli */}
                     <div className="space-y-2">
-                      <p className="font-semibold text-sm text-gray-700 mb-2">
+                      <p className="font-semibold text-xs md:text-sm text-gray-700 mb-2">
                         Articoli ordinati:
                       </p>
                       {orderData.items?.map((item: any, idx: number) => (
                         <div
                           key={idx}
-                          className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded"
+                          className="flex items-center justify-between gap-2 py-2 px-2 md:px-3 bg-gray-50 rounded"
                         >
-                          <div className="flex-1">
-                            <p className="font-medium">{item.name}</p>
-                            <p className="text-xs text-gray-600">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm md:text-base font-medium truncate">{item.name}</p>
+                            <p className="text-xs text-gray-600 truncate">
                               {item.category} {item.supplier && `• ${item.supplier}`}
                             </p>
                           </div>
-                          <div className="text-right">
-                            <p className="font-semibold">
+                          <div className="text-right flex-shrink-0">
+                            <p className="text-sm md:text-base font-semibold">
                               {item.quantity} {item.unit === "k" ? "kg" : "pz"}
                             </p>
                           </div>
@@ -121,14 +123,15 @@ export default function OrderHistory() {
 
                     {/* PDF Link (se disponibile) */}
                     {order.pdfUrl && (
-                      <div className="mt-4 pt-4 border-t">
+                      <div className="mt-3 md:mt-4 pt-3 md:pt-4 border-t">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => window.open(order.pdfUrl!, "_blank")}
+                          className="w-full sm:w-auto"
                         >
-                          <FileText className="h-4 w-4 mr-2" />
-                          Scarica PDF
+                          <FileText className="h-4 w-4" />
+                          <span className="ml-2">Scarica PDF</span>
                         </Button>
                       </div>
                     )}

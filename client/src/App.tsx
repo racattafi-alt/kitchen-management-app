@@ -27,6 +27,7 @@ import OrdersNew from "./pages/OrdersNew";
 import OrderHistory from "./pages/OrderHistory";
 import Invoices from "./pages/Invoices";
 import Fridges from "./pages/Fridges";
+import DocumentArchive from "./pages/DocumentArchive";
 
 function Router() {
   return (
@@ -55,6 +56,7 @@ function Router() {
       <Route path={"/order-history"} component={OrderHistory} />
       <Route path={"/invoices"} component={Invoices} />
       <Route path={"/fridges"} component={Fridges} />
+      <Route path={"/documents"} component={DocumentArchive} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

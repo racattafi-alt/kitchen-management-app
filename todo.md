@@ -572,3 +572,33 @@
 - [ ] Mantenere solo input quantità da produrre
 - [ ] Testare conferma produzioni
 - [ ] Salvare checkpoint
+
+## OTTIMIZZAZIONE UX MOBILE - COMPLETAMENTO
+- [x] Ottimizzare OrdersNew.tsx: header responsive, card compatte, pulsanti icon-only
+- [x] Ottimizzare OrderHistory.tsx: header responsive, testo truncate, card compatte
+- [x] Ottimizzare HACCPLanding.tsx: grid responsive (4 colonne), card compatte, testo responsive
+- [ ] Testare su viewport mobile (375px, 768px)
+- [ ] Salvare checkpoint
+
+## FEATURE: FRONTEND NON CONFORMITÀ HACCP - COMPLETATO
+- [x] Leggere PDF modello non conformità per capire struttura
+- [x] Implementare pagina HACCPNonCompliance con form completo
+- [x] Creare dialog creazione non conformità (descrizione, azione immediata, trattamento prodotto)
+- [x] Creare dialog modifica con 3 sezioni: analisi causa radice, piano correttivo, verifica efficacia
+- [x] Implementare filtri per stato (aperta/in corso/in verifica/chiusa) con tabs
+- [x] Implementare badge status con icone e colori (open=rosso, in_progress=blu, pending_verification=arancione, closed=verde)
+- [x] Ottimizzare per mobile: dialog full-screen responsive, form grid responsive
+- [ ] Testare creazione, modifica, eliminazione non conformità
+- [ ] Salvare checkpoint
+
+## FEATURE: FRONTEND ARCHIVIO DOCUMENTI - COMPLETATO
+- [x] Implementare pagina DocumentArchive con 3 tab (Sanitari, Permessi, Storico Controlli)
+- [x] Implementare dialog upload con form completo (titolo, descrizione, date, riferimento, note)
+- [x] Implementare upload PDF e immagini con conversione base64 e S3
+- [x] Implementare alert documenti in scadenza (prossimi 30 giorni) con badge rosso
+- [x] Implementare visualizzazione documenti per categoria con badge scadenza arancione
+- [x] Aggiungere route /documents in App.tsx
+- [x] Aggiungere card Archivio Documenti in HACCPLanding (4a card con icona viola)
+- [x] Ottimizzare per mobile: dialog full-screen, form responsive, tab responsive, card compatte
+- [ ] Testare upload e visualizzazione documenti
+- [ ] Salvare checkpoint

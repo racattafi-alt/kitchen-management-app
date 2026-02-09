@@ -151,51 +151,55 @@ export default function OrdersNew() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white border-b shadow-sm">
-        <div className="container py-4 flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => setLocation("/")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">Ordini Ingredienti</h1>
-            <p className="text-sm text-gray-600">
-              {totalCartItems > 0 ? `${totalCartItems} articoli nel carrello` : "Carrello vuoto"}
-            </p>
+        <div className="container py-3 md:py-4">
+          <div className="flex items-center gap-2 md:gap-4">
+            <Button variant="ghost" size="icon" onClick={() => setLocation("/")}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl md:text-2xl font-bold truncate">Ordini Ingredienti</h1>
+              <p className="text-xs md:text-sm text-gray-600 truncate">
+                {totalCartItems > 0 ? `${totalCartItems} articoli nel carrello` : "Carrello vuoto"}
+              </p>
+            </div>
+            <Button
+              onClick={handleSubmitOrder}
+              disabled={cartItems.length === 0 || submitOrderMutation.isPending}
+              size="sm"
+              className="md:size-default"
+            >
+              <Send className="h-4 w-4 md:h-5 md:w-5" />
+              <span className="hidden sm:inline ml-2">Invia Ordine</span>
+            </Button>
           </div>
-          <Button
-            onClick={handleSubmitOrder}
-            disabled={cartItems.length === 0 || submitOrderMutation.isPending}
-            size="lg"
-          >
-            <Send className="h-5 w-5 mr-2" />
-            Invia Ordine
-          </Button>
         </div>
       </div>
 
       <div className="container py-6">
         {/* Barra ricerca */}
-        <div className="mb-6">
+        <div className="mb-4 md:mb-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
             <Input
               placeholder="Cerca ingrediente..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-9 md:pl-10 text-sm md:text-base"
             />
           </div>
         </div>
 
         {/* Note ordine */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Note Ordine (opzionale)</CardTitle>
+        <Card className="mb-4 md:mb-6">
+          <CardHeader className="pb-3 md:pb-4">
+            <CardTitle className="text-base md:text-lg">Note Ordine (opzionale)</CardTitle>
           </CardHeader>
           <CardContent>
             <Input
               placeholder="Aggiungi note per questo ordine..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
+              className="text-sm md:text-base"
             />
           </CardContent>
         </Card>
@@ -208,22 +212,22 @@ export default function OrdersNew() {
 
             return (
               <Card key={ingredient.id} className={cartQty > 0 ? "border-green-500" : ""}>
-                <CardContent className="py-4">
-                  <div className="flex items-center gap-4">
+                <CardContent className="py-3 md:py-4">
+                  <div className="flex items-start md:items-center gap-2 md:gap-4">
                     {/* Nome ingrediente */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold truncate">{ingredient.name}</h3>
-                      <div className="flex gap-2 text-sm text-gray-600">
-                        <span className="bg-gray-100 px-2 py-0.5 rounded">
+                      <h3 className="text-sm md:text-base font-semibold truncate">{ingredient.name}</h3>
+                      <div className="flex flex-wrap gap-1 md:gap-2 text-xs md:text-sm text-gray-600 mt-1">
+                        <span className="bg-gray-100 px-1.5 md:px-2 py-0.5 rounded text-xs">
                           {ingredient.category}
                         </span>
                         {ingredient.supplierName && (
-                          <span className="bg-blue-100 px-2 py-0.5 rounded">
+                          <span className="bg-blue-100 px-1.5 md:px-2 py-0.5 rounded text-xs">
                             {ingredient.supplierName}
                           </span>
                         )}
                         {isAdmin && parseFloat(ingredient.pricePerKgOrUnit as any) > 0 && (
-                          <span className="bg-yellow-100 px-2 py-0.5 rounded font-mono">
+                          <span className="bg-yellow-100 px-1.5 md:px-2 py-0.5 rounded font-mono text-xs">
                             €{parseFloat(ingredient.pricePerKgOrUnit as any).toFixed(2)}/{ingredient.unitType === "k" ? "kg" : "pz"}
                           </span>
                         )}
@@ -231,7 +235,7 @@ export default function OrdersNew() {
                     </div>
 
                     {/* Campo quantità */}
-                    <div className="w-32">
+                    <div className="w-24 md:w-32 flex-shrink-0">
                       <Input
                         type="number"
                         min="0"
@@ -239,7 +243,7 @@ export default function OrdersNew() {
                         value={cartQty || ""}
                         onChange={(e) => handleQuantityChange(ingredient.id, e.target.value)}
                         placeholder="0"
-                        className="text-right"
+                        className="text-right text-sm md:text-base h-10"
                       />
                       <p className="text-xs text-gray-500 text-right mt-1">
                         {ingredient.unitType === "k" ? "kg" : "pz"}
