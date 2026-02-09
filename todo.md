@@ -462,3 +462,21 @@
 - [ ] Implementare alert temperature fuori range (frontend)
 - [ ] Testare tutte le funzionalità HACCP
 - [ ] Salvare checkpoint
+
+## FEATURE: SISTEMA IMPORTAZIONE FATTURE CON AI MATCHING (DA IMPLEMENTARE)
+- [x] Progettare schema database: invoices, price_history, product_mappings (memoria abbinamenti)
+- [x] Creare tabelle database per fatture e storico prezzi
+- [ ] Implementare backend: upload fattura PDF/immagine
+- [ ] Implementare OCR estrazione testo da fatture
+- [ ] Implementare AI extraction dati strutturati (prodotto, quantità, prezzo, unità)
+- [ ] Implementare algoritmo matching intelligente con memoria storica
+- [ ] Implementare salvataggio abbinamenti confermati per apprendimento
+- [ ] Implementare calcolo variazioni prezzi e impatto su prodotti finiti
+- [ ] Implementare frontend: pagina upload fatture
+- [ ] Implementare frontend: tabella conferma abbinamenti (modificabile)
+- [ ] Implementare frontend: report variazioni prezzi con grafici
+- [ ] Implementare frontend: alert variazioni anomale (>20%)
+- [ ] Testare workflow completo con fatture reali
+- [ ] Salvare checkpoint
+
+NOTA: Database creato, implementazione backend/frontend rimandata a sessione dedicata
