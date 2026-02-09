@@ -25,6 +25,7 @@ export default function ShoppingList() {
   const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
   const [selectedWeekGroup, setSelectedWeekGroup] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'supplier' | 'name' | 'category'>('supplier');
   const [orderQuantities, setOrderQuantities] = useState<Record<string, number>>({});
   const [orderPackages, setOrderPackages] = useState<Record<string, number>>({});
   const [extraItems, setExtraItems] = useState<Array<{
@@ -72,10 +73,18 @@ export default function ShoppingList() {
     (!selectedSupplier || item.supplier === selectedSupplier) &&
     (!selectedDepartment || item.department === selectedDepartment)
   ).sort((a: any, b: any) => {
-    // Ordina prima per fornitore, poi per nome articolo
-    const supplierCompare = (a.supplier || '').localeCompare(b.supplier || '');
-    if (supplierCompare !== 0) return supplierCompare;
-    return (a.itemName || '').localeCompare(b.itemName || '');
+    if (sortBy === 'name') {
+      return (a.itemName || '').localeCompare(b.itemName || '');
+    } else if (sortBy === 'category') {
+      const categoryCompare = (a.category || '').localeCompare(b.category || '');
+      if (categoryCompare !== 0) return categoryCompare;
+      return (a.itemName || '').localeCompare(b.itemName || '');
+    } else {
+      // Default: ordina per fornitore, poi per nome
+      const supplierCompare = (a.supplier || '').localeCompare(b.supplier || '');
+      if (supplierCompare !== 0) return supplierCompare;
+      return (a.itemName || '').localeCompare(b.itemName || '');
+    }
   });
 
   // Fornitori unici
@@ -128,6 +137,9 @@ export default function ShoppingList() {
     const qty = orderQuantities[item.id] || 0;
     return sum + (qty * item.pricePerUnit);
   }, 0) || 0;
+
+  // Verifica se ci sono articoli con quantità > 0 (indipendentemente dal prezzo)
+  const hasOrderedItems = filteredList?.some((item: any) => (orderQuantities[item.id] || 0) > 0) || false;
 
   // Genera ordine per fornitore (apre dialog con opzioni)
   const handleSupplierOrder = async () => {
@@ -390,10 +402,10 @@ export default function ShoppingList() {
               <div className="text-2xl font-bold">€{totalOrderCost.toFixed(2)}</div>
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleEmailExport} disabled={totalOrderCost === 0} variant="secondary" size="sm">
+              <Button onClick={handleEmailExport} disabled={!hasOrderedItems} variant="secondary" size="sm">
                 <FileText className="h-4 w-4" />
               </Button>
-              <Button onClick={handleExport} disabled={totalOrderCost === 0} variant="secondary" size="sm">
+              <Button onClick={handleExport} disabled={!hasOrderedItems} variant="secondary" size="sm">
                 <Download className="h-4 w-4" />
               </Button>
             </div>
@@ -412,15 +424,15 @@ export default function ShoppingList() {
               <CheckCircle className="mr-2 h-4 w-4" />
               Compila Tutto
             </Button>
-            <Button onClick={handleSupplierOrder} disabled={totalOrderCost === 0} variant="default" className="w-full sm:w-auto">
+            <Button onClick={handleSupplierOrder} disabled={!hasOrderedItems} variant="default" className="w-full sm:w-auto">
               <MessageCircle className="mr-2 h-4 w-4" />
               Ordine per Fornitore
             </Button>
-            <Button onClick={handleEmailExport} disabled={totalOrderCost === 0} variant="outline" className="w-full sm:w-auto">
+            <Button onClick={handleEmailExport} disabled={!hasOrderedItems} variant="outline" className="w-full sm:w-auto">
               <FileText className="mr-2 h-4 w-4" />
               Esporta Email
             </Button>
-            <Button onClick={handleExport} disabled={totalOrderCost === 0} variant="outline" className="w-full sm:w-auto">
+            <Button onClick={handleExport} disabled={!hasOrderedItems} variant="outline" className="w-full sm:w-auto">
               <Download className="mr-2 h-4 w-4" />
               Esporta CSV
             </Button>
@@ -430,7 +442,7 @@ export default function ShoppingList() {
         {/* Filtri */}
         <Card>
           <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               {/* Ricerca */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -440,6 +452,31 @@ export default function ShoppingList() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
                 />
+              </div>
+
+              {/* Ordinamento */}
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  variant={sortBy === 'supplier' ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSortBy('supplier')}
+                >
+                  Fornitore
+                </Button>
+                <Button
+                  variant={sortBy === 'name' ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSortBy('name')}
+                >
+                  Nome
+                </Button>
+                <Button
+                  variant={sortBy === 'category' ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSortBy('category')}
+                >
+                  Categoria
+                </Button>
               </div>
 
               {/* Filtro Settimana */}

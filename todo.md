@@ -715,3 +715,15 @@
 - [x] Usare colori distintivi (es: verde per Cucina, blu per Sala)
 - [x] Implementare badge anche in Lista Acquisti per identificazione rapida
 - [x] Testare visualizzazione badge su mobile e desktop
+
+## BUG: ORDINI SALA BLOCCATI
+- [x] Analizzare problema: inserendo quantità articoli sala non si può completare ordine
+- [x] Identificare validazione o controllo che blocca ordini sala
+- [x] Correggere logica per permettere ordini con articoli sala
+- [x] Testare completamento ordine con mix articoli cucina/sala
+
+## FEATURE: ORDINAMENTO PER CATEGORIA LISTA ACQUISTI
+- [x] Aggiungere dropdown/pulsanti ordinamento (Nome, Fornitore, Categoria)
+- [x] Implementare ordinamento alfabetico per categoria ingredienti
+- [x] Mantenere ordinamento quando si applicano filtri
+- [x] Testare ordinamento con filtri attivi (reparto, fornitore, settimana)
