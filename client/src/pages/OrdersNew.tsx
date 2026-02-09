@@ -14,6 +14,7 @@ export default function OrdersNew() {
   // Toast notifications removed for simplicity
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
 
   // Ottieni lista ingredienti
@@ -50,10 +51,12 @@ export default function OrdersNew() {
     },
   });
 
-  // Filtra ingredienti in base alla ricerca
-  const filteredIngredients = ingredients.filter((ing) =>
-    ing.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filtra ingredienti in base alla ricerca e department
+  const filteredIngredients = ingredients.filter((ing) => {
+    const matchesSearch = ing.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDepartment = selectedDepartment === null || ing.department === selectedDepartment;
+    return matchesSearch && matchesDepartment;
+  });
 
   // Ottieni quantità corrente dal carrello
   const getCartQuantity = (ingredientId: string) => {
@@ -187,6 +190,31 @@ export default function OrdersNew() {
               className="pl-9 md:pl-10 text-sm md:text-base"
             />
           </div>
+        </div>
+
+        {/* Filtro Reparto */}
+        <div className="mb-4 md:mb-6 flex gap-2 flex-wrap">
+          <Button
+            variant={selectedDepartment === null ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedDepartment(null)}
+          >
+            Tutti i Reparti
+          </Button>
+          <Button
+            variant={selectedDepartment === "Cucina" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedDepartment("Cucina")}
+          >
+            Cucina
+          </Button>
+          <Button
+            variant={selectedDepartment === "Sala" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedDepartment("Sala")}
+          >
+            Sala
+          </Button>
         </div>
 
         {/* Note ordine */}

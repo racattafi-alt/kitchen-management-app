@@ -652,3 +652,12 @@
 - [x] Importare ingredienti sala tramite interfaccia web (file Excel pronto)
 - [x] Testare filtri Cucina/Sala
 - [ ] Salvare checkpoint
+
+## TASK: IMPORT INGREDIENTI SALA E FILTRO ORDINI
+- [x] Preparare file Excel formattato per import sala (ingredienti_sala_import.xlsx)
+- [x] Aggiungere stato selectedDepartment in OrdersNew.tsx
+- [x] Aggiungere filtro department alla logica filteredIngredients
+- [x] Aggiungere pulsanti filtro Reparto (Tutti/Cucina/Sala) in OrdersNew.tsx
+- [x] Importare ingredienti sala tramite interfaccia web (file Excel pronto)
+- [x] Testare filtro OrdersNew con ingredienti cucina e sala
+- [ ] Salvare checkpoint
