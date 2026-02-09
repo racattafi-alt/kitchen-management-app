@@ -727,3 +727,8 @@
 - [x] Implementare ordinamento alfabetico per categoria ingredienti
 - [x] Mantenere ordinamento quando si applicano filtri
 - [x] Testare ordinamento con filtri attivi (reparto, fornitore, settimana)
+
+## BUG: CHIAVI DUPLICATE PULSANTI FORNITORI
+- [x] Analizzare errore React: chiavi duplicate supplier-Soplaya, supplier-Allegro, supplier-Atoms
+- [x] Correggere array suppliers per rimuovere duplicati
+- [x] Testare che errori console React sono risolti

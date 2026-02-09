@@ -633,7 +633,7 @@ export default function ShoppingList() {
                     
                     if (showSupplierHeader) {
                       acc.push(
-                        <div key={`supplier-${item.supplier}`} className="sticky top-0 z-10 bg-primary text-primary-foreground px-4 py-2 rounded-md font-semibold">
+                        <div key={`supplier-header-${index}`} className="sticky top-0 z-10 bg-primary text-primary-foreground px-4 py-2 rounded-md font-semibold">
                           {item.supplier}
                         </div>
                       );
