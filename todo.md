@@ -752,3 +752,10 @@
 - [x] Correggere categorie per ingredienti sala (Amari dovrebbero essere Alcolici, non Bevande)
 - [x] Reimportare ingredienti con categorie corrette
 - [x] Testare ordinamento categoria con categorie corrette
+
+## BUG: CATEGORIE BIRRE E ALTRI ARTICOLI SALA SBAGLIATE
+- [x] Verificare quali birre hanno categoria sbagliata (dovrebbero essere "Birra" non "Bevande")
+- [x] Verificare caffè (dovrebbero essere categoria specifica non "Bevande")
+- [x] Correggere categorie nel JSON sala_data.json
+- [x] Aggiornare database con categorie corrette
+- [x] Testare ordinamento categoria con tutte le categorie corrette
