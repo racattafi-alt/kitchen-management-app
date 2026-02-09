@@ -504,3 +504,12 @@
 - [x] Salvare tutte le temperature in batch con Promise.all
 - [x] Testare funzionalità compilazione rapida (implementata)
 - [ ] Salvare checkpoint
+
+## FEATURE: STORICO TEMPERATURE COMPLETO
+- [x] Implementare backend query getAllTemperatures con filtri (fridgeId, startDate, endDate)
+- [x] Implementare frontend tab Storico Temperature con tabella
+- [x] Aggiungere filtri: select frigo, date picker range
+- [x] Implementare export Excel (CSV) storico temperature
+- [x] Rimuovere tab Statistiche (non necessario)
+- [x] Testare filtri e export (implementato)
+- [ ] Salvare checkpoint

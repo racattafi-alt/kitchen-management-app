@@ -11,13 +11,12 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Thermometer, Plus, Edit, Trash2, AlertTriangle, ClipboardList } from "lucide-react";
+import { Thermometer, Plus, Trash2, AlertTriangle, ClipboardList, Download } from "lucide-react";
 
 export default function Fridges() {
   const [activeTab, setActiveTab] = useState("fridges");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showBatchTempDialog, setShowBatchTempDialog] = useState(false);
-  const [selectedFridge, setSelectedFridge] = useState<any>(null);
   
   // Form states
   const [name, setName] = useState("");
@@ -28,18 +27,24 @@ export default function Fridges() {
   
   // Batch temperature states
   const [batchTemps, setBatchTemps] = useState<Record<string, string>>({});
+  
+  // Filtri storico temperature
+  const [filterFridgeId, setFilterFridgeId] = useState<string>("");
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
 
   const utils = trpc.useUtils();
   const { data: fridges = [], isLoading: loadingFridges } = trpc.fridges.getAll.useQuery();
   const { data: outOfRange = [] } = trpc.fridges.getOutOfRange.useQuery();
   
-  // Query per storico temperature (tutte)
-  const { data: allTemperatures = [] } = trpc.fridges.getTemperatures.useQuery({
-    fridgeId: "all" // Placeholder, implementeremo query separata
-  }, { enabled: false });
+  // Query storico temperature con filtri
+  const { data: allTemperatures = [], isLoading: loadingTemps } = trpc.fridges.getAllTemperatures.useQuery({
+    fridgeId: filterFridgeId || undefined,
+    startDate: filterStartDate ? new Date(filterStartDate) : undefined,
+    endDate: filterEndDate ? new Date(filterEndDate) : undefined,
+  });
 
   const createMutation = trpc.fridges.create.useMutation();
-  const updateMutation = trpc.fridges.update.useMutation();
   const deleteMutation = trpc.fridges.delete.useMutation();
   const addTempMutation = trpc.fridges.addTemperature.useMutation();
 
@@ -49,7 +54,6 @@ export default function Fridges() {
     setLocation("kitchen");
     setMinTemp("");
     setMaxTemp("");
-    setSelectedFridge(null);
   };
 
   const handleCreateFridge = async () => {
@@ -96,7 +100,6 @@ export default function Fridges() {
     }
 
     try {
-      // Salva tutte le temperature in parallelo
       await Promise.all(
         entries.map(([fridgeId, temperature]) =>
           addTempMutation.mutateAsync({
@@ -112,9 +115,39 @@ export default function Fridges() {
       setBatchTemps({});
       utils.fridges.getAll.invalidate();
       utils.fridges.getOutOfRange.invalidate();
+      utils.fridges.getAllTemperatures.invalidate();
     } catch (err: any) {
       toast.error(`Errore: ${err.message}`);
     }
+  };
+
+  const handleExportExcel = () => {
+    if (allTemperatures.length === 0) {
+      toast.error("Nessun dato da esportare");
+      return;
+    }
+
+    // Crea CSV
+    const headers = ["Data", "Frigo", "Temperatura (°C)", "Note"];
+    const rows = allTemperatures.map((temp: any) => [
+      new Date(temp.date).toLocaleString("it-IT"),
+      fridges.find((f: any) => f.id === temp.fridgeId)?.name || temp.fridgeId,
+      temp.temperature,
+      temp.notes || "",
+    ]);
+
+    const csv = [
+      headers.join(","),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `storico_temperature_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+
+    toast.success("Export completato!");
   };
 
   return (
@@ -165,10 +198,9 @@ export default function Fridges() {
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="fridges">Anagrafica Frighi</TabsTrigger>
             <TabsTrigger value="temperatures">Storico Temperature</TabsTrigger>
-            <TabsTrigger value="stats">Statistiche</TabsTrigger>
           </TabsList>
 
           {/* Tab Anagrafica Frighi */}
@@ -220,15 +252,13 @@ export default function Fridges() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteFridge(fridge.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteFridge(fridge.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -243,32 +273,105 @@ export default function Fridges() {
           <TabsContent value="temperatures">
             <Card>
               <CardHeader>
-                <CardTitle>Storico Temperature</CardTitle>
-                <CardDescription>
-                  Visualizza tutte le temperature registrate con filtri per frigo e data
-                </CardDescription>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle>Storico Temperature</CardTitle>
+                    <CardDescription>
+                      Visualizza tutte le temperature registrate con filtri per frigo e data
+                    </CardDescription>
+                  </div>
+                  <Button onClick={handleExportExcel} variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Export Excel
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground text-center py-8">
-                  Funzionalità in sviluppo: visualizzazione storico temperature con filtri
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                {/* Filtri */}
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div>
+                    <Label>Frigo/Freezer</Label>
+                    <Select value={filterFridgeId} onValueChange={setFilterFridgeId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Tutti" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Tutti</SelectItem>
+                        {fridges.map((fridge: any) => (
+                          <SelectItem key={fridge.id} value={fridge.id}>
+                            {fridge.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Data Inizio</Label>
+                    <Input
+                      type="date"
+                      value={filterStartDate}
+                      onChange={(e) => setFilterStartDate(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>Data Fine</Label>
+                    <Input
+                      type="date"
+                      value={filterEndDate}
+                      onChange={(e) => setFilterEndDate(e.target.value)}
+                    />
+                  </div>
+                </div>
 
-          {/* Tab Statistiche */}
-          <TabsContent value="stats">
-            <Card>
-              <CardHeader>
-                <CardTitle>Statistiche e Grafici</CardTitle>
-                <CardDescription>
-                  Trend temperature, conformità HACCP, alert mensili
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-center py-8">
-                  Funzionalità in sviluppo: grafici trend temperature
-                </p>
+                {/* Tabella */}
+                {loadingTemps ? (
+                  <p>Caricamento...</p>
+                ) : allTemperatures.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    Nessuna temperatura registrata. Usa "Compila Temperature" per iniziare.
+                  </p>
+                ) : (
+                  <div className="max-h-[500px] overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Data e Ora</TableHead>
+                          <TableHead>Frigo/Freezer</TableHead>
+                          <TableHead>Temperatura</TableHead>
+                          <TableHead>Note</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {allTemperatures.map((temp: any) => {
+                          const fridge = fridges.find((f: any) => f.id === temp.fridgeId);
+                          const isOutOfRange = fridge && (
+                            parseFloat(temp.temperature) < parseFloat(fridge.minTemp) ||
+                            parseFloat(temp.temperature) > parseFloat(fridge.maxTemp)
+                          );
+
+                          return (
+                            <TableRow key={temp.id}>
+                              <TableCell>
+                                {new Date(temp.date).toLocaleString("it-IT")}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {fridge?.name || temp.fridgeId}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant={isOutOfRange ? "destructive" : "outline"}>
+                                  {temp.temperature}°C
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-muted-foreground">
+                                {temp.notes || "-"}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

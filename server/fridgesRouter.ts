@@ -110,4 +110,43 @@ export const fridgesRouter = router({
   getOutOfRange: protectedProcedure.query(async () => {
     return await getOutOfRangeTemperatures();
   }),
+
+  // Ottiene tutte le temperature con filtri opzionali
+  getAllTemperatures: protectedProcedure
+    .input(
+      z.object({
+        fridgeId: z.string().optional(),
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      const db = await import("./db").then((m) => m.getDb());
+      if (!db) return [];
+      
+      const { fridgeTemperatureLogs } = await import("../drizzle/schema");
+      const { and, eq, gte, lte, desc } = await import("drizzle-orm");
+      
+      const conditions = [];
+      if (input.fridgeId) {
+        conditions.push(eq(fridgeTemperatureLogs.fridgeId, input.fridgeId));
+      }
+      if (input.startDate) {
+        conditions.push(gte(fridgeTemperatureLogs.date, input.startDate));
+      }
+      if (input.endDate) {
+        conditions.push(lte(fridgeTemperatureLogs.date, input.endDate));
+      }
+      
+      const query = db
+        .select()
+        .from(fridgeTemperatureLogs)
+        .orderBy(desc(fridgeTemperatureLogs.date));
+      
+      if (conditions.length > 0) {
+        return query.where(and(...conditions));
+      }
+      
+      return query;
+    }),
 });
