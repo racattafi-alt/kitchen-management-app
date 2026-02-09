@@ -5,6 +5,8 @@ import { orderSessionsRouter } from "./orderSessionsRouter";
 import { haccpRouter as haccpSheetRouter } from "./haccpRouter";
 import { fridgesRouter } from "./fridgesRouter";
 import { invoicesRouter } from "./invoicesRouter";
+import { nonConformitiesRouter } from "./nonConformitiesRouter";
+import { documentsRouter } from "./documentsRouter";
 import crypto from "crypto";
 import { execSync } from "child_process";
 import fs from "fs";
@@ -1239,6 +1241,8 @@ export const appRouter = router({
   haccpSheets: haccpSheetRouter,
   fridges: fridgesRouter,
   invoices: invoicesRouter,
+  nonConformities: nonConformitiesRouter,
+  documents: documentsRouter,
   storage: storageRouter,
   suppliers: suppliersRouter,
   orders: ordersRouter,

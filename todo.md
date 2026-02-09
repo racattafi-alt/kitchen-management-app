@@ -525,7 +525,8 @@
 - [x] Progettare database non_conformities (collegato a production_checks)
 - [x] Creare tabella database per non conformità
 - [x] Implementare funzioni database nonConformitiesDb.ts
-- [ ] Implementare backend router non conformità (CRUD)
+- [x] Implementare backend router non conformità (CRUD)
+- [x] Collegare router all'appRouter
 - [ ] Riorganizzare frontend controlli produzioni: lista settimane espandibile
 - [ ] Aggiungere pulsante "Apri Non Conformità" per ogni preparazione
 - [ ] Implementare frontend scheda non conformità basata su PDF
@@ -542,7 +543,8 @@
 - [x] Progettare database documents con cartelle (Sanitari, Permessi, Storico Controlli)
 - [x] Creare tabella database per documenti
 - [x] Implementare funzioni database documentsDb.ts
-- [ ] Implementare backend router documenti (upload, list, delete)
+- [x] Implementare backend router documenti (upload, list, delete)
+- [x] Collegare router all'appRouter
 - [ ] Implementare frontend pagina Archivio con cartelle
 - [ ] Implementare upload PDF e immagini con S3
 - [ ] Testare upload e visualizzazione documenti
