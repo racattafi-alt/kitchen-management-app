@@ -294,12 +294,35 @@
 - [ ] Testare gestione frighi e temperature
 - [ ] Salvare checkpoint
 
-## TASK CORRENTE: IMPLEMENTAZIONE ORDINI MULTI-UTENTE (PRIORITÀ 1)
+## ✅ CHECKPOINT SALVATO - LAVORO PREPARATORIO COMPLETATO
+
+**Vedi file**: `/home/ubuntu/RIEPILOGO_LAVORO_E_PROSSIMI_PASSI.md` per dettagli completi
+
+### Completato in Questa Sessione:
+- ✅ Risolti tutti i bug ricette e permessi utenti
+- ✅ Create tabelle database ordini (user_order_sessions, order_history)
+- ✅ Schema database aggiornato per prodotti sala
+- ✅ Installate dipendenze PDF (jspdf, jspdf-autotable)
+- ✅ Estratti 122 prodotti sala da PDF
+- ✅ Creati 5 prompt per delegazione lavoro
+
+### Prossima Sessione - PRIORITÀ 1: Sistema Ordini Multi-Utente
+- [ ] Implementare backend router tRPC (orderSessionsRouter.ts)
+- [ ] Implementare helper database (orderSessionsDb.ts)
+- [ ] Implementare generazione PDF ordini (generateOrderPDF.ts)
+- [ ] Implementare frontend pagina Orders con carrello persistente
+- [ ] Implementare frontend pagina OrderHistory
+- [ ] Testare sessioni separate per utente
+- [ ] Testare persistenza quantità dopo refresh
+- [ ] Testare generazione PDF senza prezzi
+- [ ] Salvare checkpoint
+
+## TASK CORRENTE (SOSPESO): IMPLEMENTAZIONE ORDINI MULTI-UTENTE
 - [x] Aggiornare schema database con campi isSalaItem e subcategory
 - [x] Creare tabelle user_order_sessions e order_history manualmente con SQL
 - [x] Estrarre inventario sala da PDF (~122 prodotti)
-- [ ] Importare 122 prodotti sala nel database
-- [ ] Installare dipendenze jspdf e jspdf-autotable
+- [x] Installare dipendenze jspdf e jspdf-autotable
+- [ ] Importare 122 prodotti sala (RIMANDATO - da fare manualmente o successivamente)
 - [ ] Implementare backend router tRPC per ordini (sessioni per utente)
 - [ ] Implementare frontend pagina Orders con carrello persistente
 - [ ] Implementare generazione PDF ordini

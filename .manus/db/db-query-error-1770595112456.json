@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE ingredients \nADD COLUMN isSalaItem TINYINT(1) DEFAULT 0 AFTER is_food,\nADD COLUMN subcategory VARCHAR(255) AFTER isSalaItem,\nADD COLUMN packageUnit ENUM('u', 'k') AFTER packageSize;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute ALTER TABLE ingredients \nADD COLUMN isSalaItem TINYINT(1) DEFAULT 0 AFTER is_food,\nADD COLUMN subcategory VARCHAR(255) AFTER isSalaItem,\nADD COLUMN packageUnit ENUM('u', 'k') AFTER packageSize;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'issalaitem' in 'ingredients'"
+  ]
+}
