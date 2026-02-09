@@ -23,6 +23,8 @@ import CostAnalysisDashboard from "./pages/CostAnalysisDashboard";
 import Users from "./pages/Users";
 import OrdersNew from "./pages/OrdersNew";
 import OrderHistory from "./pages/OrderHistory";
+import Invoices from "./pages/Invoices";
+import Fridges from "./pages/Fridges";
 
 function Router() {
   return (
@@ -47,6 +49,8 @@ function Router() {
       <Route path={"/users"} component={Users} />
       <Route path={"/orders-new"} component={OrdersNew} />
       <Route path={"/order-history"} component={OrderHistory} />
+      <Route path={"/invoices"} component={Invoices} />
+      <Route path={"/fridges"} component={Fridges} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

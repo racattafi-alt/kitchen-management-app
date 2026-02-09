@@ -4,6 +4,7 @@ import * as db from "./db";
 import { orderSessionsRouter } from "./orderSessionsRouter";
 import { haccpRouter as haccpSheetRouter } from "./haccpRouter";
 import { fridgesRouter } from "./fridgesRouter";
+import { invoicesRouter } from "./invoicesRouter";
 import crypto from "crypto";
 import { execSync } from "child_process";
 import fs from "fs";
@@ -1237,6 +1238,7 @@ export const appRouter = router({
   haccp: haccpRouter,
   haccpSheets: haccpSheetRouter,
   fridges: fridgesRouter,
+  invoices: invoicesRouter,
   storage: storageRouter,
   suppliers: suppliersRouter,
   orders: ordersRouter,

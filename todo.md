@@ -458,25 +458,23 @@
 - [x] Implementare frontend pagina HACCP con lista produzioni settimanali
 - [x] Implementare controlli HACCP per ogni produzione (temperatura, conformità)
 - [x] Integrazione automatica: conferma produzioni → crea controlli HACCP
-- [ ] Implementare gestione frighi con storico temperature (frontend)
-- [ ] Implementare alert temperature fuori range (frontend)
-- [ ] Testare tutte le funzionalità HACCP
+- [x] Implementare gestione frighi con storico temperature (frontend)
+- [x] Implementare alert temperature fuori range (frontend)
+- [ ] Testare tutte le funzionalità HACCP e frighi
 - [ ] Salvare checkpoint
 
-## FEATURE: SISTEMA IMPORTAZIONE FATTURE CON AI MATCHING (DA IMPLEMENTARE)
+## FEATURE: SISTEMA IMPORTAZIONE FATTURE CON AI MATCHING
 - [x] Progettare schema database: invoices, price_history, product_mappings (memoria abbinamenti)
 - [x] Creare tabelle database per fatture e storico prezzi
-- [ ] Implementare backend: upload fattura PDF/immagine
-- [ ] Implementare OCR estrazione testo da fatture
-- [ ] Implementare AI extraction dati strutturati (prodotto, quantità, prezzo, unità)
-- [ ] Implementare algoritmo matching intelligente con memoria storica
-- [ ] Implementare salvataggio abbinamenti confermati per apprendimento
-- [ ] Implementare calcolo variazioni prezzi e impatto su prodotti finiti
-- [ ] Implementare frontend: pagina upload fatture
-- [ ] Implementare frontend: tabella conferma abbinamenti (modificabile)
-- [ ] Implementare frontend: report variazioni prezzi con grafici
-- [ ] Implementare frontend: alert variazioni anomale (>20%)
+- [x] Implementare backend: upload fattura PDF/immagine
+- [x] Implementare OCR estrazione testo da fatture (simulato per ora)
+- [x] Implementare AI extraction dati strutturati (prodotto, quantità, prezzo, unità)
+- [x] Implementare algoritmo matching intelligente con memoria storica
+- [x] Implementare salvataggio abbinamenti confermati per apprendimento
+- [x] Implementare calcolo variazioni prezzi e impatto su prodotti finiti
+- [x] Implementare frontend: pagina upload fatture
+- [x] Implementare frontend: tabella conferma abbinamenti (modificabile)
+- [x] Implementare frontend: report variazioni prezzi con grafici
+- [x] Implementare frontend: alert variazioni anomale (>20%)
 - [ ] Testare workflow completo con fatture reali
 - [ ] Salvare checkpoint
-
-NOTA: Database creato, implementazione backend/frontend rimandata a sessione dedicata
