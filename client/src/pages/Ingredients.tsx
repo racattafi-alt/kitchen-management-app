@@ -173,7 +173,7 @@ export default function Ingredients() {
           await updateMutation.mutateAsync({
             id: item.id,
             name: item.name,
-            supplierId: item.supplier || undefined,
+            supplier: item.supplier || undefined,
             category: item.category,
             unitType: item.unitType,
             packageType: item.packageType || undefined,

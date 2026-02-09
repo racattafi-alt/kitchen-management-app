@@ -676,3 +676,13 @@
 - [x] Aggiungere pulsante "Importa Dati Sala" che legge JSON e aggiorna via tRPC
 - [x] Testare import massivo e verificare dati
 - [ ] Salvare checkpoint
+
+## BUG: FORNITORE NON MOSTRATO INGREDIENTI SALA
+- [x] Verificare se campo supplier è stato importato nel database
+- [x] Controllare se funzione handleImportSalaData usa campo corretto (supplierId vs supplier)
+- [x] Aggiungere campo supplier allo schema input update ingredienti
+- [x] Aggiungere gestione campo supplier nella mutation update
+- [x] Aggiungere packageType e department nella mutation update
+- [x] Correggere handleImportSalaData per usare campo supplier
+- [x] Testare import e verificare visualizzazione fornitore
+- [ ] Salvare checkpoint

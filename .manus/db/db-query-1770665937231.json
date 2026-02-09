@@ -1,0 +1,40 @@
+{
+  "query": "SELECT id, name, supplier, supplierId FROM ingredients WHERE department='Sala' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT id, name, supplier, supplierId FROM ingredients WHERE department='Sala' LIMIT 5;",
+  "rows": [
+    {
+      "id": "SAL001",
+      "name": "Pepsi Lattina",
+      "supplier": "Allegro",
+      "supplierId": "NULL"
+    },
+    {
+      "id": "SAL002",
+      "name": "Pepsi Zero lattina",
+      "supplier": "Allegro",
+      "supplierId": "NULL"
+    },
+    {
+      "id": "SAL003",
+      "name": "Lipton Limone lattina",
+      "supplier": "Allegro",
+      "supplierId": "NULL"
+    },
+    {
+      "id": "SAL004",
+      "name": "Lipton Pesca lattina",
+      "supplier": "Allegro",
+      "supplierId": "NULL"
+    },
+    {
+      "id": "SAL005",
+      "name": "Mirinda lattina",
+      "supplier": "Allegro",
+      "supplierId": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tsupplier\tsupplierId\nSAL001\tPepsi Lattina\tAllegro\tNULL\nSAL002\tPepsi Zero lattina\tAllegro\tNULL\nSAL003\tLipton Limone lattina\tAllegro\tNULL\nSAL004\tLipton Pesca lattina\tAllegro\tNULL\nSAL005\tMirinda lattina\tAllegro\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

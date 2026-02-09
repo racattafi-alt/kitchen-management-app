@@ -75,6 +75,7 @@ const ingredientsRouter = router({
       z.object({
         id: z.string(),
         name: z.string().optional(),
+        supplier: z.string().optional(),
         supplierId: z.string().optional(),
         category: z.enum(["Additivi", "Alcolici", "Bevande", "Birra", "Carni", "Farine", "Latticini", "Non Food", "Packaging", "Spezie", "Verdura", "Altro"]).optional(),
         unitType: z.enum(["u", "k"]).optional(),
@@ -104,6 +105,7 @@ const ingredientsRouter = router({
       
       const updateData: any = {};
       if (input.name !== undefined) updateData.name = input.name;
+      if (input.supplier !== undefined) updateData.supplier = input.supplier;
       if (input.supplierId !== undefined) updateData.supplierId = input.supplierId;
       if (input.category !== undefined) updateData.category = input.category;
       if (input.unitType !== undefined) updateData.unitType = input.unitType;
@@ -121,6 +123,8 @@ const ingredientsRouter = router({
       
       if (input.minOrderQuantity !== undefined) updateData.minOrderQuantity = input.minOrderQuantity.toString();
       if (input.packageSize !== undefined) updateData.packageSize = input.packageSize.toString();
+      if (input.packageType !== undefined) updateData.packageType = input.packageType;
+      if (input.department !== undefined) updateData.department = input.department;
       if (input.brand !== undefined) updateData.brand = input.brand;
       if (input.notes !== undefined) updateData.notes = input.notes;
       if (input.isFood !== undefined) updateData.isFood = input.isFood;
