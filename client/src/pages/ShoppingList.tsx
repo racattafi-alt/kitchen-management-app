@@ -25,6 +25,7 @@ export default function ShoppingList() {
   const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
   const [selectedWeekGroup, setSelectedWeekGroup] = useState<string | null>(null);
   const [orderQuantities, setOrderQuantities] = useState<Record<string, number>>({});
+  const [orderPackages, setOrderPackages] = useState<Record<string, number>>({});
   const [extraItems, setExtraItems] = useState<Array<{
     name: string;
     supplier: string;
@@ -88,9 +89,29 @@ export default function ShoppingList() {
     return multiplier * minOrder;
   };
 
-  // Aggiorna quantità da ordinare
+  // Calcola confezioni necessarie
+  const calculatePackages = (quantityNeeded: number, packageQuantity: number | null): number => {
+    if (!packageQuantity || packageQuantity <= 0) return 0;
+    return Math.ceil(quantityNeeded / packageQuantity);
+  };
+
+  // Calcola quantità totale da confezioni
+  const calculateTotalQuantity = (packages: number, packageQuantity: number | null): number => {
+    if (!packageQuantity || packageQuantity <= 0) return 0;
+    return packages * packageQuantity;
+  };
+
+  // Aggiorna quantità da ordinare (deprecato, ora usiamo confezioni)
   const handleQuantityChange = (itemId: string, value: number) => {
     setOrderQuantities(prev => ({ ...prev, [itemId]: value }));
+  };
+  
+  // Aggiorna confezioni da ordinare
+  const handlePackagesChange = (itemId: string, packages: number, item: any) => {
+    setOrderPackages(prev => ({ ...prev, [itemId]: packages }));
+    // Calcola quantità totale basata su confezioni
+    const totalQty = calculateTotalQuantity(packages, item.packageQuantity);
+    setOrderQuantities(prev => ({ ...prev, [itemId]: totalQty }));
   };
   
   // Auto-arrotonda quantità necessaria al minOrderQuantity
@@ -121,11 +142,25 @@ export default function ShoppingList() {
     orderedItems?.forEach((item: any) => {
       const supplier = item.supplier || 'Senza Fornitore';
       if (!supplierGroups[supplier]) supplierGroups[supplier] = [];
-      supplierGroups[supplier].push({
-        name: item.itemName,
-        qty: orderQuantities[item.id] || 0,
-        unit: item.unitType === 'k' ? 'kg' : 'pz',
-      });
+      
+      const packages = orderPackages[item.id];
+      const totalQty = orderQuantities[item.id] || 0;
+      const unit = item.unitType === 'k' ? 'kg' : 'pz';
+      
+      // Mostra confezioni se disponibili, altrimenti quantità
+      if (packages && item.packageQuantity && item.packageQuantity > 0) {
+        supplierGroups[supplier].push({
+          name: item.itemName,
+          qty: `${packages} conf. (${item.packageQuantity.toFixed(2)} ${unit}/conf) = ${totalQty.toFixed(2)} ${unit}`,
+          unit: '',
+        });
+      } else {
+        supplierGroups[supplier].push({
+          name: item.itemName,
+          qty: totalQty,
+          unit: unit,
+        });
+      }
     });
     
     // Aggiungi articoli extra
@@ -142,9 +177,13 @@ export default function ShoppingList() {
     // Prepara testo ordine (senza prezzi)
     const orderSummary = Object.entries(supplierGroups)
       .map(([supplier, items]) => {
-        const itemsList = items.map(item => 
-          `- ${item.name}: ${item.qty.toFixed(2)} ${item.unit}`
-        ).join('\n');
+        const itemsList = items.map(item => {
+          if (typeof item.qty === 'string') {
+            return `- ${item.name}: ${item.qty}`;
+          } else {
+            return `- ${item.name}: ${item.qty.toFixed(2)} ${item.unit}`;
+          }
+        }).join('\n');
         return `*${supplier}*\n${itemsList}`;
       })
       .join('\n\n');
@@ -244,21 +283,26 @@ export default function ShoppingList() {
   const handleFillAll = () => {
     if (!filteredList) return;
     
-    const newQuantities: Record<number, number> = { ...orderQuantities };
+    const newQuantities: Record<string, number> = { ...orderQuantities };
+    const newPackages: Record<string, number> = { ...orderPackages };
     let count = 0;
     
     filteredList.forEach((item: any) => {
       if (item.quantityNeeded > 0 && !orderQuantities[item.id]) {
-        // Arrotonda al multiplo minimo se presente
-        if (item.minOrderQuantity) {
-          newQuantities[item.id] = Math.ceil(item.quantityNeeded / item.minOrderQuantity) * item.minOrderQuantity;
+        // Calcola confezioni necessarie
+        if (item.packageQuantity && item.packageQuantity > 0) {
+          const packages = calculatePackages(item.quantityNeeded, item.packageQuantity);
+          newPackages[item.id] = packages;
+          newQuantities[item.id] = calculateTotalQuantity(packages, item.packageQuantity);
         } else {
+          // Fallback: usa quantità necessaria
           newQuantities[item.id] = item.quantityNeeded;
         }
         count++;
       }
     });
     
+    setOrderPackages(newPackages);
     setOrderQuantities(newQuantities);
     toast.success(`${count} quantità compilate automaticamente`);
   };
@@ -273,16 +317,29 @@ export default function ShoppingList() {
     }
 
     // Raggruppa per fornitore
-    const supplierGroups: Record<string, Array<{ name: string; qty: number; unit: string }>> = {};
+    const supplierGroups: Record<string, Array<{ name: string; qty: number | string; unit: string }>> = {};
     
     orderedItems?.forEach((item: any) => {
       const supplier = item.supplier || 'Senza Fornitore';
       if (!supplierGroups[supplier]) supplierGroups[supplier] = [];
-      supplierGroups[supplier].push({
-        name: item.itemName,
-        qty: orderQuantities[item.id] || 0,
-        unit: item.unitType === 'k' ? 'kg' : 'pz',
-      });
+      
+      const packages = orderPackages[item.id];
+      const totalQty = orderQuantities[item.id] || 0;
+      const unit = item.unitType === 'k' ? 'kg' : 'pz';
+      
+      if (packages && item.packageQuantity && item.packageQuantity > 0) {
+        supplierGroups[supplier].push({
+          name: item.itemName,
+          qty: `${packages} conf. (${item.packageQuantity.toFixed(2)} ${unit}/conf) = ${totalQty.toFixed(2)} ${unit}`,
+          unit: '',
+        });
+      } else {
+        supplierGroups[supplier].push({
+          name: item.itemName,
+          qty: totalQty,
+          unit: unit,
+        });
+      }
     });
     
     validExtraItems.forEach(item => {
@@ -302,7 +359,11 @@ export default function ShoppingList() {
     Object.entries(supplierGroups).forEach(([supplier, items]) => {
       emailBody += `=== ${supplier.toUpperCase()} ===\n`;
       items.forEach(item => {
-        emailBody += `- ${item.name}: ${item.qty.toFixed(3)} ${item.unit}\n`;
+        if (typeof item.qty === 'string') {
+          emailBody += `- ${item.name}: ${item.qty}\n`;
+        } else {
+          emailBody += `- ${item.name}: ${item.qty.toFixed(3)} ${item.unit}\n`;
+        }
       });
       emailBody += `\n`;
     });
@@ -531,26 +592,46 @@ export default function ShoppingList() {
                               </div>
                             </div>
                             <div className="flex flex-col items-end gap-2">
-                              <Input
-                                type="number"
-                                min="0"
-                                step="0.001"
-                                value={orderQty || ""}
-                                placeholder=""
-                                onFocus={(e) => e.target.select()}
-                                onChange={(e) => handleQuantityChange(item.id, parseFloat(e.target.value) || 0)}
-                                className="w-24 h-12 text-right text-lg font-semibold"
-                                style={{ color: orderQty ? 'inherit' : 'transparent' }}
-                              />
-                              {item.minOrderQuantity && item.quantityNeeded > 0 && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleAutoRound(item)}
-                                  className="w-24 h-8 text-xs"
-                                >
-                                  Auto
-                                </Button>
+                              {item.packageQuantity && item.packageQuantity > 0 ? (
+                                <>
+                                  <div className="text-xs text-muted-foreground text-right">
+                                    Confezioni:
+                                  </div>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    step="1"
+                                    value={orderPackages[item.id] || ""}
+                                    placeholder="0"
+                                    onFocus={(e) => {
+                                      e.target.select();
+                                      // Auto-calcola se vuoto
+                                      if (!orderPackages[item.id] && item.quantityNeeded > 0) {
+                                        const packages = calculatePackages(item.quantityNeeded, item.packageQuantity);
+                                        handlePackagesChange(item.id, packages, item);
+                                      }
+                                    }}
+                                    onChange={(e) => handlePackagesChange(item.id, parseInt(e.target.value) || 0, item)}
+                                    className="w-20 h-10 text-right text-base font-semibold"
+                                  />
+                                  {orderPackages[item.id] > 0 && (
+                                    <div className="text-xs text-muted-foreground text-right">
+                                      {orderPackages[item.id]} × {item.packageQuantity.toFixed(2)} {item.unitType === 'k' ? 'kg' : 'pz'} = {orderQty.toFixed(2)} {item.unitType === 'k' ? 'kg' : 'pz'}
+                                    </div>
+                                  )}
+                                </>
+                              ) : (
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="0.001"
+                                  value={orderQty || ""}
+                                  placeholder=""
+                                  onFocus={(e) => e.target.select()}
+                                  onChange={(e) => handleQuantityChange(item.id, parseFloat(e.target.value) || 0)}
+                                  className="w-24 h-12 text-right text-lg font-semibold"
+                                  style={{ color: orderQty ? 'inherit' : 'transparent' }}
+                                />
                               )}
                             </div>
                           </div>
@@ -584,11 +665,12 @@ export default function ShoppingList() {
                       <TableHead>Articolo</TableHead>
                       <TableHead>Tipo</TableHead>
                       <TableHead>Fornitore</TableHead>
-                      <TableHead className="text-right">Quantità Necessaria</TableHead>
-                      <TableHead className="text-right">Quantità da Ordinare</TableHead>
+                      <TableHead className="text-right">Necessario</TableHead>
+                      <TableHead className="text-right">Confezioni</TableHead>
+                      <TableHead className="text-right">Totale Ordine</TableHead>
                       <TableHead className="text-right">Unità</TableHead>
                       <TableHead className="text-right">Prezzo/Unità</TableHead>
-                      <TableHead className="text-right">Costo Ordine</TableHead>
+                      <TableHead className="text-right">Costo</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -618,30 +700,40 @@ export default function ShoppingList() {
                             )}
                           </TableCell>
                           <TableCell className="text-right">
-                            <div className="flex items-center gap-2 justify-end">
-                              <Input
-                                type="number"
-                                min="0"
-                                step="0.001"
-                                value={orderQty || ""}
-                                placeholder=""
-                                onFocus={(e) => e.target.select()}
-                                onChange={(e) => handleQuantityChange(item.id, parseFloat(e.target.value) || 0)}
-                                className="w-24 text-right"
-                                style={{ color: orderQty ? 'inherit' : 'transparent' }}
-                              />
-                              {item.minOrderQuantity && item.quantityNeeded > 0 && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleAutoRound(item)}
-                                  title={`Arrotonda al multiplo di ${item.minOrderQuantity}`}
-                                  className="h-8 px-2"
-                                >
-                                  Auto
-                                </Button>
-                              )}
-                            </div>
+                            {item.packageQuantity && item.packageQuantity > 0 ? (
+                              <div className="flex flex-col items-end gap-1">
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="1"
+                                  value={orderPackages[item.id] || ""}
+                                  placeholder="0"
+                                  onFocus={(e) => {
+                                    e.target.select();
+                                    if (!orderPackages[item.id] && item.quantityNeeded > 0) {
+                                      const packages = calculatePackages(item.quantityNeeded, item.packageQuantity);
+                                      handlePackagesChange(item.id, packages, item);
+                                    }
+                                  }}
+                                  onChange={(e) => handlePackagesChange(item.id, parseInt(e.target.value) || 0, item)}
+                                  className="w-20 text-right"
+                                />
+                                {orderPackages[item.id] > 0 && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {item.packageQuantity.toFixed(2)} {item.unitType === 'k' ? 'kg' : 'pz'}/conf
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right font-semibold">
+                            {orderQty > 0 ? (
+                              <span>{orderQty.toFixed(3)}</span>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-right">
                             {item.unitType === 'u' ? 'Unità' : 'kg'}

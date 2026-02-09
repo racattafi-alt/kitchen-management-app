@@ -602,3 +602,19 @@
 - [x] Ottimizzare per mobile: dialog full-screen, form responsive, tab responsive, card compatte
 - [ ] Testare upload e visualizzazione documenti
 - [ ] Salvare checkpoint
+
+## FEATURE: CALCOLO AUTOMATICO CONFEZIONI ORDINI
+- [x] Analizzare struttura attuale ShoppingList.tsx e schema database
+- [x] Verificare campo packageQuantity disponibile per ogni ingrediente
+- [x] Aggiungere packageQuantity al backend generateShoppingList
+- [x] Implementare logica calcolo automatico: confezioni = Math.ceil(quantitàNecessaria / packageQuantity)
+- [x] Aggiungere stato locale orderPackages per confezioni da ordinare
+- [x] Aggiornare UI mobile con campo confezioni + visualizzazione conversione
+- [x] Aggiornare UI desktop table con colonna confezioni + totale ordine
+- [x] Mostrare conversione chiara: "2 × 3.00 kg/conf = 6.00 kg"
+- [x] Aggiornare handleSupplierOrder per mostrare confezioni nell'export
+- [x] Aggiornare handleEmailExport per mostrare confezioni nell'email
+- [x] Aggiornare handleFillAll per calcolare confezioni automaticamente
+- [x] Testare calcolo automatico con vari ingredienti
+- [x] Testare override manuale confezioni
+- [ ] Salvare checkpoint

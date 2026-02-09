@@ -570,10 +570,12 @@ const productionRouter = router({
           itemName: ing.name,
           itemType: 'INGREDIENT',
           supplier: ing.supplierName || 'N/A',
+          category: ing.category,
           quantityNeeded,
           quantityToOrder: 0,
           unitType: ing.unitType || 'k',
           pricePerUnit: parseFloat(ing.pricePerKgOrUnit),
+          packageQuantity: ing.packageQuantity ? parseFloat(ing.packageQuantity) : null,
           totalCost: 0,
           minOrderQuantity: ing.minOrderQuantity ? parseFloat(ing.minOrderQuantity) : null,
         });
