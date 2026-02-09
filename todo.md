@@ -738,3 +738,17 @@
 - [x] Verificare quale campo viene usato per ordinare (category vs ingredientType)
 - [x] Correggere sort per usare campo categoria corretto
 - [x] Testare ordinamento categoria con filtri attivi
+
+## BUG: ORDINAMENTO CATEGORIA NON FUNZIONA CON FILTRO SALA
+- [ ] Testare ordinamento categoria dopo aver applicato filtro Sala
+- [ ] Verificare se problema si presenta anche con filtro Cucina o altri filtri
+- [ ] Analizzare logica filteredList per vedere interazione filtro department + sort category
+- [ ] Correggere ordinamento per funzionare correttamente con tutti i filtri attivi
+- [ ] Testare tutti i casi: Sala+Categoria, Cucina+Categoria, Fornitore+Categoria
+
+## BUG: CATEGORIE INGREDIENTI IMPORTATE SBAGLIATE
+- [x] Trovare file JSON importazione ingredienti
+- [x] Verificare abbinamento categorie-ingredienti nel JSON
+- [x] Correggere categorie per ingredienti sala (Amari dovrebbero essere Alcolici, non Bevande)
+- [x] Reimportare ingredienti con categorie corrette
+- [x] Testare ordinamento categoria con categorie corrette
