@@ -15,7 +15,9 @@ import FoodMatrix from "./pages/FoodMatrix";
 import ProductionNew from "./pages/ProductionNew";
 import Menu from "./pages/Menu";
 import Waste from "./pages/Waste";
-import HACCP from "./pages/HACCP";
+import HACCPLanding from "./pages/HACCPLanding";
+import HACCPProductions from "./pages/HACCPProductions";
+import HACCPNonCompliance from "./pages/HACCPNonCompliance";
 import Storage from "./pages/Storage";
 import Assistant from "./pages/Assistant";
 import Suppliers from "./pages/Suppliers";
@@ -40,7 +42,9 @@ function Router() {
       <Route path={"/production"} component={ProductionNew} />
       <Route path={"/menu"} component={Menu} />
       <Route path={"/waste"} component={Waste} />
-      <Route path={"/haccp"} component={HACCP} />
+      <Route path={"/haccp"} component={HACCPLanding} />
+      <Route path={"/haccp-productions"} component={HACCPProductions} />
+      <Route path={"/haccp-non-compliance"} component={HACCPNonCompliance} />
       <Route path={"/storage"} component={Storage} />
       <Route path={"/shopping-list"} component={ShoppingList} />
       <Route path={"/assistant"} component={Assistant} />

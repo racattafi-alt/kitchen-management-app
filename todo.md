@@ -478,3 +478,14 @@
 - [x] Implementare frontend: alert variazioni anomale (>20%)
 - [ ] Testare workflow completo con fatture reali
 - [ ] Salvare checkpoint
+
+## FEATURE: LANDING PAGE HACCP UNIFICATA
+- [x] Creare nuova landing page HACCPLanding.tsx con 3 card
+- [x] Card 1: Produzioni Settimanali (link a /haccp-productions)
+- [x] Card 2: Gestione Frighi (link a /fridges)
+- [x] Card 3: Gestione Inadempienze (link a /haccp-non-compliance)
+- [x] Rinominare pagina HACCP esistente in HACCPProductions.tsx
+- [x] Creare pagina HACCPNonCompliance.tsx per gestione inadempienze
+- [x] Aggiornare routing in App.tsx
+- [x] Testare navigazione tra sezioni HACCP
+- [ ] Salvare checkpoint
