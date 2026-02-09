@@ -1,0 +1,1 @@
+ALTER TABLE `ingredients` ADD `packageType` enum('Sacco','Busta','Brick','Cartone','Scatola','Bottiglia','Barattolo','Sfuso');

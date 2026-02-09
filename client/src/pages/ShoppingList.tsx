@@ -592,7 +592,7 @@ export default function ShoppingList() {
                               </div>
                             </div>
                             <div className="flex flex-col items-end gap-2">
-                              {item.packageQuantity && item.packageQuantity > 0 ? (
+                              {item.packageQuantity && item.packageQuantity > 0 && item.packageType && item.packageType !== 'Sfuso' ? (
                                 <>
                                   <div className="text-xs text-muted-foreground text-right">
                                     Confezioni:
@@ -616,7 +616,7 @@ export default function ShoppingList() {
                                   />
                                   {orderPackages[item.id] > 0 && (
                                     <div className="text-xs text-muted-foreground text-right">
-                                      {orderPackages[item.id]} × {item.packageQuantity.toFixed(2)} {item.unitType === 'k' ? 'kg' : 'pz'} = {orderQty.toFixed(2)} {item.unitType === 'k' ? 'kg' : 'pz'}
+                                      {orderPackages[item.id]} {item.packageType?.toLowerCase() || 'conf.'} × {item.packageQuantity.toFixed(2)} {item.unitType === 'k' ? 'kg' : 'pz'} = {orderQty.toFixed(2)} {item.unitType === 'k' ? 'kg' : 'pz'}
                                     </div>
                                   )}
                                 </>
@@ -700,7 +700,7 @@ export default function ShoppingList() {
                             )}
                           </TableCell>
                           <TableCell className="text-right">
-                            {item.packageQuantity && item.packageQuantity > 0 ? (
+                            {item.packageQuantity && item.packageQuantity > 0 && item.packageType && item.packageType !== 'Sfuso' ? (
                               <div className="flex flex-col items-end gap-1">
                                 <Input
                                   type="number"
@@ -720,7 +720,7 @@ export default function ShoppingList() {
                                 />
                                 {orderPackages[item.id] > 0 && (
                                   <span className="text-xs text-muted-foreground">
-                                    {item.packageQuantity.toFixed(2)} {item.unitType === 'k' ? 'kg' : 'pz'}/conf
+                                    {item.packageQuantity.toFixed(2)} {item.unitType === 'k' ? 'kg' : 'pz'}/{item.packageType?.toLowerCase() || 'conf'}
                                   </span>
                                 )}
                               </div>

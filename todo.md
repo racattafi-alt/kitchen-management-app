@@ -618,3 +618,17 @@
 - [x] Testare calcolo automatico con vari ingredienti
 - [x] Testare override manuale confezioni
 - [ ] Salvare checkpoint
+
+## FEATURE: TIPO CONFEZIONE (PACKAGE TYPE)
+- [x] Aggiungere campo packageType allo schema drizzle/schema.ts (enum: Sacco, Busta, Brick, Cartone, Scatola, Bottiglia, Barattolo, Sfuso)
+- [x] Rinominare packageUnit a packageType via SQL ALTER TABLE
+- [x] Aggiornare backend routers.ts per includere packageType in create/update ingredienti
+- [x] Aggiornare generateShoppingList per restituire packageType
+- [x] Aggiungere packageType al select di getIngredients in db.ts
+- [x] Modificare ShoppingList.tsx per mostrare confezioni solo se packageType != "Sfuso"
+- [x] Aggiungere tipo confezione alla visualizzazione conversione (mobile + desktop)
+- [x] Aggiornare Ingredients.tsx con dropdown packageType nel form create
+- [x] Aggiornare Ingredients.tsx con dropdown packageType nel form edit
+- [x] Aggiornare export ordini per mostrare tipo confezione (es: "2 sacchi da 3kg")
+- [x] Testare con prodotti confezionati (aglio, farina) e sfusi (carni, formaggi)
+- [ ] Salvare checkpoint

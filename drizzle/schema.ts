@@ -71,6 +71,7 @@ export const ingredients = mysqlTable("ingredients", {
     "Altro",
   ]).notNull(),
   unitType: mysqlEnum("unitType", ["u", "k"]).notNull(),
+  packageType: mysqlEnum("packageType", ["Sacco", "Busta", "Brick", "Cartone", "Scatola", "Bottiglia", "Barattolo", "Sfuso"]),
   packageQuantity: decimal("packageQuantity", { precision: 10, scale: 3 }).notNull(),
   packagePrice: decimal("packagePrice", { precision: 10, scale: 2 }).notNull(),
   pricePerKgOrUnit: decimal("pricePerKgOrUnit", { precision: 10, scale: 2 }).notNull(),

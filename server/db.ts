@@ -178,6 +178,7 @@ export async function getIngredients() {
       supplierName: suppliers.name,
       category: ingredients.category,
       unitType: ingredients.unitType,
+      packageType: ingredients.packageType,
       packageQuantity: ingredients.packageQuantity,
       packagePrice: ingredients.packagePrice,
       pricePerKgOrUnit: ingredients.pricePerKgOrUnit,

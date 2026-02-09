@@ -30,6 +30,7 @@ export default function Ingredients() {
     supplier: "",
     category: "Altro" as const,
     unitType: "k" as const,
+    packageType: "" as "Sacco" | "Busta" | "Brick" | "Cartone" | "Scatola" | "Bottiglia" | "Barattolo" | "Sfuso" | "",
     packageQuantity: 0,
     packagePrice: 0,
     brand: "",
@@ -41,6 +42,7 @@ export default function Ingredients() {
     supplierId: "",
     category: "Altro" as const,
     unitType: "k" as const,
+    packageType: "" as "Sacco" | "Busta" | "Brick" | "Cartone" | "Scatola" | "Bottiglia" | "Barattolo" | "Sfuso" | "",
     packageQuantity: 0,
     packagePrice: 0,
     brand: "",
@@ -184,6 +186,7 @@ export default function Ingredients() {
       supplier: "",
       category: "Altro" as const,
       unitType: "k" as const,
+      packageType: "",
       packageQuantity: 0,
       packagePrice: 0,
       brand: "",
@@ -221,6 +224,7 @@ export default function Ingredients() {
       supplierId: formData.supplier || undefined,
       category: formData.category,
       unitType: formData.unitType,
+      packageType: formData.packageType || undefined,
       packageQuantity: formData.packageQuantity,
       packagePrice: formData.packagePrice,
       pricePerKgOrUnit: pricePerUnit,
@@ -237,6 +241,7 @@ export default function Ingredients() {
       supplierId: ingredient.supplierId || "",
       category: ingredient.category,
       unitType: ingredient.unitType,
+      packageType: ingredient.packageType || "",
       packageQuantity: parseFloat(ingredient.packageQuantity) || 0,
       packagePrice: parseFloat(ingredient.packagePrice) || 0,
       brand: ingredient.brand || "",
@@ -280,6 +285,7 @@ export default function Ingredients() {
       supplierId: editFormData.supplierId || undefined,
       category: editFormData.category,
       unitType: editFormData.unitType,
+      packageType: editFormData.packageType || undefined,
       packageQuantity: pkgQty,
       packagePrice: pkgPrice,
       brand: editFormData.brand || undefined,
@@ -423,6 +429,27 @@ export default function Ingredients() {
                         <SelectContent>
                           <SelectItem value="k">Chilogrammi (kg)</SelectItem>
                           <SelectItem value="u">Unità (pz)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="packageType">Tipo Confezione</Label>
+                      <Select
+                        value={formData.packageType}
+                        onValueChange={(value: any) => setFormData({ ...formData, packageType: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleziona tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Sacco">Sacco</SelectItem>
+                          <SelectItem value="Busta">Busta</SelectItem>
+                          <SelectItem value="Brick">Brick</SelectItem>
+                          <SelectItem value="Cartone">Cartone</SelectItem>
+                          <SelectItem value="Scatola">Scatola</SelectItem>
+                          <SelectItem value="Bottiglia">Bottiglia</SelectItem>
+                          <SelectItem value="Barattolo">Barattolo</SelectItem>
+                          <SelectItem value="Sfuso">Sfuso (peso variabile)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -575,6 +602,27 @@ export default function Ingredients() {
                     <SelectContent>
                       <SelectItem value="k">Chilogrammi (kg)</SelectItem>
                       <SelectItem value="u">Unità (pz)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="edit-packageType">Tipo Confezione</Label>
+                  <Select
+                    value={editFormData.packageType}
+                    onValueChange={(value: any) => setEditFormData({ ...editFormData, packageType: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleziona tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Sacco">Sacco</SelectItem>
+                      <SelectItem value="Busta">Busta</SelectItem>
+                      <SelectItem value="Brick">Brick</SelectItem>
+                      <SelectItem value="Cartone">Cartone</SelectItem>
+                      <SelectItem value="Scatola">Scatola</SelectItem>
+                      <SelectItem value="Bottiglia">Bottiglia</SelectItem>
+                      <SelectItem value="Barattolo">Barattolo</SelectItem>
+                      <SelectItem value="Sfuso">Sfuso (peso variabile)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
