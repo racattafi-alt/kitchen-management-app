@@ -495,3 +495,12 @@
 - [x] Sostituire Input con Select per campo location (valori: Cucina/Sala)
 - [x] Testare creazione frigo (errore risolto)
 - [ ] Salvare checkpoint
+
+## FEATURE: STORICO TEMPERATURE E COMPILAZIONE BATCH
+- [x] Aggiungere tab "Storico Temperature" nella pagina Frighi (placeholder)
+- [ ] Visualizzare tabella temperature con filtri per frigo e data (da implementare)
+- [x] Implementare pulsante "Compila Temperature" per compilazione batch
+- [x] Dialog con lista tutti frighi e caselle input temperatura
+- [x] Salvare tutte le temperature in batch con Promise.all
+- [x] Testare funzionalità compilazione rapida (implementata)
+- [ ] Salvare checkpoint

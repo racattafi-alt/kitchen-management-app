@@ -9,14 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Thermometer, Plus, Edit, Trash2, AlertTriangle } from "lucide-react";
+import { Thermometer, Plus, Edit, Trash2, AlertTriangle, ClipboardList } from "lucide-react";
 
 export default function Fridges() {
   const [activeTab, setActiveTab] = useState("fridges");
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [showTempDialog, setShowTempDialog] = useState(false);
+  const [showBatchTempDialog, setShowBatchTempDialog] = useState(false);
   const [selectedFridge, setSelectedFridge] = useState<any>(null);
   
   // Form states
@@ -25,11 +25,18 @@ export default function Fridges() {
   const [location, setLocation] = useState<"kitchen" | "sala">("kitchen");
   const [minTemp, setMinTemp] = useState("");
   const [maxTemp, setMaxTemp] = useState("");
-  const [temperature, setTemperature] = useState("");
+  
+  // Batch temperature states
+  const [batchTemps, setBatchTemps] = useState<Record<string, string>>({});
 
   const utils = trpc.useUtils();
   const { data: fridges = [], isLoading: loadingFridges } = trpc.fridges.getAll.useQuery();
   const { data: outOfRange = [] } = trpc.fridges.getOutOfRange.useQuery();
+  
+  // Query per storico temperature (tutte)
+  const { data: allTemperatures = [] } = trpc.fridges.getTemperatures.useQuery({
+    fridgeId: "all" // Placeholder, implementeremo query separata
+  }, { enabled: false });
 
   const createMutation = trpc.fridges.create.useMutation();
   const updateMutation = trpc.fridges.update.useMutation();
@@ -42,7 +49,6 @@ export default function Fridges() {
     setLocation("kitchen");
     setMinTemp("");
     setMaxTemp("");
-    setTemperature("");
     setSelectedFridge(null);
   };
 
@@ -56,7 +62,7 @@ export default function Fridges() {
       await createMutation.mutateAsync({
         name,
         type,
-        location: (location || 'kitchen') as 'kitchen' | 'sala',
+        location,
         minTemp: minTemp,
         maxTemp: maxTemp,
       });
@@ -81,22 +87,30 @@ export default function Fridges() {
     }
   };
 
-  const handleAddTemperature = async () => {
-    if (!selectedFridge || !temperature) {
-      toast.error("Inserisci la temperatura");
+  const handleBatchTemperatureSave = async () => {
+    const entries = Object.entries(batchTemps).filter(([_, temp]) => temp && temp.trim() !== "");
+    
+    if (entries.length === 0) {
+      toast.error("Inserisci almeno una temperatura");
       return;
     }
 
     try {
-      await addTempMutation.mutateAsync({
-        fridgeId: selectedFridge.id,
-        date: new Date(),
-        temperature: temperature,
-      });
-      toast.success("Temperatura registrata!");
-      setShowTempDialog(false);
-      setTemperature("");
-      setSelectedFridge(null);
+      // Salva tutte le temperature in parallelo
+      await Promise.all(
+        entries.map(([fridgeId, temperature]) =>
+          addTempMutation.mutateAsync({
+            fridgeId,
+            date: new Date(),
+            temperature,
+          })
+        )
+      );
+      
+      toast.success(`${entries.length} temperature salvate!`);
+      setShowBatchTempDialog(false);
+      setBatchTemps({});
+      utils.fridges.getAll.invalidate();
       utils.fridges.getOutOfRange.invalidate();
     } catch (err: any) {
       toast.error(`Errore: ${err.message}`);
@@ -106,35 +120,43 @@ export default function Fridges() {
   return (
     <DashboardLayout>
       <div className="container py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Gestione Frighi e Freezer</h1>
-          <p className="text-muted-foreground">
-            Monitora temperature e mantieni conformità HACCP
-          </p>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Gestione Frighi e Temperature</h1>
+            <p className="text-muted-foreground">
+              Anagrafica frighi/freezer, registrazione temperature, alert automatici
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => setShowBatchTempDialog(true)} variant="default">
+              <ClipboardList className="h-4 w-4 mr-2" />
+              Compila Temperature
+            </Button>
+            <Button onClick={() => setShowAddDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nuovo Frigo/Freezer
+            </Button>
+          </div>
         </div>
 
         {/* Alert temperature fuori range */}
         {outOfRange.length > 0 && (
-          <Card className="mb-6 border-orange-500">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center text-orange-600">
-                <AlertTriangle className="w-5 h-5 mr-2" />
-                ⚠️ {outOfRange.length} Temperature Fuori Range
+          <Card className="mb-6 border-red-500 bg-red-50 dark:bg-red-950">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-red-700 dark:text-red-400">
+                <AlertTriangle className="h-5 w-5" />
+                Alert: Temperature Fuori Range
               </CardTitle>
+              <CardDescription className="text-red-600 dark:text-red-300">
+                {outOfRange.length} frigo/freezer con temperature anomale
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {outOfRange.map((log: any) => (
-                  <div key={log.id} className="flex justify-between items-center p-2 bg-orange-50 rounded">
-                    <div>
-                      <span className="font-medium">{log.fridgeName}</span>
-                      <span className="text-sm text-muted-foreground ml-2">
-                        {new Date(log.createdAt).toLocaleString()}
-                      </span>
-                    </div>
-                    <Badge variant="destructive">
-                      {log.temperature}°C (Range: {log.minTemp}°C - {log.maxTemp}°C)
-                    </Badge>
+                {outOfRange.map((alert: any) => (
+                  <div key={alert.id} className="flex justify-between items-center">
+                    <span className="font-medium">{alert.fridgeName}</span>
+                    <Badge variant="destructive">{alert.temperature}°C</Badge>
                   </div>
                 ))}
               </div>
@@ -143,122 +165,27 @@ export default function Fridges() {
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 mb-8">
-            <TabsTrigger value="fridges">
-              <Thermometer className="w-4 h-4 mr-2" />
-              Anagrafica Frighi
-            </TabsTrigger>
-            <TabsTrigger value="temperatures">
-              <Thermometer className="w-4 h-4 mr-2" />
-              Registra Temperature
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="fridges">Anagrafica Frighi</TabsTrigger>
+            <TabsTrigger value="temperatures">Storico Temperature</TabsTrigger>
+            <TabsTrigger value="stats">Statistiche</TabsTrigger>
           </TabsList>
 
-          {/* TAB: Anagrafica Frighi */}
+          {/* Tab Anagrafica Frighi */}
           <TabsContent value="fridges">
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>Frighi e Freezer</CardTitle>
-                    <CardDescription>Gestisci anagrafica e range temperature</CardDescription>
-                  </div>
-                  <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-                    <DialogTrigger asChild>
-                      <Button onClick={() => resetForm()}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Aggiungi Frigo/Freezer
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Nuovo Frigo/Freezer</DialogTitle>
-                        <DialogDescription>
-                          Inserisci i dati del nuovo frigo o freezer
-                        </DialogDescription>
-                      </DialogHeader>
-
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="name">Nome *</Label>
-                          <Input
-                            id="name"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="es. Frigo Cucina 1"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="type">Tipo *</Label>
-                          <Select value={type} onValueChange={(v: any) => setType(v)}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="fridge">Frigo (+4°C)</SelectItem>
-                              <SelectItem value="freezer">Freezer (-20°C)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="location">Posizione *</Label>
-                          <Select value={location} onValueChange={(val) => setLocation(val as "kitchen" | "sala")}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="kitchen">Cucina</SelectItem>
-                              <SelectItem value="sala">Sala</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="minTemp">Temp. Minima (°C) *</Label>
-                            <Input
-                              id="minTemp"
-                              type="number"
-                              step="0.1"
-                              value={minTemp}
-                              onChange={(e) => setMinTemp(e.target.value)}
-                              placeholder={type === 'fridge' ? '0' : '-25'}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="maxTemp">Temp. Massima (°C) *</Label>
-                            <Input
-                              id="maxTemp"
-                              type="number"
-                              step="0.1"
-                              value={maxTemp}
-                              onChange={(e) => setMaxTemp(e.target.value)}
-                              placeholder={type === 'fridge' ? '8' : '-15'}
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                          Annulla
-                        </Button>
-                        <Button onClick={handleCreateFridge}>
-                          Crea
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                </div>
+                <CardTitle>Frighi e Freezer Attivi</CardTitle>
+                <CardDescription>
+                  Gestisci anagrafica frighi/freezer con range temperature
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {loadingFridges ? (
-                  <p className="text-center py-8 text-muted-foreground">Caricamento...</p>
+                  <p>Caricamento...</p>
                 ) : fridges.length === 0 ? (
-                  <p className="text-center py-8 text-muted-foreground">
-                    Nessun frigo/freezer configurato. Clicca "Aggiungi" per iniziare.
+                  <p className="text-muted-foreground text-center py-8">
+                    Nessun frigo/freezer registrato. Clicca "Nuovo Frigo/Freezer" per iniziare.
                   </p>
                 ) : (
                   <Table>
@@ -267,7 +194,8 @@ export default function Fridges() {
                         <TableHead>Nome</TableHead>
                         <TableHead>Tipo</TableHead>
                         <TableHead>Posizione</TableHead>
-                        <TableHead>Range Temperatura</TableHead>
+                        <TableHead>Range Temp.</TableHead>
+                        <TableHead>Ultima Temp.</TableHead>
                         <TableHead>Azioni</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -276,13 +204,20 @@ export default function Fridges() {
                         <TableRow key={fridge.id}>
                           <TableCell className="font-medium">{fridge.name}</TableCell>
                           <TableCell>
-                            <Badge variant={fridge.type === 'fridge' ? 'default' : 'secondary'}>
-                              {fridge.type === 'fridge' ? 'Frigo' : 'Freezer'}
+                            <Badge variant={fridge.type === "fridge" ? "default" : "secondary"}>
+                              {fridge.type === "fridge" ? "Frigo" : "Freezer"}
                             </Badge>
                           </TableCell>
-                          <TableCell>{fridge.location || "-"}</TableCell>
+                          <TableCell>{fridge.location === "kitchen" ? "Cucina" : "Sala"}</TableCell>
+                          <TableCell>{fridge.minTemp}°C ~ {fridge.maxTemp}°C</TableCell>
                           <TableCell>
-                            {fridge.minTemp}°C - {fridge.maxTemp}°C
+                            {fridge.lastTemperature ? (
+                              <Badge variant={fridge.isOutOfRange ? "destructive" : "outline"}>
+                                {fridge.lastTemperature}°C
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground">N/D</span>
+                            )}
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
@@ -291,7 +226,7 @@ export default function Fridges() {
                                 size="sm"
                                 onClick={() => handleDeleteFridge(fridge.id)}
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
                           </TableCell>
@@ -304,93 +239,170 @@ export default function Fridges() {
             </Card>
           </TabsContent>
 
-          {/* TAB: Registra Temperature */}
+          {/* Tab Storico Temperature */}
           <TabsContent value="temperatures">
             <Card>
               <CardHeader>
-                <CardTitle>Registrazione Temperature</CardTitle>
+                <CardTitle>Storico Temperature</CardTitle>
                 <CardDescription>
-                  Inserisci le temperature giornaliere per ciascun frigo/freezer
+                  Visualizza tutte le temperature registrate con filtri per frigo e data
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {fridges.length === 0 ? (
-                  <p className="text-center py-8 text-muted-foreground">
-                    Nessun frigo/freezer configurato. Vai alla tab "Anagrafica" per aggiungerne uno.
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {fridges.map((fridge: any) => (
-                      <Card key={fridge.id}>
-                        <CardHeader>
-                          <CardTitle className="text-lg">{fridge.name}</CardTitle>
-                          <CardDescription>
-                            {fridge.type === 'fridge' ? 'Frigo' : 'Freezer'} • {fridge.location || 'N/A'}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-2">
-                            <p className="text-sm text-muted-foreground">
-                              Range: {fridge.minTemp}°C - {fridge.maxTemp}°C
-                            </p>
-                            <Dialog open={showTempDialog && selectedFridge?.id === fridge.id} onOpenChange={(open) => {
-                              setShowTempDialog(open);
-                              if (!open) setSelectedFridge(null);
-                            }}>
-                              <DialogTrigger asChild>
-                                <Button
-                                  className="w-full"
-                                  onClick={() => setSelectedFridge(fridge)}
-                                >
-                                  <Thermometer className="w-4 h-4 mr-2" />
-                                  Registra Temperatura
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Registra Temperatura: {fridge.name}</DialogTitle>
-                                  <DialogDescription>
-                                    Range previsto: {fridge.minTemp}°C - {fridge.maxTemp}°C
-                                  </DialogDescription>
-                                </DialogHeader>
+                <p className="text-muted-foreground text-center py-8">
+                  Funzionalità in sviluppo: visualizzazione storico temperature con filtri
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-                                <div>
-                                  <Label htmlFor="temp">Temperatura (°C)</Label>
-                                  <Input
-                                    id="temp"
-                                    type="number"
-                                    step="0.1"
-                                    value={temperature}
-                                    onChange={(e) => setTemperature(e.target.value)}
-                                    placeholder="es. 4.5"
-                                    autoFocus
-                                  />
-                                </div>
-
-                                <DialogFooter>
-                                  <Button variant="outline" onClick={() => {
-                                    setShowTempDialog(false);
-                                    setTemperature("");
-                                    setSelectedFridge(null);
-                                  }}>
-                                    Annulla
-                                  </Button>
-                                  <Button onClick={handleAddTemperature}>
-                                    Salva
-                                  </Button>
-                                </DialogFooter>
-                              </DialogContent>
-                            </Dialog>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
+          {/* Tab Statistiche */}
+          <TabsContent value="stats">
+            <Card>
+              <CardHeader>
+                <CardTitle>Statistiche e Grafici</CardTitle>
+                <CardDescription>
+                  Trend temperature, conformità HACCP, alert mensili
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-center py-8">
+                  Funzionalità in sviluppo: grafici trend temperature
+                </p>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Dialog Nuovo Frigo */}
+        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Nuovo Frigo/Freezer</DialogTitle>
+              <DialogDescription>
+                Aggiungi un nuovo frigo o freezer all'anagrafica
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="name">Nome *</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="es. Frigo Principale Cucina"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="type">Tipo *</Label>
+                <Select value={type} onValueChange={(val) => setType(val as "fridge" | "freezer")}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fridge">Frigo</SelectItem>
+                    <SelectItem value="freezer">Freezer</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="location">Posizione *</Label>
+                <Select value={location} onValueChange={(val) => setLocation(val as "kitchen" | "sala")}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="kitchen">Cucina</SelectItem>
+                    <SelectItem value="sala">Sala</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="minTemp">Temp. Minima (°C) *</Label>
+                  <Input
+                    id="minTemp"
+                    type="number"
+                    step="0.1"
+                    value={minTemp}
+                    onChange={(e) => setMinTemp(e.target.value)}
+                    placeholder="es. 2"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="maxTemp">Temp. Massima (°C) *</Label>
+                  <Input
+                    id="maxTemp"
+                    type="number"
+                    step="0.1"
+                    value={maxTemp}
+                    onChange={(e) => setMaxTemp(e.target.value)}
+                    placeholder="es. 6"
+                  />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+                Annulla
+              </Button>
+              <Button onClick={handleCreateFridge}>Salva</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog Compilazione Batch Temperature */}
+        <Dialog open={showBatchTempDialog} onOpenChange={setShowBatchTempDialog}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Compila Temperature</DialogTitle>
+              <DialogDescription>
+                Inserisci le temperature per tutti i frighi/freezer. Lascia vuoto per saltare.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {fridges.length === 0 ? (
+                <p className="text-muted-foreground text-center py-4">
+                  Nessun frigo/freezer disponibile. Crea prima un frigo.
+                </p>
+              ) : (
+                fridges.map((fridge: any) => (
+                  <div key={fridge.id} className="flex items-center gap-4">
+                    <div className="flex-1">
+                      <Label className="font-medium">{fridge.name}</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {fridge.type === "fridge" ? "Frigo" : "Freezer"} • {fridge.location === "kitchen" ? "Cucina" : "Sala"} • Range: {fridge.minTemp}~{fridge.maxTemp}°C
+                      </p>
+                    </div>
+                    <div className="w-32">
+                      <Input
+                        type="number"
+                        step="0.1"
+                        placeholder="°C"
+                        value={batchTemps[fridge.id] || ""}
+                        onChange={(e) => setBatchTemps({ ...batchTemps, [fridge.id]: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => {
+                setShowBatchTempDialog(false);
+                setBatchTemps({});
+              }}>
+                Annulla
+              </Button>
+              <Button onClick={handleBatchTemperatureSave} disabled={fridges.length === 0}>
+                Salva Temperature
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
