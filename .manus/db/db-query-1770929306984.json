@@ -1,0 +1,130 @@
+{
+  "query": "SELECT name, department, pricePerKgOrUnit, packagePrice FROM ingredients WHERE CAST(pricePerKgOrUnit AS DECIMAL) = 0 OR CAST(packagePrice AS DECIMAL) = 0 LIMIT 20",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT name, department, pricePerKgOrUnit, packagePrice FROM ingredients WHERE CAST(pricePerKgOrUnit AS DECIMAL) = 0 OR CAST(packagePrice AS DECIMAL) = 0 LIMIT 20",
+  "rows": [
+    {
+      "name": "Shopper Bio",
+      "department": "Cucina",
+      "pricePerKgOrUnit": "0.04",
+      "packagePrice": "21.24"
+    },
+    {
+      "name": "Panni stracci",
+      "department": "Cucina",
+      "pricePerKgOrUnit": "0.00",
+      "packagePrice": "0.00"
+    },
+    {
+      "name": "Uova",
+      "department": "Cucina",
+      "pricePerKgOrUnit": "0.24",
+      "packagePrice": "21.76"
+    },
+    {
+      "name": "Tovaglioli tavolo",
+      "department": "Cucina",
+      "pricePerKgOrUnit": "0.00",
+      "packagePrice": "0.00"
+    },
+    {
+      "name": "Sale grosso",
+      "department": "Cucina",
+      "pricePerKgOrUnit": "0.31",
+      "packagePrice": "3.68"
+    },
+    {
+      "name": "Buste delivery",
+      "department": "Cucina",
+      "pricePerKgOrUnit": "0.00",
+      "packagePrice": "0.00"
+    },
+    {
+      "name": "Latte di soja",
+      "department": "Cucina",
+      "pricePerKgOrUnit": "0.00",
+      "packagePrice": "0.00"
+    },
+    {
+      "name": "Funghi shitake",
+      "department": "Cucina",
+      "pricePerKgOrUnit": "0.00",
+      "packagePrice": "0.00"
+    },
+    {
+      "name": "Carta burger",
+      "department": "Cucina",
+      "pricePerKgOrUnit": "0.00",
+      "packagePrice": "0.00"
+    },
+    {
+      "name": "Aceto di alcool",
+      "department": "Cucina",
+      "pricePerKgOrUnit": "0.00",
+      "packagePrice": "0.00"
+    },
+    {
+      "name": "BIB Pepsi",
+      "department": "Sala",
+      "pricePerKgOrUnit": "0.00",
+      "packagePrice": "0.00"
+    },
+    {
+      "name": "Pepsi Lattina",
+      "department": "Sala",
+      "pricePerKgOrUnit": "0.00",
+      "packagePrice": "0.00"
+    },
+    {
+      "name": "Pepsi Zero lattina",
+      "department": "Sala",
+      "pricePerKgOrUnit": "0.00",
+      "packagePrice": "0.00"
+    },
+    {
+      "name": "Lipton Limone lattina",
+      "department": "Sala",
+      "pricePerKgOrUnit": "0.00",
+      "packagePrice": "0.00"
+    },
+    {
+      "name": "Lipton Pesca lattina",
+      "department": "Sala",
+      "pricePerKgOrUnit": "0.00",
+      "packagePrice": "0.00"
+    },
+    {
+      "name": "Mirinda lattina",
+      "department": "Sala",
+      "pricePerKgOrUnit": "0.00",
+      "packagePrice": "0.00"
+    },
+    {
+      "name": "7up lattina",
+      "department": "Sala",
+      "pricePerKgOrUnit": "0.00",
+      "packagePrice": "0.00"
+    },
+    {
+      "name": "RedBull lattina",
+      "department": "Sala",
+      "pricePerKgOrUnit": "0.00",
+      "packagePrice": "0.00"
+    },
+    {
+      "name": "Acqua Naturale lattina",
+      "department": "Sala",
+      "pricePerKgOrUnit": "0.00",
+      "packagePrice": "0.00"
+    },
+    {
+      "name": "Acqua Frizzante lattina",
+      "department": "Sala",
+      "pricePerKgOrUnit": "0.00",
+      "packagePrice": "0.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "name\tdepartment\tpricePerKgOrUnit\tpackagePrice\nShopper Bio\tCucina\t0.04\t21.24\nPanni stracci\tCucina\t0.00\t0.00\nUova\tCucina\t0.24\t21.76\nTovaglioli tavolo\tCucina\t0.00\t0.00\nSale grosso\tCucina\t0.31\t3.68\nBuste delivery\tCucina\t0.00\t0.00\nLatte di soja\tCucina\t0.00\t0.00\nFunghi shitake\tCucina\t0.00\t0.00\nCarta burger\tCucina\t0.00\t0.00\nAceto di alcool\tCucina\t0.00\t0.00\nBIB Pepsi\tSala\t0.00\t0.00\nPepsi Lattina\tSala\t0.00\t0.00\nPepsi Zero lattina\tSala\t0.00\t0.00\nLipton Limone lattina\tSala\t0.00\t0.00\nLipton Pesca lattina\tSala\t0.00\t0.00\nMirinda lattina\tSala\t0.00\t0.00\n7up lattina\tSala\t0.00\t0.00\nRedBull lattina\tSala\t0.00\t0.00\nAcqua Naturale lattina\tSala\t0.00\t0.00\nAcqua Frizzante lattina\tSala\t0.00\t0.00\n",
+  "stderr": "",
+  "execution_time_ms": 105
+}

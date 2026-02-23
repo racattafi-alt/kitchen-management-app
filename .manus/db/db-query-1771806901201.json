@@ -1,0 +1,55 @@
+{
+  "query": "SELECT name, packageQuantity, packagePrice, pricePerKgOrUnit, unitType, packageType, packageSize FROM ingredients WHERE name LIKE '%arina%' ORDER BY name",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT name, packageQuantity, packagePrice, pricePerKgOrUnit, unitType, packageType, packageSize FROM ingredients WHERE name LIKE '%arina%' ORDER BY name",
+  "rows": [
+    {
+      "name": "Farina",
+      "packageQuantity": "25.000",
+      "packagePrice": "29.25",
+      "pricePerKgOrUnit": "1.17",
+      "unitType": "k",
+      "packageType": "Busta",
+      "packageSize": "NULL"
+    },
+    {
+      "name": "Farina PAN",
+      "packageQuantity": "1.000",
+      "packagePrice": "2.20",
+      "pricePerKgOrUnit": "2.20",
+      "unitType": "k",
+      "packageType": "NULL",
+      "packageSize": "NULL"
+    },
+    {
+      "name": "Farina UNIQUA Viola",
+      "packageQuantity": "5.000",
+      "packagePrice": "12.00",
+      "pricePerKgOrUnit": "2.40",
+      "unitType": "k",
+      "packageType": "NULL",
+      "packageSize": "NULL"
+    },
+    {
+      "name": "Farina per fritti",
+      "packageQuantity": "25.000",
+      "packagePrice": "31.50",
+      "pricePerKgOrUnit": "1.26",
+      "unitType": "k",
+      "packageType": "NULL",
+      "packageSize": "NULL"
+    },
+    {
+      "name": "Margarina",
+      "packageQuantity": "1.000",
+      "packagePrice": "4.78",
+      "pricePerKgOrUnit": "4.78",
+      "unitType": "k",
+      "packageType": "NULL",
+      "packageSize": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "name\tpackageQuantity\tpackagePrice\tpricePerKgOrUnit\tunitType\tpackageType\tpackageSize\nFarina\t25.000\t29.25\t1.17\tk\tBusta\tNULL\nFarina PAN\t1.000\t2.20\t2.20\tk\tNULL\tNULL\nFarina UNIQUA Viola\t5.000\t12.00\t2.40\tk\tNULL\tNULL\nFarina per fritti\t25.000\t31.50\t1.26\tk\tNULL\tNULL\nMargarina\t1.000\t4.78\t4.78\tk\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

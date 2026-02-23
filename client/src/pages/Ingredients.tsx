@@ -42,6 +42,7 @@ export default function Ingredients() {
   const [editFormData, setEditFormData] = useState({
     name: "",
     supplierId: "",
+    supplier: "",
     category: "Altro" as const,
     unitType: "k" as const,
     packageType: "" as "Sacco" | "Busta" | "Brick" | "Cartone" | "Scatola" | "Bottiglia" | "Barattolo" | "Lattina" | "Sfuso" | "",
@@ -307,6 +308,7 @@ export default function Ingredients() {
     setEditFormData({
       name: ingredient.name,
       supplierId: ingredient.supplierId || "",
+      supplier: ingredient.supplier || ingredient.supplierName || "",
       category: ingredient.category,
       unitType: ingredient.unitType,
       packageType: ingredient.packageType || "",
@@ -351,6 +353,7 @@ export default function Ingredients() {
     updateMutation.mutate({
       id: editingIngredient.id,
       name: editFormData.name,
+      supplier: editFormData.supplier || undefined,
       supplierId: editFormData.supplierId || undefined,
       category: editFormData.category,
       unitType: editFormData.unitType,
@@ -485,6 +488,7 @@ export default function Ingredients() {
                           <SelectItem value="Alcolici">Alcolici</SelectItem>
                           <SelectItem value="Bevande">Bevande</SelectItem>
                           <SelectItem value="Birra">Birra</SelectItem>
+                          <SelectItem value="Caffè">Caffè</SelectItem>
                           <SelectItem value="Carni">Carni</SelectItem>
                           <SelectItem value="Farine">Farine</SelectItem>
                           <SelectItem value="Latticini">Latticini</SelectItem>
@@ -646,7 +650,10 @@ export default function Ingredients() {
                   <Label htmlFor="edit-supplier">Fornitore</Label>
                   <Select
                     value={editFormData.supplierId}
-                    onValueChange={(value: string) => setEditFormData({ ...editFormData, supplierId: value })}
+                    onValueChange={(value: string) => {
+                      const selectedSupplier = suppliers?.find((s: any) => s.id === value);
+                      setEditFormData({ ...editFormData, supplierId: value, supplier: selectedSupplier?.name || value });
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Seleziona fornitore" />
@@ -674,6 +681,7 @@ export default function Ingredients() {
                       <SelectItem value="Alcolici">Alcolici</SelectItem>
                       <SelectItem value="Bevande">Bevande</SelectItem>
                       <SelectItem value="Birra">Birra</SelectItem>
+                      <SelectItem value="Caffè">Caffè</SelectItem>
                       <SelectItem value="Carni">Carni</SelectItem>
                       <SelectItem value="Farine">Farine</SelectItem>
                       <SelectItem value="Latticini">Latticini</SelectItem>
@@ -852,6 +860,7 @@ export default function Ingredients() {
                     <SelectItem value="Alcolici">Alcolici</SelectItem>
                     <SelectItem value="Bevande">Bevande</SelectItem>
                     <SelectItem value="Birra">Birra</SelectItem>
+                    <SelectItem value="Caffè">Caffè</SelectItem>
                     <SelectItem value="Carni">Carni</SelectItem>
                     <SelectItem value="Farine">Farine</SelectItem>
                     <SelectItem value="Latticini">Latticini</SelectItem>

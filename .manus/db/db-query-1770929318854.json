@@ -1,0 +1,52 @@
+{
+  "query": "SELECT name, yieldPercentage FROM final_recipes WHERE CAST(yieldPercentage AS DECIMAL) < 10 OR CAST(yieldPercentage AS DECIMAL) > 100; SELECT DISTINCT supplier FROM ingredients WHERE supplier IS NOT NULL AND supplier != '' ORDER BY supplier; SELECT name FROM suppliers ORDER BY name; SELECT COUNT(*) as no_supplier FROM ingredients WHERE supplier IS NULL OR supplier = '' OR supplier = 'Non specificato'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT name, yieldPercentage FROM final_recipes WHERE CAST(yieldPercentage AS DECIMAL) < 10 OR CAST(yieldPercentage AS DECIMAL) > 100; SELECT DISTINCT supplier FROM ingredients WHERE supplier IS NOT NULL AND supplier != '' ORDER BY supplier; SELECT name FROM suppliers ORDER BY name; SELECT COUNT(*) as no_supplier FROM ingredients WHERE supplier IS NULL OR supplier = '' OR supplier = 'Non specificato'",
+  "rows": [
+    {
+      "name": "Salsa Ketchup",
+      "yieldPercentage": "1.000"
+    }
+  ],
+  "messages": [
+    "supplier",
+    "Allegro",
+    "Altro",
+    "Amazon",
+    "Atoms",
+    "Cinesi",
+    "Corte dei Sapori",
+    "DAC",
+    "Dersut",
+    "Fine Food",
+    "LM alimentare",
+    "LM alimentari",
+    "Luxardo",
+    "Metro",
+    "Non specificato",
+    "Pool Pack",
+    "Pool pack",
+    "Rumeni",
+    "Soplaya",
+    "Tutte le spezie del mondo",
+    "Verduraio",
+    "name",
+    "Amazon",
+    "Cinesi",
+    "Corte dei Sapori",
+    "DAC",
+    "Fine Food",
+    "LM alimentare",
+    "LM alimentari",
+    "Non specificato",
+    "Pool Pack",
+    "Rumeni",
+    "Soplaya",
+    "Tutte le spezie del mondo",
+    "Verduraio",
+    "no_supplier",
+    "2"
+  ],
+  "stdout": "name\tyieldPercentage\nSalsa Ketchup\t1.000\nsupplier\nAllegro\nAltro\nAmazon\nAtoms\nCinesi\nCorte dei Sapori\nDAC\nDersut\nFine Food\nLM alimentare\nLM alimentari\nLuxardo\nMetro\nNon specificato\nPool Pack\nPool pack\nRumeni\nSoplaya\nTutte le spezie del mondo\nVerduraio\nname\nAmazon\nCinesi\nCorte dei Sapori\nDAC\nFine Food\nLM alimentare\nLM alimentari\nNon specificato\nPool Pack\nRumeni\nSoplaya\nTutte le spezie del mondo\nVerduraio\nno_supplier\n2\n",
+  "stderr": "",
+  "execution_time_ms": 66
+}

@@ -271,26 +271,60 @@ export default function ShoppingList() {
       return;
     }
 
-    const csv = [
-      ["Articolo", "Fornitore", "Quantità Necessaria", "Quantità da Ordinare", "Unità", "Prezzo Unitario", "Costo Totale"],
-      ...orderedItems.map((item: any) => [
-        item.itemName,
-        item.supplier,
-        item.quantityNeeded.toFixed(3),
-        (orderQuantities[item.id] || 0).toFixed(3),
-        item.unitType === 'u' ? 'Unità' : 'kg',
-        `€ ${item.pricePerUnit.toFixed(2)}`,
-        `€ ${((orderQuantities[item.id] || 0) * item.pricePerUnit).toFixed(2)}`,
-      ])
-    ].map(row => row.join(",")).join("\n");
+    // Raggruppa per fornitore per una visualizzazione ordinata
+    const supplierGroups: Record<string, any[]> = {};
+    orderedItems.forEach((item: any) => {
+      const supplier = item.supplier || 'Senza Fornitore';
+      if (!supplierGroups[supplier]) supplierGroups[supplier] = [];
+      supplierGroups[supplier].push(item);
+    });
 
-    const blob = new Blob([csv], { type: "text/csv" });
+    // Crea CSV con separatore punto e virgola (standard Excel italiano)
+    const rows: string[][] = [
+      ["Fornitore", "Articolo", "Categoria", "Quantità Necessaria", "Quantità da Ordinare", "Unità", "Confezioni", "Tipo Confezione", "Prezzo Unitario", "Costo Totale"]
+    ];
+
+    Object.entries(supplierGroups).sort(([a], [b]) => a.localeCompare(b)).forEach(([supplier, items]) => {
+      items.sort((a: any, b: any) => a.itemName.localeCompare(b.itemName)).forEach((item: any) => {
+        const qty = orderQuantities[item.id] || 0;
+        const packages = orderPackages[item.id] || 0;
+        const unit = item.unitType === 'k' ? 'kg' : 'pz';
+        rows.push([
+          supplier,
+          item.itemName,
+          item.category || '',
+          item.quantityNeeded.toFixed(3).replace('.', ','),
+          qty.toFixed(3).replace('.', ','),
+          unit,
+          packages > 0 ? packages.toString() : '',
+          item.packageType || '',
+          item.pricePerUnit.toFixed(2).replace('.', ','),
+          (qty * item.pricePerUnit).toFixed(2).replace('.', ','),
+        ]);
+      });
+    });
+
+    // Escape campi che contengono separatore o virgolette
+    const csvContent = rows.map(row => 
+      row.map(cell => {
+        const str = String(cell);
+        if (str.includes(';') || str.includes('"') || str.includes('\n')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      }).join(';')
+    ).join('\n');
+
+    // BOM UTF-8 per compatibilità Excel
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = url;
-    a.download = `ordine_${selectedWeekGroup || 'tutte'}.csv`;
+    a.download = `ordine_${selectedWeekGroup || 'tutte'}_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
-    toast.success("Lista ordini esportata");
+    URL.revokeObjectURL(url);
+    toast.success("Lista ordini esportata in formato Excel");
   };
 
   // Esporta ordine per email (senza prezzi)
@@ -668,7 +702,7 @@ export default function ShoppingList() {
                               </div>
                             </div>
                             <div className="flex flex-col items-end gap-2">
-                              {item.packageQuantity && item.packageQuantity > 0 && item.packageType && item.packageType !== 'Sfuso' ? (
+                              {item.packageQuantity && item.packageQuantity > 1 ? (
                                 <>
                                   <div className="text-xs text-muted-foreground text-right">
                                     Confezioni:
@@ -790,7 +824,7 @@ export default function ShoppingList() {
                             )}
                           </TableCell>
                           <TableCell className="text-right">
-                            {item.packageQuantity && item.packageQuantity > 0 && item.packageType && item.packageType !== 'Sfuso' ? (
+                            {item.packageQuantity && item.packageQuantity > 1 ? (
                               <div className="flex flex-col items-end gap-1">
                                 <Input
                                   type="number"
@@ -810,7 +844,7 @@ export default function ShoppingList() {
                                 />
                                 {orderPackages[item.id] > 0 && (
                                   <span className="text-xs text-muted-foreground">
-                                    {item.packageQuantity.toFixed(2)} {item.unitType === 'k' ? 'kg' : 'pz'}/{item.packageType?.toLowerCase() || 'conf'}
+                                    {item.packageQuantity.toFixed(2)} {item.unitType === 'k' ? 'kg' : 'pz'}/{item.packageType?.toLowerCase() || 'conf.'}
                                   </span>
                                 )}
                               </div>

@@ -759,3 +759,36 @@
 - [x] Correggere categorie nel JSON sala_data.json
 - [x] Aggiornare database con categorie corrette
 - [x] Testare ordinamento categoria con tutte le categorie corrette
+
+## BUG: MODIFICA INGREDIENTI NON SALVA
+- [x] Analizzare procedura update ingredienti nel backend
+- [x] Correggere salvataggio campo fornitore e altri campi
+- [ ] Testare modifica fornitore Aglio pelato
+
+## BUG: QUANTITÀ CONFEZIONI ERRATE IN LISTA ACQUISTI
+- [x] Analizzare calcolo packageQuantity nella generazione lista
+- [x] Correggere associazione quantità unità per confezione
+- [x] Testare: 1 Farina Fritti deve mostrare 25kg non 3kg
+
+## BUG: STORICO ORDINI NON MOSTRA ORDINI
+- [x] Analizzare query storico ordini nel backend
+- [x] Verificare se ordini generati oggi vengono salvati nel database
+- [x] Correggere visualizzazione storico ordini
+
+## BUG: EXPORT EXCEL IN FORMATO JSON
+- [x] Analizzare funzione export in ShoppingList
+- [x] Convertire export da JSON a formato Excel/CSV leggibile
+- [ ] Testare download file Excel
+
+## BUG B4: CATEGORIE INGREDIENTI ERRATE
+- [x] Correggere Basilico, Albume in polvere, Arance, Fiori decorazione, Frutta essiccata, Cacao
+- [x] Aggiornare database con categorie corrette
+
+## BUG B5+B6: FORNITORI DUPLICATI E MANCANTI
+- [x] Unificare "LM alimentare" e "LM alimentari"
+- [x] Unificare "Pool Pack" e "Pool pack"
+- [x] Aggiungere fornitori sala mancanti: Allegro, Atoms, Dersut, Luxardo, Metro
+
+## BUG B7: ENUM ZOD SENZA CAFFÈ
+- [x] Aggiungere "Caffè" all'enum category nello schema Zod
+- [ ] Testare creazione/modifica ingrediente con categoria Caffè

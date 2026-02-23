@@ -1,0 +1,81 @@
+{
+  "query": "SELECT department, COUNT(*) as cnt FROM ingredients WHERE CAST(pricePerKgOrUnit AS DECIMAL) = 0 GROUP BY department; SELECT COUNT(*) as total_zero_price FROM ingredients WHERE CAST(pricePerKgOrUnit AS DECIMAL) = 0; SELECT name, yieldPercentage FROM final_recipes WHERE CAST(yieldPercentage AS DECIMAL) < 5; SELECT category, COUNT(*) as cnt FROM ingredients GROUP BY category ORDER BY cnt DESC",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute SELECT department, COUNT(*) as cnt FROM ingredients WHERE CAST(pricePerKgOrUnit AS DECIMAL) = 0 GROUP BY department; SELECT COUNT(*) as total_zero_price FROM ingredients WHERE CAST(pricePerKgOrUnit AS DECIMAL) = 0; SELECT name, yieldPercentage FROM final_recipes WHERE CAST(yieldPercentage AS DECIMAL) < 5; SELECT category, COUNT(*) as cnt FROM ingredients GROUP BY category ORDER BY cnt DESC",
+  "rows": [
+    {
+      "department": "Sala",
+      "cnt": "114"
+    },
+    {
+      "department": "Cucina",
+      "cnt": "17"
+    },
+    {
+      "department": "name",
+      "cnt": "yieldPercentage"
+    },
+    {
+      "department": "Salsa Ketchup",
+      "cnt": "1.000"
+    },
+    {
+      "department": "category",
+      "cnt": "cnt"
+    },
+    {
+      "department": "Altro",
+      "cnt": "102"
+    },
+    {
+      "department": "Alcolici",
+      "cnt": "54"
+    },
+    {
+      "department": "Bevande",
+      "cnt": "41"
+    },
+    {
+      "department": "Spezie",
+      "cnt": "25"
+    },
+    {
+      "department": "Carni",
+      "cnt": "11"
+    },
+    {
+      "department": "Additivi",
+      "cnt": "8"
+    },
+    {
+      "department": "Birra",
+      "cnt": "7"
+    },
+    {
+      "department": "Farine",
+      "cnt": "6"
+    },
+    {
+      "department": "Latticini",
+      "cnt": "5"
+    },
+    {
+      "department": "Non Food",
+      "cnt": "4"
+    },
+    {
+      "department": "Caffè",
+      "cnt": "4"
+    },
+    {
+      "department": "Packaging",
+      "cnt": "1"
+    }
+  ],
+  "messages": [
+    "total_zero_price",
+    "131"
+  ],
+  "stdout": "department\tcnt\nSala\t114\nCucina\t17\ntotal_zero_price\n131\nname\tyieldPercentage\nSalsa Ketchup\t1.000\ncategory\tcnt\nAltro\t102\nAlcolici\t54\nBevande\t41\nSpezie\t25\nCarni\t11\nAdditivi\t8\nBirra\t7\nFarine\t6\nLatticini\t5\nNon Food\t4\nCaffè\t4\nPackaging\t1\n",
+  "stderr": "",
+  "execution_time_ms": 77
+}
