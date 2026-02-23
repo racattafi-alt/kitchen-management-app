@@ -649,8 +649,12 @@ export default function Ingredients() {
                 <div>
                   <Label htmlFor="edit-supplier">Fornitore</Label>
                   <Select
-                    value={editFormData.supplierId}
+                    value={editFormData.supplierId || `custom-${editFormData.supplier}`}
                     onValueChange={(value: string) => {
+                      if (value.startsWith('custom-')) {
+                        // Mantieni il fornitore custom esistente
+                        return;
+                      }
                       const selectedSupplier = suppliers?.find((s: any) => s.id === value);
                       setEditFormData({ ...editFormData, supplierId: value, supplier: selectedSupplier?.name || value });
                     }}
@@ -659,6 +663,12 @@ export default function Ingredients() {
                       <SelectValue placeholder="Seleziona fornitore" />
                     </SelectTrigger>
                     <SelectContent>
+                      {/* Mostra fornitore custom se non è nella lista suppliers */}
+                      {editFormData.supplier && !editFormData.supplierId && (
+                        <SelectItem key={`custom-${editFormData.supplier}`} value={`custom-${editFormData.supplier}`}>
+                          {editFormData.supplier} (custom)
+                        </SelectItem>
+                      )}
                       {suppliers?.map((supplier: any) => (
                         <SelectItem key={supplier.id} value={supplier.id}>
                           {supplier.name}

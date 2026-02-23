@@ -792,3 +792,13 @@
 ## BUG B7: ENUM ZOD SENZA CAFFÈ
 - [x] Aggiungere "Caffè" all'enum category nello schema Zod
 - [ ] Testare creazione/modifica ingrediente con categoria Caffè
+
+## BUG: PULSANTE ORDINI DASHBOARD LINK ERRATO
+- [x] Verificare dove porta attualmente il pulsante "Ordini" nella dashboard (porta a /orders-new)
+- [x] Correggere link per portare a /shopping-list (Lista Acquisti)
+- [ ] Testare navigazione corretta dal pulsante
+
+## BUG: MODIFICA FORNITORE INGREDIENTE NON FUNZIONA
+- [x] Testare modifica fornitore Aglio pelato
+- [x] Verificare se il campo supplier viene salvato correttamente
+- [x] Correggere bug se presente (Select mostra fornitore custom)

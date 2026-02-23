@@ -99,7 +99,7 @@ export default function Home() {
               </CardHeader>
             </Card>
 
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setLocation("/orders-new")}>
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setLocation("/shopping-list")}>
               <CardHeader>
                 <ClipboardCheck className="h-10 w-10 text-blue-600 mb-2" />
                 <CardTitle>Ordini</CardTitle>
