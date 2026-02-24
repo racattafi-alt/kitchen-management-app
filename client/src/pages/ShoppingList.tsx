@@ -41,13 +41,43 @@ export default function ShoppingList() {
   });
   const [showOrderDialog, setShowOrderDialog] = useState(false);
   const [orderText, setOrderText] = useState("");
+  const [isSavingSession, setIsSavingSession] = useState(false);
   
   const saveShoppingListOrderMutation = trpc.orderSessions.saveShoppingListOrder.useMutation();
+  const saveSessionMutation = trpc.orderSessions.saveShoppingListSession.useMutation();
+  const clearSessionMutation = trpc.orderSessions.clearShoppingListSession.useMutation();
+  const { data: savedSession } = trpc.orderSessions.getShoppingListSession.useQuery();
 
   // Salva articoli extra in localStorage
   useEffect(() => {
     localStorage.setItem('extraItems', JSON.stringify(extraItems));
   }, [extraItems]);
+
+  // Ripristina sessione salvata al caricamento
+  useEffect(() => {
+    if (savedSession && Object.keys(orderQuantities).length === 0) {
+      setOrderQuantities(savedSession.orderQuantities);
+      setOrderPackages(savedSession.orderPackages);
+    }
+  }, [savedSession]);
+
+  // Auto-save sessione quando cambiano quantità (debounced)
+  useEffect(() => {
+    if (Object.keys(orderQuantities).length === 0 && Object.keys(orderPackages).length === 0) return;
+    
+    const timer = setTimeout(() => {
+      setIsSavingSession(true);
+      saveSessionMutation.mutate(
+        { orderQuantities, orderPackages },
+        {
+          onSuccess: () => setIsSavingSession(false),
+          onError: () => setIsSavingSession(false),
+        }
+      );
+    }, 1000); // Salva dopo 1 secondo di inattività
+
+    return () => clearTimeout(timer);
+  }, [orderQuantities, orderPackages]);
 
   // Carica tutte le produzioni
   const { data: allProductions } = trpc.production.list.useQuery({});
@@ -238,7 +268,11 @@ export default function ShoppingList() {
   const handleCopyText = async () => {
     await navigator.clipboard.writeText(orderText);
     await saveOrder();
-    toast.success("Testo copiato!");
+    // Cancella sessione e quantità
+    await clearSessionMutation.mutateAsync();
+    setOrderQuantities({});
+    setOrderPackages({});
+    toast.success("Testo copiato e ordine salvato!");
     setShowOrderDialog(false);
   };
   
@@ -247,8 +281,12 @@ export default function ShoppingList() {
     const whatsappMessage = encodeURIComponent(orderText);
     const whatsappUrl = `https://wa.me/?text=${whatsappMessage}`;
     await saveOrder();
+    // Cancella sessione e quantità
+    await clearSessionMutation.mutateAsync();
+    setOrderQuantities({});
+    setOrderPackages({});
     window.open(whatsappUrl, '_blank');
-    toast.success("Ordine aperto in WhatsApp!");
+    toast.success("Ordine inviato su WhatsApp!");
     setShowOrderDialog(false);
   };
   
@@ -258,13 +296,17 @@ export default function ShoppingList() {
     const body = encodeURIComponent(orderText);
     const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
     await saveOrder();
+    // Cancella sessione e quantità
+    await clearSessionMutation.mutateAsync();
+    setOrderQuantities({});
+    setOrderPackages({});
     window.location.href = mailtoLink;
-    toast.success("Email preparata!");
+    toast.success("Email preparata e ordine salvato!");
     setShowOrderDialog(false);
   };
 
-  // Esporta lista ordini
-  const handleExport = () => {
+  // Esporta CSV e cancella sessione
+  const handleExportCSV = async () => {
     const orderedItems = filteredList?.filter((item: any) => (orderQuantities[item.id] || 0) > 0);
     if (!orderedItems || orderedItems.length === 0) {
       toast.error("Nessun articolo da ordinare");
@@ -324,7 +366,13 @@ export default function ShoppingList() {
     a.download = `ordine_${selectedWeekGroup || 'tutte'}_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("Lista ordini esportata in formato Excel");
+    
+    // Salva ordine e cancella sessione
+    await saveOrder();
+    await clearSessionMutation.mutateAsync();
+    setOrderQuantities({});
+    setOrderPackages({});
+    toast.success("Ordine esportato e salvato!");
   };
 
   // Esporta ordine per email (senza prezzi)
@@ -439,7 +487,7 @@ export default function ShoppingList() {
               <Button onClick={handleEmailExport} disabled={!hasOrderedItems} variant="secondary" size="sm">
                 <FileText className="h-4 w-4" />
               </Button>
-              <Button onClick={handleExport} disabled={!hasOrderedItems} variant="secondary" size="sm">
+              <Button onClick={handleExportCSV} disabled={!hasOrderedItems} variant="secondary" size="sm">
                 <Download className="h-4 w-4" />
               </Button>
             </div>
@@ -458,18 +506,13 @@ export default function ShoppingList() {
               <CheckCircle className="mr-2 h-4 w-4" />
               Compila Tutto
             </Button>
-            <Button onClick={handleSupplierOrder} disabled={!hasOrderedItems} variant="default" className="w-full sm:w-auto">
-              <MessageCircle className="mr-2 h-4 w-4" />
-              Ordine per Fornitore
+            <Button onClick={handleSupplierOrder} disabled={!hasOrderedItems} variant="default" className="w-full sm:w-auto" size="lg">
+              <ShoppingCart className="mr-2 h-5 w-5" />
+              Crea Ordine
             </Button>
-            <Button onClick={handleEmailExport} disabled={!hasOrderedItems} variant="outline" className="w-full sm:w-auto">
-              <FileText className="mr-2 h-4 w-4" />
-              Esporta Email
-            </Button>
-            <Button onClick={handleExport} disabled={!hasOrderedItems} variant="outline" className="w-full sm:w-auto">
-              <Download className="mr-2 h-4 w-4" />
-              Esporta CSV
-            </Button>
+            {isSavingSession && (
+              <span className="text-xs text-muted-foreground self-center">Salvataggio...</span>
+            )}
           </div>
         </div>
 
@@ -987,7 +1030,7 @@ export default function ShoppingList() {
             </div>
             
             {/* Pulsanti opzioni */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <Button onClick={handleCopyText} variant="outline" className="h-auto py-4 flex-col gap-2">
                 <Copy className="h-6 w-6" />
                 <div className="text-center">
@@ -1009,6 +1052,14 @@ export default function ShoppingList() {
                 <div className="text-center">
                   <div className="font-semibold">Email</div>
                   <div className="text-xs text-muted-foreground">Apri client email</div>
+                </div>
+              </Button>
+              
+              <Button onClick={handleExportCSV} variant="outline" className="h-auto py-4 flex-col gap-2">
+                <Download className="h-6 w-6" />
+                <div className="text-center">
+                  <div className="font-semibold">CSV Excel</div>
+                  <div className="text-xs text-muted-foreground">Scarica file</div>
                 </div>
               </Button>
             </div>

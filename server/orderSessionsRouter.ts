@@ -7,6 +7,9 @@ import {
   saveOrderToHistory,
   getUserOrderHistory,
   getAllOrderHistory,
+  getShoppingListSession,
+  saveShoppingListSession,
+  clearShoppingListSession,
 } from "./orderSessionsDb";
 import { TRPCError } from "@trpc/server";
 
@@ -150,5 +153,36 @@ export const orderSessionsRouter = router({
 
     const history = await getAllOrderHistory();
     return history;
+  }),
+
+  // ============ NUOVE PROCEDURE PER PERSISTENZA SHOPPING LIST ============
+
+  // Ottiene la sessione shopping list dell'utente
+  getShoppingListSession: protectedProcedure.query(async ({ ctx }) => {
+    const session = await getShoppingListSession(ctx.user.id);
+    return session;
+  }),
+
+  // Salva la sessione shopping list (quantità e packages)
+  saveShoppingListSession: protectedProcedure
+    .input(
+      z.object({
+        orderQuantities: z.record(z.string(), z.number()),
+        orderPackages: z.record(z.string(), z.number()),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await saveShoppingListSession(
+        ctx.user.id,
+        input.orderQuantities,
+        input.orderPackages
+      );
+      return { success: true };
+    }),
+
+  // Cancella la sessione shopping list
+  clearShoppingListSession: protectedProcedure.mutation(async ({ ctx }) => {
+    await clearShoppingListSession(ctx.user.id);
+    return { success: true };
   }),
 });

@@ -802,3 +802,24 @@
 - [x] Testare modifica fornitore Aglio pelato
 - [x] Verificare se il campo supplier viene salvato correttamente
 - [x] Correggere bug se presente (Select mostra fornitore custom)
+
+
+## PROGETTO: MIGRAZIONE ARCHITETTURA MULTI-STORE
+- [ ] Analizzare schema database attuale e identificare tabelle da modificare
+- [ ] Progettare tabella stores e relazioni con tabelle esistenti
+- [ ] Definire strategia migrazione dati esistenti (assegnazione store_id)
+- [ ] Documentare modifiche backend: context, middleware, query
+- [ ] Documentare modifiche frontend: store selector, filtri
+- [ ] Compilare documento completo migrazione multi-store
+
+## MIGLIORAMENTI UX SEZIONE ORDINI
+- [x] Sostituire pulsanti multipli con pulsante unico "Crea Ordine"
+- [x] Implementare dialog selezione metodo invio (Copia testo, WhatsApp, Email, CSV)
+- [x] Implementare invio automatico dopo selezione metodo
+- [x] Cancellare articoli dalla lista dopo invio riuscito
+- [x] Implementare persistenza dati sessione utente nel backend
+- [x] Implementare auto-save quantità ordine in tempo reale
+- [x] Implementare ripristino quantità da sessione al caricamento pagina
+- [x] Testare persistenza dati con refresh pagina (7 test passati)
+- [x] Testare flusso completo creazione ordine
+- [ ] Salvare checkpoint

@@ -139,3 +139,69 @@ export async function getAllOrderHistory(): Promise<OrderHistoryItem[]> {
     orderData: typeof row.orderData === 'string' ? JSON.parse(row.orderData) : row.orderData,
   }));
 }
+
+// ============ SHOPPING LIST SESSION ============
+
+export interface ShoppingListSession {
+  userId: number;
+  orderQuantities: Record<string, number>;
+  orderPackages: Record<string, number>;
+  updatedAt: Date;
+}
+
+// Ottiene la sessione shopping list dell'utente
+export async function getShoppingListSession(userId: number): Promise<ShoppingListSession | null> {
+  const rows = await executeQuery(
+    `SELECT * FROM shopping_list_sessions WHERE userId = ? LIMIT 1`,
+    [userId]
+  );
+  
+  if ((rows as any[]).length === 0) {
+    return null;
+  }
+  
+  const row = (rows as any[])[0];
+  return {
+    userId: row.userId,
+    orderQuantities: typeof row.orderQuantities === 'string' ? JSON.parse(row.orderQuantities) : row.orderQuantities,
+    orderPackages: typeof row.orderPackages === 'string' ? JSON.parse(row.orderPackages) : row.orderPackages,
+    updatedAt: row.updatedAt,
+  };
+}
+
+// Salva la sessione shopping list
+export async function saveShoppingListSession(
+  userId: number,
+  orderQuantities: Record<string, number>,
+  orderPackages: Record<string, number>
+) {
+  // Verifica se esiste
+  const existing = await executeQuery(
+    `SELECT userId FROM shopping_list_sessions WHERE userId = ?`,
+    [userId]
+  );
+
+  if ((existing as any[]).length > 0) {
+    // Update
+    await executeQuery(
+      `UPDATE shopping_list_sessions 
+       SET orderQuantities = ?, orderPackages = ?, updatedAt = NOW() 
+       WHERE userId = ?`,
+      [JSON.stringify(orderQuantities), JSON.stringify(orderPackages), userId]
+    );
+  } else {
+    // Insert
+    await executeQuery(
+      `INSERT INTO shopping_list_sessions (userId, orderQuantities, orderPackages, createdAt, updatedAt)
+       VALUES (?, ?, ?, NOW(), NOW())`,
+      [userId, JSON.stringify(orderQuantities), JSON.stringify(orderPackages)]
+    );
+  }
+
+  return { userId, orderQuantities, orderPackages };
+}
+
+// Cancella la sessione shopping list
+export async function clearShoppingListSession(userId: number) {
+  await executeQuery(`DELETE FROM shopping_list_sessions WHERE userId = ?`, [userId]);
+}
