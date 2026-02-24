@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { trpc } from "@/lib/trpc";
@@ -467,11 +468,14 @@ export default function Ingredients() {
                     </div>
                     <div>
                       <Label htmlFor="supplier">Fornitore</Label>
-                      <Input
-                        id="supplier"
+                      <Combobox
                         value={formData.supplier}
-                        onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                        required
+                        onValueChange={(value) => setFormData({ ...formData, supplier: value })}
+                        options={suppliers?.map((s: any) => ({ value: s.name, label: s.name })) || []}
+                        placeholder="Seleziona o scrivi fornitore..."
+                        searchPlaceholder="Cerca fornitore..."
+                        emptyText="Nessun fornitore trovato"
+                        allowCustom={true}
                       />
                     </div>
                     <div>

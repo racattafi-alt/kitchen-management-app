@@ -822,4 +822,11 @@
 - [x] Implementare ripristino quantità da sessione al caricamento pagina
 - [x] Testare persistenza dati con refresh pagina (7 test passati)
 - [x] Testare flusso completo creazione ordine
+- [x] Salvare checkpoint
+
+## BUG FILTRI FORNITORI
+- [x] Correggere filtro fornitori in Lista Ordini: implementare Select dropdown con tutti i fornitori
+- [x] Correggere campo fornitori in form Aggiungi Ingrediente: implementare Combobox con autocomplete e lista completa fornitori
+- [x] Testare filtro fornitori in Lista Ordini
+- [x] Testare campo fornitori in form Aggiungi Ingrediente
 - [ ] Salvare checkpoint

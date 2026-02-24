@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ShoppingCart, Download, Filter, Search, Calendar, MessageCircle, FileText, CheckCircle, Copy, Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
 // Funzione per calcolare il lunedì della settimana (in UTC)
@@ -607,25 +608,25 @@ export default function ShoppingList() {
               </div>
 
               {/* Filtro Fornitore */}
-              <div className="flex gap-2 flex-wrap">
-                <Button
-                  variant={selectedSupplier === null ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedSupplier(null)}
-                >
-                  <Filter className="mr-2 h-4 w-4" />
-                  Tutti i Fornitori
-                </Button>
-                {suppliers.slice(0, 3).map((supplier) => (
-                  <Button
-                    key={supplier}
-                    variant={selectedSupplier === supplier ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedSupplier(supplier)}
-                  >
-                    {supplier}
-                  </Button>
-                ))}
+              <div>
+                <Select value={selectedSupplier || "all"} onValueChange={(value) => setSelectedSupplier(value === "all" ? null : value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleziona fornitore" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      <div className="flex items-center">
+                        <Filter className="mr-2 h-4 w-4" />
+                        Tutti i Fornitori
+                      </div>
+                    </SelectItem>
+                    {suppliers.sort().map((supplier) => (
+                      <SelectItem key={supplier} value={supplier}>
+                        {supplier}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </CardContent>
