@@ -1088,4 +1088,21 @@
 - [x] Ingredienti: Aggiungere paginazione visibile (20 item/pagina, controlli responsive)
 - [x] Produzione: Ottimizzare layout card ricette per mobile (layout verticale, codice visibile, input full-width)
 - [x] Testato su viewport mobile (entrambe le pagine funzionanti)
+- [x] Salvare checkpoint (5722351e)
+
+## MIGLIORAMENTI UX MOBILE - FASE 2
+- [ ] 1. Aggiungere paginazione a pagina Fornitori (pattern come Ingredienti)
+- [ ] 2. Aggiungere paginazione a pagina Ricette Finali (pattern come Ingredienti)
+- [ ] 3. Aggiungere paginazione a Lista Acquisti (pattern come Ingredienti)
+- [ ] 4. Implementare swipe gestures su card ricette mobile (swipe left = elimina, swipe right = modifica)
+- [ ] 5. Ottimizzare Food Matrix per mobile (layout card invece di tabella su schermi <768px)
+- [ ] 6. Testare tutte le modifiche su viewport mobile (375px width)
+- [ ] 7. Salvare checkpoint finale
+
+## MIGLIORAMENTI UX MOBILE - FASE 2
+- [x] Paginazione Fornitori (20 item/pagina)
+- [x] Paginazione Ricette Finali (20 item/pagina)
+- [-] Swipe gestures RIMOSSO (violava regole React hooks - useSwipeable non può essere in .map)
+- [x] Food Matrix layout card per mobile (tabella desktop, card mobile)
+- [x] Testare tutte le modifiche su viewport mobile (paginazione OK, layout responsive OK)
 - [ ] Salvare checkpoint

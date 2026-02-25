@@ -242,12 +242,14 @@ export default function FoodMatrix() {
               </div>
             </div>
 
-            {/* Tabella */}
+            {/* Tabella Desktop / Card Mobile */}
             {isLoading ? (
               <div className="text-center py-8">Caricamento...</div>
             ) : sellableRecipes.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
+              <>
+                {/* Tabella Desktop (>= 768px) */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full border-collapse">
                   <thead>
                     <tr className="bg-slate-50">
                       <th className="text-left p-3 text-sm font-medium text-slate-700 border-b">Codice</th>
@@ -343,6 +345,108 @@ export default function FoodMatrix() {
                   </tbody>
                 </table>
               </div>
+
+              {/* Layout Card Mobile (< 768px) */}
+              <div className="md:hidden space-y-3">
+                {sellableRecipes.map((recipe: any) => {
+                  const cost = parseFloat(recipe.totalCost || '0');
+                  const weight = parseFloat(recipe.unitWeight || '0');
+                  const pricePerKg = weight > 0 ? cost / weight : 0;
+                  const sellingPrice = parseFloat(recipe.sellingPrice || '0');
+                  const margin = sellingPrice - cost;
+                  const marginPercent = cost > 0 ? (margin / cost) * 100 : 0;
+                  const isEditing = editingPriceId === recipe.id;
+
+                  return (
+                    <div key={recipe.id} className="border rounded-lg p-4 space-y-3 bg-white">
+                      {/* Header */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-sm truncate">{recipe.name}</h3>
+                          <p className="text-xs text-slate-500 mt-0.5">{recipe.code}</p>
+                        </div>
+                        <span className="inline-block px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700 shrink-0">
+                          {recipe.category}
+                        </span>
+                      </div>
+
+                      {/* Dati Costo */}
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <div className="text-xs text-slate-500">Costo</div>
+                          <div className="font-medium">€ {cost.toFixed(2)}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-slate-500">Peso</div>
+                          <div className="font-medium">{weight.toFixed(3)} kg</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-slate-500">€/kg</div>
+                          <div className="font-medium">€ {pricePerKg.toFixed(2)}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-slate-500">Prezzo Vendita</div>
+                          {isEditing ? (
+                            <div className="flex items-center gap-1">
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={tempPrice}
+                                onChange={(e) => setTempPrice(e.target.value)}
+                                className="w-20 h-7 text-sm"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleSavePrice(recipe.id);
+                                  if (e.key === 'Escape') handleCancelEdit();
+                                }}
+                              />
+                              <Button
+                                size="sm"
+                                onClick={() => handleSavePrice(recipe.id)}
+                                className="h-7 px-2 text-xs"
+                              >
+                                ✓
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={handleCancelEdit}
+                                className="h-7 px-2 text-xs"
+                              >
+                                ✕
+                              </Button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleStartEditPrice(recipe)}
+                              className="font-medium hover:bg-slate-100 px-2 py-1 rounded text-left w-full"
+                            >
+                              {sellingPrice > 0 ? `€ ${sellingPrice.toFixed(2)}` : '—'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Margine */}
+                      {sellingPrice > 0 && (
+                        <div className="pt-2 border-t">
+                          <div className="text-xs text-slate-500 mb-1">Margine</div>
+                          <div className="flex items-center justify-between">
+                            <div className={`font-semibold ${margin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              € {margin.toFixed(2)}
+                            </div>
+                            <div className={`text-sm ${marginPercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {marginPercent.toFixed(1)}%
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
             ) : (
               <div className="text-center py-8 text-slate-500">
                 Nessuna ricetta vendibile trovata

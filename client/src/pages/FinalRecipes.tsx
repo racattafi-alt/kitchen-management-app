@@ -72,6 +72,8 @@ function RecipeAllergensBadge({ recipeId }: { recipeId: string }) {
 
 export default function FinalRecipes() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'hidden'>('all');
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -121,6 +123,23 @@ export default function FinalRecipes() {
       return true;
     });
   }, [allFinalRecipes, filterStatus, searchQuery]);
+
+  // Paginazione
+  const totalPages = recipes ? Math.ceil(recipes.length / itemsPerPage) : 0;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedRecipes = recipes?.slice(startIndex, endIndex);
+
+  // Reset pagina quando cambiano filtri o ricerca
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
+
+  const handleFilterChange = (value: 'all' | 'active' | 'hidden') => {
+    setFilterStatus(value);
+    setCurrentPage(1);
+  };
   
   const utils = trpc.useUtils();
   
@@ -557,11 +576,11 @@ export default function FinalRecipes() {
                     type="text"
                     placeholder="Cerca ricetta..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => handleSearchChange(e.target.value)}
                     className="pl-10 h-10"
                   />
                 </div>
-                <Select value={filterStatus} onValueChange={(value: any) => setFilterStatus(value)}>
+                <Select value={filterStatus} onValueChange={(value: any) => handleFilterChange(value)}>
                 <SelectTrigger className="w-full sm:w-[180px] h-10">
                   <SelectValue placeholder="Filtra per stato" />
                 </SelectTrigger>
@@ -584,7 +603,7 @@ export default function FinalRecipes() {
               <div className="text-center py-8">Caricamento...</div>
             ) : recipes && recipes.length > 0 ? (
               <div className="space-y-4">
-                {recipes.map((item: any) => (
+                {paginatedRecipes?.map((item: any) => (
                   <div key={item.id} className="p-3 md:p-4 border rounded-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:bg-slate-50">
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -716,14 +735,59 @@ export default function FinalRecipes() {
                     </div>
                   </div>
                 ))}
+
+                {/* Controlli Paginazione */}
+                {totalPages > 1 && (
+                  <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
+                    <div className="text-sm text-muted-foreground">
+                      Mostrando {startIndex + 1}-{Math.min(endIndex, recipes?.length || 0)} di {recipes?.length || 0} ricette
+                    </div>
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(1)}
+                        disabled={currentPage === 1}
+                      >
+                        Prima
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        Precedente
+                      </Button>
+                      <span className="text-sm px-3 py-1 bg-muted rounded">
+                        Pagina {currentPage} di {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                      >
+                        Successiva
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(totalPages)}
+                        disabled={currentPage === totalPages}
+                      >
+                        Ultima
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-8 text-slate-500">
                 <ChefHat className="h-12 w-12 mx-auto mb-3 text-slate-300" />
                 <p>Nessuna ricetta trovata</p>
               </div>
-            )}
-          </CardContent>
+            )}          </CardContent>
         </Card>
       </div>
 

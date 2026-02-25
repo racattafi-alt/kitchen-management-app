@@ -18,6 +18,8 @@ export default function Suppliers() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
   const [formData, setFormData] = useState({
     name: "",
     contact: "",
@@ -41,6 +43,18 @@ export default function Suppliers() {
   const suppliers = suppliersRaw?.filter((supplier: any) =>
     supplier.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Paginazione
+  const totalPages = suppliers ? Math.ceil(suppliers.length / itemsPerPage) : 0;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedSuppliers = suppliers?.slice(startIndex, endIndex);
+
+  // Reset pagina quando cambia la ricerca
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
 
   const createMutation = trpc.suppliers.create.useMutation({
     onSuccess: () => {
@@ -299,7 +313,7 @@ export default function Suppliers() {
               <Input
                 placeholder="Cerca per nome..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
               />
             </div>
 
@@ -321,7 +335,7 @@ export default function Suppliers() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {suppliers.map((supplier: any) => (
+                    {paginatedSuppliers?.map((supplier: any) => (
                       <TableRow key={supplier.id}>
                         <TableCell className="font-medium">{supplier.name}</TableCell>
                         <TableCell>{supplier.contact || "-"}</TableCell>
@@ -356,6 +370,52 @@ export default function Suppliers() {
                     ))}
                   </TableBody>
                 </Table>
+
+                {/* Controlli Paginazione */}
+                {totalPages > 1 && (
+                  <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
+                    <div className="text-sm text-muted-foreground">
+                      Mostrando {startIndex + 1}-{Math.min(endIndex, suppliers?.length || 0)} di {suppliers?.length || 0} fornitori
+                    </div>
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(1)}
+                        disabled={currentPage === 1}
+                      >
+                        Prima
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        Precedente
+                      </Button>
+                      <span className="text-sm px-3 py-1 bg-muted rounded">
+                        Pagina {currentPage} di {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                      >
+                        Successiva
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(totalPages)}
+                        disabled={currentPage === totalPages}
+                      >
+                        Ultima
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
