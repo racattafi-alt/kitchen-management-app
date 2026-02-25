@@ -4,14 +4,14 @@ import { useLocation } from "wouter";
 interface KeyboardShortcutsOptions {
   enableEscapeBack?: boolean;
   enableSlashSearch?: boolean;
-  searchInputId?: string;
+  onOpenSearch?: () => void;
 }
 
 export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
   const {
     enableEscapeBack = true,
     enableSlashSearch = true,
-    searchInputId = "global-search",
+    onOpenSearch,
   } = options;
   
   const [, setLocation] = useLocation();
@@ -29,16 +29,15 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
         return;
       }
 
-      // /: focus sulla ricerca (solo se non in un input/textarea)
+      // /: apre ricerca globale (solo se non in un input/textarea)
       if (
         enableSlashSearch &&
         event.key === "/" &&
         !isInputFocused()
       ) {
         event.preventDefault();
-        const searchInput = document.getElementById(searchInputId);
-        if (searchInput) {
-          searchInput.focus();
+        if (onOpenSearch) {
+          onOpenSearch();
         }
         return;
       }
@@ -46,7 +45,7 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [enableEscapeBack, enableSlashSearch, searchInputId, setLocation]);
+  }, [enableEscapeBack, enableSlashSearch, onOpenSearch, setLocation]);
 }
 
 function isInputFocused(): boolean {

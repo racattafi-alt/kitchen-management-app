@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { BarChart3, Search, FileSpreadsheet, TrendingUp, TrendingDown } from "lucide-react";
+import { BarChart3, Search, FileSpreadsheet, TrendingUp, TrendingDown, ArrowLeft } from "lucide-react";
+import Breadcrumb from "@/components/Breadcrumb";
 import { toast } from "sonner";
 import { useState, useMemo } from "react";
 
@@ -142,12 +143,18 @@ export default function FoodMatrix() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        <Breadcrumb items={[{ label: "Food Matrix" }]} />
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">Food Matrix</h1>
-            <p className="text-slate-600 mt-1">
-              Gestisci prezzi di vendita e margini per tutte le ricette vendibili
-            </p>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => window.location.href = '/dashboard'}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900">Food Matrix</h1>
+              <p className="text-slate-600 mt-1">
+                Gestisci prezzi di vendita e margini per tutte le ricette vendibili
+              </p>
+            </div>
           </div>
           <Button onClick={handleExport} className="bg-green-600 hover:bg-green-700">
             <FileSpreadsheet className="mr-2 h-4 w-4" />

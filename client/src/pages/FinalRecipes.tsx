@@ -9,8 +9,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
-import { ChefHat, Plus, Eye, Pencil, Trash2, Search, FileSpreadsheet, History, EyeOff } from "lucide-react";
+import { ChefHat, Plus, Eye, Pencil, Trash2, Search, FileSpreadsheet, History, EyeOff, ArrowLeft } from "lucide-react";
 import RecipeForm, { ComponentWithDetails } from "@/components/RecipeForm";
+import Breadcrumb from "@/components/Breadcrumb";
 import { toast } from "sonner";
 import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
@@ -545,10 +546,16 @@ export default function FinalRecipes() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        <Breadcrumb items={[{ label: "Ricette Finali" }]} />
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">Ricette Finali</h1>
-            <p className="text-slate-600 mt-1">Piatti pronti per il menu (Livello 2)</p>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => window.location.href = '/dashboard'}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900">Ricette Finali</h1>
+              <p className="text-slate-600 mt-1">Piatti pronti per il menu (Livello 2)</p>
+            </div>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleExportExcel}>

@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { trpc } from "@/lib/trpc";
-import { Calendar, Plus, Edit, Trash2, Search } from "lucide-react";
+import { Calendar, Plus, Edit, Trash2, Search, ArrowLeft } from "lucide-react";
+import Breadcrumb from "@/components/Breadcrumb";
 import { toast } from "sonner";
 
 export default function Production() {
@@ -139,12 +140,18 @@ export default function Production() {
   return (
     <DashboardLayout>
       <div className="container py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">Gestione Produzioni</h1>
-            <p className="text-muted-foreground mt-2">
-              Pianifica la produzione settimanale
-            </p>
+        <Breadcrumb items={[{ label: "Produzione" }]} />
+        <div className="flex justify-between items-center mb-8 mt-6">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => window.location.href = '/dashboard'}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold">Gestione Produzioni</h1>
+              <p className="text-muted-foreground mt-2">
+                Pianifica la produzione settimanale
+              </p>
+            </div>
           </div>
         </div>
 

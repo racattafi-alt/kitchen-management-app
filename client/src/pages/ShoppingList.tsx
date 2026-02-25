@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ShoppingCart, Download, Filter, Search, Calendar, MessageCircle, FileText, CheckCircle, Copy, Mail } from "lucide-react";
+import { ShoppingCart, Download, Filter, Search, Calendar, MessageCircle, FileText, CheckCircle, Copy, Mail, ArrowLeft } from "lucide-react";
+import Breadcrumb from "@/components/Breadcrumb";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -477,6 +478,7 @@ export default function ShoppingList() {
   return (
     <DashboardLayout>
       <div className="space-y-6 pb-24 md:pb-6">
+        <Breadcrumb items={[{ label: "Lista Acquisti" }]} />
         {/* Sticky Footer Mobile con Totale */}
         <div className="md:hidden fixed bottom-0 left-0 right-0 bg-primary text-primary-foreground p-4 shadow-lg z-50 border-t-2 border-primary-foreground/20">
           <div className="flex items-center justify-between max-w-screen-xl mx-auto">
@@ -496,11 +498,16 @@ export default function ShoppingList() {
         </div>
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
-          <div>
-            <h1 className="text-3xl font-bold">Lista Acquisti</h1>
-            <p className="text-muted-foreground">
-              Gestisci ordini per tutti gli articoli ordinabili
-            </p>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => window.location.href = '/dashboard'}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold">Lista Acquisti</h1>
+              <p className="text-muted-foreground">
+                Gestisci ordini per tutti gli articoli ordinabili
+              </p>
+            </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
             <Button onClick={handleFillAll} variant="secondary" className="w-full sm:w-auto">

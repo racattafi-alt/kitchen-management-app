@@ -1128,3 +1128,15 @@
 - [-] Keyboard shortcut / per ricerca rimandato (richiede ricerca globale)
 - [x] Testare navigazione keyboard e breadcrumb (ESC funzionante, breadcrumb visibili)
 - [ ] Salvare checkpoint
+
+## ESTENSIONE NAVIGAZIONE COMPLETA
+- [x] Estendere breadcrumb a FinalRecipes.tsx
+- [x] Estendere breadcrumb a Production.tsx
+- [x] Estendere breadcrumb a ShoppingList.tsx
+- [x] Estendere breadcrumb a FoodMatrix.tsx
+- [-] HACCP.tsx non esiste
+- [-] Breadcrumb multi-livello saltato (nessuna pagina dettaglio)
+- [x] Creare componente GlobalSearch con keyboard navigation (frecce + Enter)
+- [x] Integrare GlobalSearch in DashboardLayout con shortcut /
+- [x] Testare navigazione e ricerca globale (server funzionante, breadcrumb visibili)
+- [ ] Salvare checkpoint finale
