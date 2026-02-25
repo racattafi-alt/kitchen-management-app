@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Save, AlertTriangle, Check } from "lucide-react";
 import { useStore } from "@/contexts/StoreContext";
-import { RecipeForm, RecipeFormData, ComponentWithDetails } from "@/components/RecipeForm";
+import RecipeForm, { RecipeFormData, ComponentWithDetails } from "@/components/RecipeForm";
 
 type EntityType = "ingredient" | "recipe" | "supplier";
 

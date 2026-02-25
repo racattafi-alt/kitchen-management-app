@@ -1061,3 +1061,10 @@
 - [ ] Testare creazione ricetta con nuovo componente
 - [ ] Testare modifica ricetta con nuovo componente
 - [ ] Salvare checkpoint finale
+
+## MIGLIORAMENTI RICHIESTI
+- [x] 1. Refactoring FinalRecipes.tsx - sostituire form duplicati con RecipeForm
+- [x] 2. Validazione avanzata - evitare componenti duplicati, quantità negative, ricette vuote
+- [x] 3. Migliorare UX ricerca - filtri categoria, ordinamento prezzo, preview costo
+- [x] Test completo funzionalità (9/9 test passati)
+- [ ] Salvare checkpoint finale

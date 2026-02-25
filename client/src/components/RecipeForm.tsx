@@ -18,6 +18,37 @@ export interface ComponentWithDetails {
   costType?: string;
 }
 
+// Funzione helper per validare ricetta completa
+export function validateRecipe(formData: RecipeFormData, components: ComponentWithDetails[]): { valid: boolean; error?: string } {
+  if (!formData.name || formData.name.trim() === '') {
+    return { valid: false, error: 'Il nome della ricetta è obbligatorio' };
+  }
+  
+  if (!formData.code || formData.code.trim() === '') {
+    return { valid: false, error: 'Il codice della ricetta è obbligatorio' };
+  }
+  
+  if (components.length === 0) {
+    return { valid: false, error: 'Aggiungi almeno un componente alla ricetta' };
+  }
+  
+  // Verifica che tutte le quantità siano valide
+  const invalidQuantity = components.find(c => c.quantity <= 0 || isNaN(c.quantity));
+  if (invalidQuantity) {
+    return { valid: false, error: `Quantità non valida per "${invalidQuantity.name}"` };
+  }
+  
+  if (!formData.conservationMethod || formData.conservationMethod.trim() === '') {
+    return { valid: false, error: 'Il metodo di conservazione è obbligatorio' };
+  }
+  
+  if (!formData.maxConservationTime || formData.maxConservationTime.trim() === '') {
+    return { valid: false, error: 'Il tempo massimo di conservazione è obbligatorio' };
+  }
+  
+  return { valid: true };
+}
+
 export interface RecipeFormData {
   name: string;
   code: string;
@@ -42,7 +73,7 @@ interface RecipeFormProps {
   showAllFields?: boolean; // Se false, mostra solo campi essenziali
 }
 
-export function RecipeForm({
+function RecipeForm({
   formData,
   components,
   onFormDataChange,
@@ -51,6 +82,8 @@ export function RecipeForm({
 }: RecipeFormProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchType, setSearchType] = useState<'ingredient' | 'semi_finished' | 'operation'>('ingredient');
+  const [sortBy, setSortBy] = useState<'name' | 'price'>('name');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
   // Query per ricerca componenti
   const { data: ingredients } = trpc.ingredients.list.useQuery();
@@ -64,16 +97,30 @@ export function RecipeForm({
     const term = searchTerm.toLowerCase();
     
     if (searchType === 'ingredient' && ingredients) {
-      return ingredients
+      let filtered = ingredients
         .filter(i => i.name.toLowerCase().includes(term))
-        .slice(0, 5)
         .map(i => ({
           type: 'ingredient' as const,
           id: i.id,
           name: i.name,
           unit: i.unitType === 'u' ? 'unità' : 'kg',
           pricePerUnit: parseFloat(i.pricePerKgOrUnit || '0'),
+          category: i.category || 'Altro',
         }));
+      
+      // Applica filtro categoria
+      if (categoryFilter !== 'all') {
+        filtered = filtered.filter(i => i.category === categoryFilter);
+      }
+      
+      // Applica ordinamento
+      if (sortBy === 'price') {
+        filtered.sort((a, b) => a.pricePerUnit - b.pricePerUnit);
+      } else {
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
+      }
+      
+      return filtered.slice(0, 10); // Aumentato limite a 10
     }
     
     if (searchType === 'semi_finished') {
@@ -97,13 +144,21 @@ export function RecipeForm({
           pricePerUnit: r.unitWeight ? parseFloat(r.totalCost || '0') / parseFloat(r.unitWeight) : 0,
         }));
       
-      return [...semiFromTable, ...semiFromRecipes].slice(0, 5);
+      let combined = [...semiFromTable, ...semiFromRecipes];
+      
+      // Applica ordinamento
+      if (sortBy === 'price') {
+        combined.sort((a, b) => a.pricePerUnit - b.pricePerUnit);
+      } else {
+        combined.sort((a, b) => a.name.localeCompare(b.name));
+      }
+      
+      return combined.slice(0, 10);
     }
     
     if (searchType === 'operation' && operations) {
-      return operations
+      let filtered = operations
         .filter(o => o.name.toLowerCase().includes(term))
-        .slice(0, 5)
         .map(o => ({
           type: 'operation' as const,
           id: o.id,
@@ -112,10 +167,19 @@ export function RecipeForm({
           pricePerUnit: parseFloat(o.hourlyRate || '0'),
           costType: o.costType,
         }));
+      
+      // Applica ordinamento
+      if (sortBy === 'price') {
+        filtered.sort((a, b) => a.pricePerUnit - b.pricePerUnit);
+      } else {
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
+      }
+      
+      return filtered.slice(0, 10);
     }
     
     return [];
-  }, [searchTerm, searchType, ingredients, semiFinished, operations, allRecipes]);
+  }, [searchTerm, searchType, ingredients, semiFinished, operations, allRecipes, sortBy, categoryFilter]);
 
   const calculateTotalCost = () => {
     return components.reduce((sum, comp) => {
@@ -126,6 +190,16 @@ export function RecipeForm({
   };
 
   const handleAddComponent = (comp: any) => {
+    // Validazione: controlla se il componente è già presente
+    const isDuplicate = components.some(
+      (existing) => existing.componentId === comp.id && existing.type === comp.type
+    );
+    
+    if (isDuplicate) {
+      toast.error(`"${comp.name}" è già presente nei componenti`);
+      return;
+    }
+    
     const newComponent: ComponentWithDetails = {
       type: comp.type,
       componentId: comp.id,
@@ -138,6 +212,7 @@ export function RecipeForm({
     };
     onComponentsChange([...components, newComponent]);
     setSearchTerm("");
+    toast.success(`"${comp.name}" aggiunto con successo`);
   };
 
   const handleRemoveComponent = (index: number) => {
@@ -145,6 +220,17 @@ export function RecipeForm({
   };
 
   const handleUpdateQuantity = (index: number, quantity: number) => {
+    // Validazione: quantità deve essere > 0
+    if (quantity <= 0 || isNaN(quantity)) {
+      toast.error('La quantità deve essere maggiore di zero');
+      return;
+    }
+    
+    // Warning per quantità elevate
+    if (quantity > 100) {
+      toast.warning('Quantità elevata (>100kg) - verifica che sia corretta');
+    }
+    
     const updated = [...components];
     updated[index] = { ...updated[index], quantity };
     onComponentsChange(updated);
@@ -373,7 +459,45 @@ export function RecipeForm({
 
         {/* Ricerca e aggiunta componenti */}
         <div className="space-y-3 p-5 bg-white border-2 border-dashed border-slate-300 rounded-lg">
-          <Label className="text-base font-semibold">Aggiungi Componente</Label>
+          <div className="flex items-center justify-between">
+            <Label className="text-base font-semibold">Aggiungi Componente</Label>
+            {searchTerm && filteredComponents.length > 0 && (
+              <span className="text-sm text-slate-600">
+                {filteredComponents.length} risultat{filteredComponents.length === 1 ? 'o' : 'i'}
+              </span>
+            )}
+          </div>
+          
+          {/* Filtri e Ordinamento */}
+          <div className="flex gap-2">
+            <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+              <SelectTrigger className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name">Nome A-Z</SelectItem>
+                <SelectItem value="price">Prezzo ↑</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            {searchType === 'ingredient' && (
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tutte</SelectItem>
+                  <SelectItem value="Verdure">Verdure</SelectItem>
+                  <SelectItem value="Carne">Carne</SelectItem>
+                  <SelectItem value="Formaggi">Formaggi</SelectItem>
+                  <SelectItem value="Salse">Salse</SelectItem>
+                  <SelectItem value="Pane">Pane</SelectItem>
+                  <SelectItem value="Altro">Altro</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+          
           <div className="flex gap-3">
             <Select value={searchType} onValueChange={(v: any) => setSearchType(v)}>
               <SelectTrigger className="w-40">
@@ -402,16 +526,27 @@ export function RecipeForm({
               {filteredComponents.map((comp: any) => (
                 <div
                   key={comp.id}
-                  className="p-3 hover:bg-slate-50 cursor-pointer flex items-center justify-between"
+                  className="p-3 hover:bg-green-50 cursor-pointer flex items-center justify-between transition-colors group"
                   onClick={() => handleAddComponent(comp)}
                 >
-                  <div>
+                  <div className="flex-1">
                     <p className="font-medium">{comp.name}</p>
                     <p className="text-sm text-slate-500">
                       {comp.unit} - € {comp.pricePerUnit.toFixed(2)}/{comp.unit}
                     </p>
+                    {comp.category && (
+                      <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-slate-100 text-slate-600 rounded">
+                        {comp.category}
+                      </span>
+                    )}
                   </div>
-                  <Plus className="h-4 w-4 text-green-600" />
+                  <div className="flex items-center gap-3">
+                    <div className="text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-xs text-slate-500">Costo iniziale</p>
+                      <p className="text-sm font-medium text-green-600">€ {(1 * comp.pricePerUnit).toFixed(2)}</p>
+                    </div>
+                    <Plus className="h-5 w-5 text-green-600 group-hover:scale-110 transition-transform" />
+                  </div>
                 </div>
               ))}
             </div>
@@ -421,3 +556,5 @@ export function RecipeForm({
     </div>
   );
 }
+
+export default RecipeForm;
