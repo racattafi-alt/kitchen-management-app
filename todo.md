@@ -1028,4 +1028,36 @@
 - [x] Testare modifica ingrediente in 2 store
 - [x] Testare preview differenze
 - [x] Testare audit log modifiche multi-store
-- [x] Salvare checkpoint
+- [x] Salvare checkpoint (versione 691cc9b4)
+
+## MIGLIORAMENTI EDITOR MULTI-STORE
+### Selezione Multipla
+- [ ] Aggiungere checkbox per ogni ricetta nella lista
+- [ ] Aggiungere pulsante "Seleziona Tutto" / "Deseleziona Tutto"
+- [ ] Implementare stato selezione multipla (array di ID selezionati)
+- [ ] Aggiungere pulsante "Copia Selezionate" per operazioni batch
+- [ ] Implementare logica backend per copia batch ricette multiple
+
+### Form Modifica Completo
+- [ ] Analizzare form ricette in Recipes.tsx per capire struttura completa
+- [ ] Estrarre componente form ricette riutilizzabile
+- [ ] Sostituire form semplificato con form completo in MultiStoreEditor
+- [ ] Includere tutti i campi: ingredienti, semilavorati, metodo conservazione, tempo, ecc.
+- [ ] Mantenere funzionalità propagazione multi-store nel form completo
+
+### Testing
+- [ ] Testare selezione singola ricetta
+- [ ] Testare selezione multipla ricette (5-10 ricette)
+- [ ] Testare pulsante "Seleziona Tutto"
+- [ ] Testare copia batch ricette in altro store
+- [ ] Testare form modifica completo con tutti i campi
+- [ ] Salvare checkpoint
+
+## REFACTORING: FORM RICETTE RIUTILIZZABILE
+- [x] Creato componente RecipeForm.tsx riutilizzabile con tutte le funzionalità
+- [x] Integrato RecipeForm in MultiStoreEditor.tsx per modifica ricette multi-store
+- [x] Testato form completo nel Multi-Store Editor (funzionante)
+- [ ] Completare refactoring FinalRecipes.tsx (richiede script Python per sicurezza)
+- [ ] Testare creazione ricetta con nuovo componente
+- [ ] Testare modifica ricetta con nuovo componente
+- [ ] Salvare checkpoint finale
