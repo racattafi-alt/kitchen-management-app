@@ -937,4 +937,13 @@
 - [x] Correggere OrderHistory.tsx, OrdersNew.tsx, Users.tsx, RecipeDetails.tsx
 - [x] Testare navigazione back da Storico Ordini
 - [x] Testare navigazione back da tutte le altre pagine
+- [x] Salvare checkpoint
+
+## BUG ISOLAMENTO ORDINI E LOGOUT
+- [x] Aggiungere filtro storeId al router orderSessions (getAllHistory, getMyHistory)
+- [x] Aggiornare funzioni database orderSessions per filtrare per storeId
+- [x] Pulsante Logout già presente in DashboardLayout (footer sidebar)
+- [x] Correggere funzione logout per reindirizzare a login page
+- [x] Testare isolamento ordini tra store
+- [x] Testare logout e login con utente diverso
 - [ ] Salvare checkpoint

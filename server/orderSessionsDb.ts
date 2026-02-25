@@ -103,25 +103,26 @@ export async function saveOrderToHistory(
   userName: string,
   orderData: any,
   pdfUrl: string | null,
-  notes: string | null
+  notes: string | null,
+  storeId: string
 ) {
   const id = nanoid();
   const totalItems = orderData.items?.length || 0;
 
   await executeQuery(
-    `INSERT INTO order_history (id, userId, userName, orderData, pdfUrl, totalItems, notes, createdAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
-    [id, userId, userName, JSON.stringify(orderData), pdfUrl, totalItems, notes]
+    `INSERT INTO order_history (id, userId, userName, orderData, pdfUrl, totalItems, notes, storeId, createdAt)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+    [id, userId, userName, JSON.stringify(orderData), pdfUrl, totalItems, notes, storeId]
   );
 
   return id;
 }
 
 // Ottiene storico ordini dell'utente
-export async function getUserOrderHistory(userId: number): Promise<OrderHistoryItem[]> {
+export async function getUserOrderHistory(userId: number, storeId: string): Promise<OrderHistoryItem[]> {
   const rows = await executeQuery(
-    `SELECT * FROM order_history WHERE userId = ? ORDER BY createdAt DESC LIMIT 50`,
-    [userId]
+    `SELECT * FROM order_history WHERE userId = ? AND storeId = ? ORDER BY createdAt DESC LIMIT 50`,
+    [userId, storeId]
   );
   return (rows as any[]).map((row) => ({
     ...row,
@@ -130,9 +131,10 @@ export async function getUserOrderHistory(userId: number): Promise<OrderHistoryI
 }
 
 // Ottiene tutti gli ordini (solo admin)
-export async function getAllOrderHistory(): Promise<OrderHistoryItem[]> {
+export async function getAllOrderHistory(storeId: string): Promise<OrderHistoryItem[]> {
   const rows = await executeQuery(
-    `SELECT * FROM order_history ORDER BY createdAt DESC LIMIT 100`
+    `SELECT * FROM order_history WHERE storeId = ? ORDER BY createdAt DESC LIMIT 100`,
+    [storeId]
   );
   return (rows as any[]).map((row) => ({
     ...row,

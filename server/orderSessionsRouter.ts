@@ -47,6 +47,13 @@ export const orderSessionsRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      if (!ctx.currentStoreId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Nessuno store selezionato",
+        });
+      }
+      
       // Ottieni items carrello
       const cartItems = await getUserOrderSession(ctx.user.id);
 
@@ -76,7 +83,8 @@ export const orderSessionsRouter = router({
         ctx.user.name as string,
         orderData,
         null, // PDF URL sarà aggiunto successivamente se necessario
-        input.notes || null
+        input.notes || null,
+        ctx.currentStoreId
       );
 
       // Svuota carrello
@@ -107,6 +115,13 @@ export const orderSessionsRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      if (!ctx.currentStoreId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Nessuno store selezionato",
+        });
+      }
+      
       if (input.items.length === 0) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -126,7 +141,8 @@ export const orderSessionsRouter = router({
         ctx.user.name as string,
         orderData,
         null,
-        input.notes || null
+        input.notes || null,
+        ctx.currentStoreId
       );
 
       return {
@@ -138,7 +154,13 @@ export const orderSessionsRouter = router({
 
   // Ottiene storico ordini dell'utente
   getMyHistory: protectedProcedure.query(async ({ ctx }) => {
-    const history = await getUserOrderHistory(ctx.user.id);
+    if (!ctx.currentStoreId) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Nessuno store selezionato",
+      });
+    }
+    const history = await getUserOrderHistory(ctx.user.id, ctx.currentStoreId);
     return history;
   }),
 
@@ -151,7 +173,13 @@ export const orderSessionsRouter = router({
       });
     }
 
-    const history = await getAllOrderHistory();
+    if (!ctx.currentStoreId) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Nessuno store selezionato",
+      });
+    }
+    const history = await getAllOrderHistory(ctx.currentStoreId);
     return history;
   }),
 
