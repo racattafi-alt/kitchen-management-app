@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { trpc } from "@/lib/trpc";
-import { Plus, Building2, Pencil, Trash2 } from "lucide-react";
+import { Plus, Building2, Pencil, Trash2, ArrowLeft } from "lucide-react";
+import Breadcrumb from "@/components/Breadcrumb";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -143,12 +144,18 @@ export default function Suppliers() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        <Breadcrumb items={[{ label: "Fornitori" }]} />
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Fornitori</h1>
-            <p className="text-muted-foreground">
-              Gestisci i fornitori e i loro contatti
-            </p>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => window.location.href = '/dashboard'}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Fornitori</h1>
+              <p className="text-muted-foreground">
+                Gestisci i fornitori e i loro contatti
+              </p>
+            </div>
           </div>
           {canEdit && (
             <Dialog open={isOpen} onOpenChange={setIsOpen}>

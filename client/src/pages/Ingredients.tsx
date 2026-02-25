@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { trpc } from "@/lib/trpc";
 import { Plus, Package, Pencil, Trash2, Download, Upload, ArrowLeft } from "lucide-react";
+import Breadcrumb from "@/components/Breadcrumb";
 import { useState, useEffect as React_useEffect } from "react";
 import * as React from "react";
 import { toast } from "sonner";
@@ -387,6 +388,7 @@ export default function Ingredients() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        <Breadcrumb items={[{ label: "Ingredienti" }]} />
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => window.location.href = '/dashboard'}>

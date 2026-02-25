@@ -1119,3 +1119,12 @@
 - [x] Correggere NotFound.tsx (Go Home ora porta a /dashboard)
 - [x] Testare navigazione completa (pulsante Torna Indietro visibile, NotFound corretto)
 - [ ] Salvare checkpoint
+
+## MIGLIORAMENTI NAVIGAZIONE AVANZATI
+- [x] Creare componente Breadcrumb riutilizzabile
+- [x] Integrare breadcrumb in Ingredienti e Fornitori
+- [x] Standardizzare pulsanti Torna Indietro in Ingredienti e Fornitori
+- [x] Implementare keyboard shortcut ESC per tornare alla dashboard (globale)
+- [-] Keyboard shortcut / per ricerca rimandato (richiede ricerca globale)
+- [x] Testare navigazione keyboard e breadcrumb (ESC funzionante, breadcrumb visibili)
+- [ ] Salvare checkpoint
