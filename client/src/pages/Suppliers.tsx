@@ -324,8 +324,8 @@ export default function Suppliers() {
             ) : suppliers && suppliers.length > 0 ? (
               <div className="rounded-md border">
                 <Table>
-                  <TableHeader>
-                    <TableRow>
+                  <TableHeader className="sticky top-0 bg-background z-10">
+                    <TableRow className="border-b">
                       <TableHead>Nome</TableHead>
                       <TableHead>Contatto</TableHead>
                       <TableHead>Telefono</TableHead>

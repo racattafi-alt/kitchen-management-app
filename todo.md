@@ -1105,4 +1105,11 @@
 - [-] Swipe gestures RIMOSSO (violava regole React hooks - useSwipeable non può essere in .map)
 - [x] Food Matrix layout card per mobile (tabella desktop, card mobile)
 - [x] Testare tutte le modifiche su viewport mobile (paginazione OK, layout responsive OK)
-- [ ] Salvare checkpoint
+- [x] Salvare checkpoint (ce1e2eba)
+
+## MIGLIORAMENTI UX - FASE 3
+- [-] Paginazione Produzione SALTATA (struttura JSX troppo complessa)
+- [x] Sticky headers implementati in Ingredienti e Fornitori
+- [x] Lista Acquisti ottimizzata per tablet (layout responsive, input vicini ai nomi)
+- [x] Test completati (sticky headers funzionanti, layout tablet ottimizzato)
+- [ ] Salvare checkpoint finale

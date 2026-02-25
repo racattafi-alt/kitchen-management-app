@@ -943,8 +943,8 @@ export default function Ingredients() {
               <div className="text-center py-8">Caricamento...</div>
             ) : paginatedIngredients && paginatedIngredients.length > 0 ? (
               <Table>
-                <TableHeader>
-                  <TableRow>
+                <TableHeader className="sticky top-0 bg-background z-10">
+                  <TableRow className="border-b">
                     <TableHead>Nome</TableHead>
                     <TableHead>Categoria</TableHead>
                     <TableHead>Fornitore</TableHead>

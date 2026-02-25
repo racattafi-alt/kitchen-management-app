@@ -720,7 +720,7 @@ export default function ShoppingList() {
                     acc.push(
                       <Card key={item.id} className={item.quantityNeeded > 0 ? "border-orange-300 bg-orange-50/50 dark:bg-orange-950/20" : ""}>
                         <CardContent className="p-4">
-                          <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
                             <div className="flex-1 min-w-0">
                               <div className="font-semibold text-base mb-1">{item.itemName}</div>
                               <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
@@ -745,7 +745,7 @@ export default function ShoppingList() {
                                 <span>€{item.pricePerUnit.toFixed(2)}/{item.unitType === 'k' ? 'kg' : 'pz'}</span>
                               </div>
                             </div>
-                            <div className="flex flex-col items-end gap-2">
+                            <div className="flex flex-row md:flex-col items-center md:items-end gap-3 md:gap-2 w-full md:w-auto">
                               {item.packageQuantity && item.packageQuantity > 1 ? (
                                 <>
                                   <div className="text-xs text-muted-foreground text-right">
