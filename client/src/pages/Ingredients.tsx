@@ -10,7 +10,7 @@ import { Combobox } from "@/components/ui/combobox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { trpc } from "@/lib/trpc";
-import { Plus, Package, Pencil, Trash2, Download, Upload } from "lucide-react";
+import { Plus, Package, Pencil, Trash2, Download, Upload, ArrowLeft } from "lucide-react";
 import { useState, useEffect as React_useEffect } from "react";
 import * as React from "react";
 import { toast } from "sonner";
@@ -388,11 +388,16 @@ export default function Ingredients() {
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">Ingredienti</h1>
-            <p className="text-slate-600 mt-1">
-              Gestisci le materie prime (Livello 0)
-            </p>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => window.location.href = '/dashboard'}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900">Ingredienti</h1>
+              <p className="text-slate-600 mt-1">
+                Gestisci le materie prime (Livello 0)
+              </p>
+            </div>
           </div>
           <div className="flex gap-2">
             {canEdit && (

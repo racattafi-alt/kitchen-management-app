@@ -1113,3 +1113,9 @@
 - [x] Lista Acquisti ottimizzata per tablet (layout responsive, input vicini ai nomi)
 - [x] Test completati (sticky headers funzionanti, layout tablet ottimizzato)
 - [ ] Salvare checkpoint finale
+
+## CORREZIONE NAVIGAZIONE
+- [x] Aggiungere pulsante "Torna Indietro" in Ingredienti.tsx
+- [x] Correggere NotFound.tsx (Go Home ora porta a /dashboard)
+- [x] Testare navigazione completa (pulsante Torna Indietro visibile, NotFound corretto)
+- [ ] Salvare checkpoint
