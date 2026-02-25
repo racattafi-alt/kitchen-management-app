@@ -829,4 +829,76 @@
 - [x] Correggere campo fornitori in form Aggiungi Ingrediente: implementare Combobox con autocomplete e lista completa fornitori
 - [x] Testare filtro fornitori in Lista Ordini
 - [x] Testare campo fornitori in form Aggiungi Ingrediente
+- [x] Salvare checkpoint
+
+## MIGRAZIONE MULTI-STORE
+### Database Schema
+- [ ] Creare tabella `stores` (id, name, address, phone, email, settings, createdAt)
+- [ ] Creare tabella `storeUsers` (userId, storeId, role, createdAt) con ruoli: admin, manager, user
+- [ ] Aggiungere colonna `storeId` a tabella `ingredients`
+- [ ] Aggiungere colonna `storeId` a tabella `recipes`
+- [ ] Aggiungere colonna `storeId` a tabella `productions`
+- [ ] Aggiungere colonna `storeId` a tabella `suppliers`
+- [ ] Aggiungere colonna `storeId` a tabella `orders`
+- [ ] Aggiungere colonna `storeId` a tabella `shopping_list_sessions`
+- [ ] Aggiungere colonna `storeId` a tutte le altre tabelle necessarie
+- [ ] Creare indici su tutte le colonne `storeId` per performance
+- [ ] Aggiungere colonna `preferredStoreId` a tabella `users`
+- [ ] Creare store di default e migrare dati esistenti
+
+### Backend Implementation
+- [ ] Creare `server/storesRouter.ts` con CRUD stores
+- [ ] Creare `server/storesDb.ts` con query helpers
+- [ ] Implementare middleware `storeAwareProcedure` per verificare accesso store
+- [ ] Aggiornare context per includere `currentStoreId`
+- [ ] Aggiornare `ingredientsRouter` con filtro storeId
+- [ ] Aggiornare `recipesRouter` con filtro storeId
+- [ ] Aggiornare `productionsRouter` con filtro storeId
+- [ ] Aggiornare `suppliersRouter` con filtro storeId
+- [ ] Aggiornare `ordersRouter` con filtro storeId
+- [ ] Aggiornare tutti gli altri router con filtro storeId
+- [ ] Implementare procedure per switch store e salvataggio preferenza
+
+### Frontend Implementation
+- [ ] Creare `client/src/contexts/StoreContext.tsx` per gestione store attivo
+- [ ] Creare `client/src/components/StoreSelector.tsx` per selezione store
+- [ ] Aggiungere StoreSelector in DashboardLayout
+- [ ] Implementare persistenza store preferito (localStorage + backend)
+- [ ] Aggiungere dialog selezione store obbligatoria al primo accesso
+- [ ] Aggiornare tutte le query frontend per includere storeId dal context
+- [ ] Creare `client/src/pages/SuperAdminDashboard.tsx` per admin
+- [ ] Implementare dashboard aggregata multi-store per super admin
+- [ ] Aggiungere route protetta per super admin panel
+
+### Testing & Validation
+- [ ] Testare creazione nuovo store
+- [ ] Testare associazione utente a store
+- [ ] Testare isolamento dati tra store
+- [ ] Testare switch store e persistenza preferenza
+- [ ] Testare super admin dashboard con dati aggregati
+- [ ] Verificare performance query con indici storeId
 - [ ] Salvare checkpoint
+
+## MIGRAZIONE MULTI-STORE COMPLETATA ✅
+### Backend
+- [x] Creare tabelle stores e storeUsers nel database
+- [x] Aggiungere storeId a tutte le 20+ tabelle esistenti
+- [x] Creare storesDb.ts con 13 query helpers
+- [x] Creare storesRouter.ts con 11 procedure tRPC
+- [x] Creare middleware storeAwareProcedure
+- [x] Integrare storesRouter in appRouter
+
+### Frontend
+- [x] Creare StoreContext per gestione store attivo
+- [x] Creare componente StoreSelector
+- [x] Integrare StoreProvider in main.tsx
+- [x] Aggiungere StoreSelector in DashboardLayout
+- [x] Creare pagina SuperAdminDashboard
+- [x] Aggiungere route /super-admin in App.tsx
+- [x] Aggiungere link Super Admin nel menu (solo admin)
+
+### Testing
+- [x] Testare selezione store e persistenza
+- [x] Testare isolamento dati tra store
+- [x] Testare Super Admin Dashboard
+- [ ] Salvare checkpoint finale

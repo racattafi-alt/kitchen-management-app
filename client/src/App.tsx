@@ -28,6 +28,7 @@ import OrderHistory from "./pages/OrderHistory";
 import Invoices from "./pages/Invoices";
 import Fridges from "./pages/Fridges";
 import DocumentArchive from "./pages/DocumentArchive";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 
 function Router() {
   return (
@@ -35,6 +36,7 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/recipes"} component={Recipes} />
       <Route path={"/dashboard"} component={Dashboard} />
+      <Route path={"/super-admin"} component={SuperAdminDashboard} />
       <Route path={"/404"} component={NotFound} />
       <Route path={"/ingredients"} component={Ingredients} />
 

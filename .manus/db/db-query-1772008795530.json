@@ -1,0 +1,9 @@
+{
+  "query": "-- Creare store di default\nINSERT INTO `stores` (`id`, `name`, `address`, `isActive`)\nVALUES ('default-store-001', 'Negozio Principale', 'Via Roma 1, Milano', true)\nON DUPLICATE KEY UPDATE `name` = `name`;\n\n-- Associare tutti gli utenti esistenti allo store di default come admin\nINSERT INTO `storeUsers` (`userId`, `storeId`, `role`)\nSELECT `id`, 'default-store-001', 'admin'\nFROM `users`\nWHERE NOT EXISTS (\n  SELECT 1 FROM `storeUsers` WHERE `storeUsers`.`userId` = `users`.`id`\n);\n\n-- Impostare preferredStoreId per tutti gli utenti\nUPDATE `users` SET `preferredStoreId` = 'default-store-001' WHERE `preferredStoreId` IS NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AQnpkq2FC6cpfGo.root --database UyJAnBG4RdjFPnrCDJUrf4 --execute -- Creare store di default\nINSERT INTO `stores` (`id`, `name`, `address`, `isActive`)\nVALUES ('default-store-001', 'Negozio Principale', 'Via Roma 1, Milano', true)\nON DUPLICATE KEY UPDATE `name` = `name`;\n\n-- Associare tutti gli utenti esistenti allo store di default come admin\nINSERT INTO `storeUsers` (`userId`, `storeId`, `role`)\nSELECT `id`, 'default-store-001', 'admin'\nFROM `users`\nWHERE NOT EXISTS (\n  SELECT 1 FROM `storeUsers` WHERE `storeUsers`.`userId` = `users`.`id`\n);\n\n-- Impostare preferredStoreId per tutti gli utenti\nUPDATE `users` SET `preferredStoreId` = 'default-store-001' WHERE `preferredStoreId` IS NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 93
+}

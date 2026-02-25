@@ -22,6 +22,7 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin", "manager", "cook"]).default("user").notNull(),
+  preferredStoreId: varchar("preferredStoreId", { length: 36 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -29,6 +30,38 @@ export const users = mysqlTable("users", {
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
+
+/**
+ * Tabella stores (punti vendita)
+ */
+export const stores = mysqlTable("stores", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  address: text("address"),
+  phone: varchar("phone", { length: 50 }),
+  email: varchar("email", { length: 320 }),
+  settings: json("settings"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Store = typeof stores.$inferSelect;
+export type InsertStore = typeof stores.$inferInsert;
+
+/**
+ * Tabella storeUsers (associazione utenti-store con ruoli)
+ */
+export const storeUsers = mysqlTable("storeUsers", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  storeId: varchar("storeId", { length: 36 }).notNull(),
+  role: mysqlEnum("role", ["admin", "manager", "user"]).default("user").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type StoreUser = typeof storeUsers.$inferSelect;
+export type InsertStoreUser = typeof storeUsers.$inferInsert;
 
 /**
  * Tabella fornitori

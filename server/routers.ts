@@ -7,6 +7,7 @@ import { fridgesRouter } from "./fridgesRouter";
 import { invoicesRouter } from "./invoicesRouter";
 import { nonConformitiesRouter } from "./nonConformitiesRouter";
 import { documentsRouter } from "./documentsRouter";
+import { storesRouter } from "./storesRouter";
 import crypto from "crypto";
 import { execSync } from "child_process";
 import fs from "fs";
@@ -1244,6 +1245,7 @@ const usersRouter = router({  list: protectedProcedure.query(async ({ ctx }) => 
 export const appRouter = router({
   auth: authRouter,
   users: usersRouter,
+  stores: storesRouter,
   ingredients: ingredientsRouter,
   semiFinished: semiFinishedRouter,
   finalRecipes: finalRecipesRouter,
