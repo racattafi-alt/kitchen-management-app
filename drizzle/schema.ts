@@ -68,6 +68,7 @@ export type InsertStoreUser = typeof storeUsers.$inferInsert;
  */
 export const suppliers = mysqlTable("suppliers", {
   id: varchar("id", { length: 36 }).primaryKey(),
+  storeId: varchar("storeId", { length: 36 }).notNull(),
   name: varchar("name", { length: 255 }).notNull().unique(),
   contact: varchar("contact", { length: 255 }),
   email: varchar("email", { length: 320 }),
@@ -86,6 +87,7 @@ export type InsertSupplier = typeof suppliers.$inferInsert;
  */
 export const ingredients = mysqlTable("ingredients", {
   id: varchar("id", { length: 36 }).primaryKey(),
+  storeId: varchar("storeId", { length: 36 }).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   supplierId: varchar("supplierId", { length: 36 }),
   supplier: varchar("supplier", { length: 255 }),
@@ -154,6 +156,7 @@ export type InsertSemiFinishedRecipe = typeof semiFinishedRecipes.$inferInsert;
  */
 export const finalRecipes = mysqlTable("final_recipes", {
   id: varchar("id", { length: 36 }).primaryKey(),
+  storeId: varchar("storeId", { length: 36 }).notNull(),
   code: varchar("code", { length: 50 }).notNull().unique(),
   name: varchar("name", { length: 255 }).notNull(),
   category: mysqlEnum("category", ["Pane", "Carne", "Salse", "Verdure", "Formaggi", "Altro"]).notNull(),
@@ -233,6 +236,7 @@ export type InsertOperation = typeof operations.$inferInsert;
  */
 export const weeklyProductions = mysqlTable("weekly_productions", {
   id: varchar("id", { length: 36 }).primaryKey(),
+  storeId: varchar("storeId", { length: 36 }).notNull(),
   weekStartDate: datetime("weekStartDate").notNull(),
   productionType: mysqlEnum("productionType", ["final", "semifinished"]).default("final").notNull(),
   recipeFinalId: varchar("recipeFinalId", { length: 36 }),
@@ -373,6 +377,7 @@ export type InsertCloudStorageFile = typeof cloudStorage.$inferInsert;
  */
 export const orders = mysqlTable("orders", {
   id: varchar("id", { length: 36 }).primaryKey(),
+  storeId: varchar("storeId", { length: 36 }).notNull(),
   orderDate: timestamp("orderDate").defaultNow().notNull(),
   weekId: varchar("weekId", { length: 50 }),
   totalCost: decimal("totalCost", { precision: 10, scale: 2 }).notNull(),

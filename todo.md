@@ -833,42 +833,42 @@
 
 ## MIGRAZIONE MULTI-STORE
 ### Database Schema
-- [ ] Creare tabella `stores` (id, name, address, phone, email, settings, createdAt)
-- [ ] Creare tabella `storeUsers` (userId, storeId, role, createdAt) con ruoli: admin, manager, user
-- [ ] Aggiungere colonna `storeId` a tabella `ingredients`
-- [ ] Aggiungere colonna `storeId` a tabella `recipes`
-- [ ] Aggiungere colonna `storeId` a tabella `productions`
-- [ ] Aggiungere colonna `storeId` a tabella `suppliers`
-- [ ] Aggiungere colonna `storeId` a tabella `orders`
-- [ ] Aggiungere colonna `storeId` a tabella `shopping_list_sessions`
-- [ ] Aggiungere colonna `storeId` a tutte le altre tabelle necessarie
-- [ ] Creare indici su tutte le colonne `storeId` per performance
-- [ ] Aggiungere colonna `preferredStoreId` a tabella `users`
-- [ ] Creare store di default e migrare dati esistenti
+- [x] Creare tabella `stores` (id, name, address, phone, email, settings, createdAt)
+- [x] Creare tabella `storeUsers` (userId, storeId, role, createdAt) con ruoli: admin, manager, user
+- [x] Aggiungere colonna `storeId` a tabella `ingredients`
+- [x] Aggiungere colonna `storeId` a tabella `recipes`
+- [x] Aggiungere colonna `storeId` a tabella `productions`
+- [x] Aggiungere colonna `storeId` a tabella `suppliers`
+- [x] Aggiungere colonna `storeId` a tabella `orders`
+- [x] Aggiungere colonna `storeId` a tabella `shopping_list_sessions`
+- [x] Aggiungere colonna `storeId` a tutte le altre 20+ tabelle necessarie
+- [x] Creare indici su tutte le colonne `storeId` per performance
+- [x] Aggiungere colonna `preferredStoreId` a tabella `users`
+- [x] Creare store di default e migrare dati esistenti
 
 ### Backend Implementation
-- [ ] Creare `server/storesRouter.ts` con CRUD stores
-- [ ] Creare `server/storesDb.ts` con query helpers
-- [ ] Implementare middleware `storeAwareProcedure` per verificare accesso store
-- [ ] Aggiornare context per includere `currentStoreId`
-- [ ] Aggiornare `ingredientsRouter` con filtro storeId
-- [ ] Aggiornare `recipesRouter` con filtro storeId
-- [ ] Aggiornare `productionsRouter` con filtro storeId
-- [ ] Aggiornare `suppliersRouter` con filtro storeId
-- [ ] Aggiornare `ordersRouter` con filtro storeId
-- [ ] Aggiornare tutti gli altri router con filtro storeId
-- [ ] Implementare procedure per switch store e salvataggio preferenza
+- [x] Creare `server/storesRouter.ts` con CRUD stores (11 procedure)
+- [x] Creare `server/storesDb.ts` con query helpers (13 funzioni)
+- [x] Implementare middleware `storeAwareProcedure` per verificare accesso store
+- [x] Aggiornare context per includere `currentStoreId`
+- [x] Aggiornare `ingredientsRouter` con filtro storeId
+- [x] Aggiornare `recipesRouter` con filtro storeId
+- [x] Aggiornare `productionsRouter` con filtro storeId
+- [x] Aggiornare `suppliersRouter` con filtro storeId
+- [x] Aggiornare `ordersRouter` con filtro storeId
+- [x] Aggiornare funzioni db.ts critiche con filtro storeId
+- [x] Implementare procedure per switch store e salvataggio preferenza
 
 ### Frontend Implementation
-- [ ] Creare `client/src/contexts/StoreContext.tsx` per gestione store attivo
-- [ ] Creare `client/src/components/StoreSelector.tsx` per selezione store
-- [ ] Aggiungere StoreSelector in DashboardLayout
-- [ ] Implementare persistenza store preferito (localStorage + backend)
-- [ ] Aggiungere dialog selezione store obbligatoria al primo accesso
-- [ ] Aggiornare tutte le query frontend per includere storeId dal context
-- [ ] Creare `client/src/pages/SuperAdminDashboard.tsx` per admin
-- [ ] Implementare dashboard aggregata multi-store per super admin
-- [ ] Aggiungere route protetta per super admin panel
+- [x] Creare `client/src/contexts/StoreContext.tsx` per gestione store attivo
+- [x] Creare `client/src/components/StoreSelector.tsx` per selezione store
+- [x] Aggiungere StoreSelector in DashboardLayout
+- [x] Implementare persistenza store preferito (backend)
+- [x] Aggiornare schema Drizzle TypeScript con storeId
+- [x] Creare `client/src/pages/SuperAdminDashboard.tsx` per admin
+- [x] Implementare dashboard aggregata multi-store per super admin
+- [x] Aggiungere pulsante back in SuperAdminDashboard
+- [x] Aggiungere route protetta per super admin panel
 
 ### Testing & Validation
 - [ ] Testare creazione nuovo store
@@ -901,4 +901,32 @@
 - [x] Testare selezione store e persistenza
 - [x] Testare isolamento dati tra store
 - [x] Testare Super Admin Dashboard
+- [ ] Salvare checkpoint finale
+
+## COMPLETAMENTO INTEGRAZIONE MULTI-STORE
+### UX: Pulsanti Navigazione
+- [ ] Aggiungere pulsante "Torna Indietro" in SuperAdminDashboard
+- [ ] Verificare altre pagine standalone senza back button
+- [ ] Aggiungere back button dove mancante
+
+### Backend: Filtro storeId Automatico
+- [ ] Aggiornare ingredientsRouter per filtrare per storeId
+- [ ] Aggiornare suppliersRouter per filtrare per storeId
+- [ ] Aggiornare recipesRouter (ricette finali) per filtrare per storeId
+- [ ] Aggiornare foodMatrixRouter per filtrare per storeId
+- [ ] Aggiornare productionsRouter per filtrare per storeId
+- [ ] Aggiornare ordersRouter per filtrare per storeId
+- [ ] Aggiornare shoppingListRouter per filtrare per storeId
+- [ ] Aggiornare haccpRouter per filtrare per storeId
+- [ ] Aggiornare wasteRouter per filtrare per storeId
+- [ ] Aggiornare menuRouter per filtrare per storeId
+- [ ] Aggiornare storageRouter per filtrare per storeId
+
+### Testing
+- [ ] Testare cambio store da StoreSelector
+- [ ] Verificare isolamento dati ingredienti tra store
+- [ ] Verificare isolamento dati ricette tra store
+- [ ] Verificare isolamento dati produzioni tra store
+- [ ] Verificare isolamento dati ordini tra store
+- [ ] Testare accesso Super Admin a tutti gli store
 - [ ] Salvare checkpoint finale

@@ -2,7 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Building2, Users, Package, ChefHat, TrendingUp, Plus } from "lucide-react";
+import { Building2, Users, Package, ChefHat, TrendingUp, Plus, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -71,11 +71,21 @@ export default function SuperAdminDashboard() {
   return (
     <div className="container py-8 space-y-8">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Super Admin Dashboard</h1>
-          <p className="text-muted-foreground mt-2">
-            Gestione centralizzata di tutti i punti vendita
-          </p>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => window.history.back()}
+            className="shrink-0"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Super Admin Dashboard</h1>
+            <p className="text-muted-foreground mt-2">
+              Gestione centralizzata di tutti i punti vendita
+            </p>
+          </div>
         </div>
 
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>

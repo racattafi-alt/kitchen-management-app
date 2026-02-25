@@ -167,10 +167,11 @@ export async function createIngredient(data: Omit<Ingredient, "createdAt" | "upd
   return data;
 }
 
-export async function getIngredients() {
+export async function getIngredients(storeId?: string | null) {
   const db = await getDb();
   if (!db) return [];
-  const results = await db
+  
+  let query = db
     .select({
       id: ingredients.id,
       name: ingredients.name,
@@ -193,8 +194,15 @@ export async function getIngredients() {
       updatedAt: ingredients.updatedAt,
     })
     .from(ingredients)
-    .leftJoin(suppliers, eq(ingredients.supplierId, suppliers.id))
-    .where(eq(ingredients.isActive, true));
+    .leftJoin(suppliers, eq(ingredients.supplierId, suppliers.id));
+  
+  if (storeId) {
+    query = query.where(and(eq(ingredients.isActive, true), eq(ingredients.storeId, storeId))) as any;
+  } else {
+    query = query.where(eq(ingredients.isActive, true)) as any;
+  }
+  
+  const results = await query;
   return results;
 }
 
@@ -258,12 +266,16 @@ export async function createFinalRecipe(data: Omit<FinalRecipe, "createdAt" | "u
   return data;
 }
 
-export async function getFinalRecipes() {
+export async function getFinalRecipes(storeId?: string | null) {
   const db = await getDb();
   if (!db) return [];
   // Filtra solo ricette attive (isActive !== false)
-  const recipes = await db.select().from(finalRecipes);
-  return recipes.filter(r => r.isActive !== false);
+  let query: any = db.select().from(finalRecipes);
+  if (storeId) {
+    query = query.where(eq(finalRecipes.storeId, storeId));
+  }
+  const recipes = await query;
+  return recipes.filter((r: any) => r.isActive !== false);
 }
 
 export async function getAllFinalRecipes() {
@@ -391,7 +403,7 @@ export async function createWeeklyProduction(data: Omit<WeeklyProduction, "creat
   return data;
 }
 
-export async function getWeeklyProductions(weekStartDate?: Date) {
+export async function getWeeklyProductions(weekStartDate?: Date, storeId?: string | null) {
   const db = await getDb();
   if (!db) return [];
   
@@ -412,6 +424,10 @@ export async function getWeeklyProductions(weekStartDate?: Date) {
     })
     .from(weeklyProductions)
     .leftJoin(finalRecipes, eq(weeklyProductions.recipeFinalId, finalRecipes.id));
+  
+  if (storeId) {
+    query = query.where(eq(weeklyProductions.storeId, storeId));
+  }
   
   if (weekStartDate) {
     query = query.where(eq(weeklyProductions.weekStartDate, weekStartDate));
@@ -555,9 +571,12 @@ export async function getCloudStorageFiles(filters?: { documentType?: string; re
 
 // ============ SUPPLIERS (FORNITORI) ============
 
-export async function getSuppliers() {
+export async function getSuppliers(storeId?: string | null) {
   const db = await getDb();
   if (!db) return [];
+  if (storeId) {
+    return db.select().from(suppliers).where(eq(suppliers.storeId, storeId));
+  }
   return db.select().from(suppliers);
 }
 
@@ -598,13 +617,22 @@ export async function createOrderItem(data: Omit<OrderItem, "createdAt">) {
   return data;
 }
 
-export async function getOrders(filters?: { weekId?: string; limit?: number }) {
+export async function getOrders(filters?: { weekId?: string; limit?: number; storeId?: string | null }) {
   const db = await getDb();
   if (!db) return [];
   let query: any = db.select().from(orders).orderBy(desc(orders.orderDate));
+  
+  const conditions = [];
   if (filters?.weekId) {
-    query = query.where(eq(orders.weekId, filters.weekId));
+    conditions.push(eq(orders.weekId, filters.weekId));
   }
+  if (filters?.storeId) {
+    conditions.push(eq(orders.storeId, filters.storeId));
+  }
+  if (conditions.length > 0) {
+    query = query.where(conditions.length === 1 ? conditions[0] : and(...conditions));
+  }
+  
   if (filters?.limit) {
     query = query.limit(filters.limit);
   }

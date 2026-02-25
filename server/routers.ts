@@ -31,8 +31,8 @@ const authRouter = router({
 
 // ============ PROCEDURE INGREDIENTI ============
 const ingredientsRouter = router({
-  list: protectedProcedure.query(async () => {
-    return db.getIngredients();
+  list: protectedProcedure.query(async ({ ctx }) => {
+    return db.getIngredients(ctx.currentStoreId);
   }),
   create: protectedProcedure
     .input(
@@ -61,6 +61,7 @@ const ingredientsRouter = router({
       }
       return db.createIngredient({
         ...input,
+        storeId: ctx.currentStoreId || 'default-store',
         packageQuantity: input.packageQuantity.toString(),
         packagePrice: input.packagePrice.toString(),
         pricePerKgOrUnit: input.pricePerKgOrUnit.toString(),
@@ -206,6 +207,7 @@ const ingredientsRouter = router({
               // Crea nuovo
               await db.createIngredient({
                 id: crypto.randomBytes(16).toString('hex'),
+                storeId: ctx.currentStoreId || 'default-store',
                 name: row.name,
                 supplierId: null,
                 supplier: row.supplier || 'Non specificato',
@@ -389,14 +391,14 @@ const productionRouter = router({
   // Alias per compatibilità con codice esistente
   list: protectedProcedure
     .input(z.object({ weekStartDate: z.date().optional() }).optional())
-    .query(async ({ input }) => {
-      return db.getWeeklyProductions(input?.weekStartDate);
+    .query(async ({ input, ctx }) => {
+      return db.getWeeklyProductions(input?.weekStartDate, ctx.currentStoreId);
     }),
 
   listWeekly: protectedProcedure
     .input(z.object({ weekStartDate: z.date().optional() }).optional())
-    .query(async ({ input }) => {
-      return db.getWeeklyProductions(input?.weekStartDate);
+    .query(async ({ input, ctx }) => {
+      return db.getWeeklyProductions(input?.weekStartDate, ctx.currentStoreId);
     }),
 
   create: protectedProcedure
@@ -415,6 +417,7 @@ const productionRouter = router({
       }
       const result = await db.createWeeklyProduction({
         id: crypto.randomUUID(),
+        storeId: ctx.currentStoreId || 'default-store',
         recipeFinalId: input.recipeFinalId || null,
         semiFinishedId: input.semiFinishedId || null,
         productionType: input.productionType,
@@ -483,6 +486,7 @@ const productionRouter = router({
         const productionId = crypto.randomUUID();
         const result = await db.createWeeklyProduction({
           id: productionId,
+          storeId: ctx.currentStoreId || 'default-store',
           recipeFinalId: prod.recipeFinalId,
           semiFinishedId: null,
           productionType: "final",
@@ -515,14 +519,14 @@ const productionRouter = router({
 
   generateShoppingList: protectedProcedure
     .input(z.object({ weekStartDate: z.date().optional() }).optional())
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const weekStartDate = input?.weekStartDate;
-      const productions = await db.getWeeklyProductions(weekStartDate);
+      const productions = await db.getWeeklyProductions(weekStartDate, ctx.currentStoreId);
 
       console.log('[generateShoppingList] Productions:', productions.length);
 
       // Carica TUTTI gli ingredienti e semilavorati
-      const allIngredients = await db.getIngredients();
+      const allIngredients = await db.getIngredients(ctx.currentStoreId);
       const allSemiFinished = await db.getSemiFinishedRecipes();
 
       // Mappa per aggregare quantità necessarie
@@ -663,9 +667,9 @@ const menuRouter = router({
 
 // ============ PROCEDURE RICETTE FINALI ============
 const finalRecipesRouter = router({
-  list: protectedProcedure.query(async () => {
+  list: protectedProcedure.query(async ({ ctx }) => {
     // Restituisce TUTTE le ricette (anche nascoste) per gestione nella pagina
-    return db.getAllFinalRecipes();
+    return db.getFinalRecipes(ctx.currentStoreId);
   }),
 
   getById: protectedProcedure
@@ -720,6 +724,7 @@ const finalRecipesRouter = router({
       const newId = crypto.randomUUID();
       return db.createFinalRecipe({
         id: newId,
+        storeId: ctx.currentStoreId || 'default-store',
         name: input.name,
         code: input.code,
         category: input.category,
@@ -1089,8 +1094,8 @@ const storageRouter = router({
 
 // ============ PROCEDURE FORNITORI ============
 const suppliersRouter = router({
-  list: protectedProcedure.query(async () => {
-    return db.getSuppliers();
+  list: protectedProcedure.query(async ({ ctx }) => {
+    return db.getSuppliers(ctx.currentStoreId);
   }),
   create: protectedProcedure
     .input(
@@ -1108,7 +1113,7 @@ const suppliersRouter = router({
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
-      return db.createSupplier(input as any);
+      return db.createSupplier({ ...input, storeId: ctx.currentStoreId || 'default-store' } as any);
     }),
   update: protectedProcedure
     .input(
@@ -1148,8 +1153,8 @@ const ordersRouter = router({
         limit: z.number().optional(),
       }).optional()
     )
-    .query(async ({ input }) => {
-      return db.getOrders(input);
+    .query(async ({ input, ctx }) => {
+      return db.getOrders({ ...input, storeId: ctx.currentStoreId });
     }),
   getItems: protectedProcedure
     .input(z.object({ orderId: z.string() }))
@@ -1175,6 +1180,7 @@ const ordersRouter = router({
       }
       return db.createOrder({
         ...input,
+        storeId: ctx.currentStoreId || 'default-store',
         totalAmount: input.totalAmount.toString(),
       } as any);
     }),

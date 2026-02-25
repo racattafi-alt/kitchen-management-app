@@ -6,6 +6,7 @@ export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
   res: CreateExpressContextOptions["res"];
   user: User | null;
+  currentStoreId: string | null;
   logout: () => void;
 };
 
@@ -25,6 +26,7 @@ export async function createContext(
     req: opts.req,
     res: opts.res,
     user,
+    currentStoreId: user?.preferredStoreId || null,
     logout: () => {
       opts.res.clearCookie('session');
     },
