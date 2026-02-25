@@ -930,7 +930,7 @@
 - [x] Verificare isolamento dati produzioni tra store
 - [x] Verificare isolamento dati ordini tra store
 - [x] Testare accesso Super Admin a tutti gli store
-- [ ] Salvare checkpoint finale
+- [x] Salvare checkpoint finale
 
 ## STANDARDIZZAZIONE PULSANTI TORNA INDIETRO
 - [x] Cercare tutti i pulsanti "Torna Indietro" che usano navigate('/')
@@ -977,3 +977,55 @@
 - [ ] Testare indicatore visivo store attivo
 - [ ] Testare audit log su azioni critiche
 - [ ] Salvare checkpoint
+
+## EDITOR MULTI-STORE CENTRALIZZATO
+### Backend
+- [ ] Creare multiStoreEditorDb.ts con funzioni helper
+- [ ] Implementare getEntityAcrossStores(entityType, entityId) per recuperare dati da tutti gli store
+- [ ] Implementare updateEntityAcrossStores(entityType, entityId, data, storeIds) per update batch
+- [ ] Implementare getEntityDifferences(entityType, entityId) per confrontare versioni tra store
+- [ ] Creare multiStoreEditorRouter.ts con procedure tRPC
+- [ ] Integrare multiStoreEditorRouter in appRouter
+- [ ] Aggiungere audit log per operazioni multi-store
+
+### Frontend
+- [ ] Creare pagina /super-admin/editor-centralizzato
+- [ ] Implementare layout 3 colonne (Selezione / Editor / Preview)
+- [ ] Colonna Sinistra: Dropdown tipo entità + lista elementi
+- [ ] Colonna Centrale: Form modifica + checkbox "Applica a tutti gli store"
+- [ ] Colonna Destra: Preview differenze tra store
+- [ ] Implementare caricamento dati multi-store
+- [ ] Implementare salvataggio batch con selezione store
+- [ ] Implementare gestione conflitti (Sovrascrivi / Mantieni / Salta)
+- [ ] Aggiungere route in App.tsx
+- [ ] Aggiungere link nel menu Super Admin
+
+### Testing
+- [ ] Testare caricamento ricetta da tutti gli store
+- [ ] Testare modifica propagata a store selezionati
+- [ ] Testare gestione conflitti
+- [ ] Testare audit log operazioni multi-store
+- [ ] Salvare checkpoint
+
+## EDITOR MULTI-STORE CENTRALIZZATO ✅
+### Backend
+- [x] Creare multiStoreEditorDb.ts con funzioni helper (13 funzioni)
+- [x] Implementare getEntityAcrossStores (ingredienti, ricette, fornitori)
+- [x] Implementare updateEntityAcrossStores con gestione conflitti
+- [x] Creare multiStoreEditorRouter.ts con procedure tRPC (3 procedure)
+- [x] Integrare router in appRouter
+
+### Frontend
+- [x] Creare pagina MultiStoreEditor con layout 3 colonne
+- [x] Colonna 1: Selezione tipo entità e lista elementi
+- [x] Colonna 2: Form modifica con selezione store target
+- [x] Colonna 3: Preview differenze tra store con evidenziazione modifiche
+- [x] Implementare gestione conflitti visiva
+- [x] Aggiungere route /multi-store-editor in App.tsx
+- [x] Aggiungere pulsante Editor Multi-Store in SuperAdminDashboard
+
+### Testing
+- [x] Testare modifica ingrediente in 2 store
+- [x] Testare preview differenze
+- [x] Testare audit log modifiche multi-store
+- [x] Salvare checkpoint

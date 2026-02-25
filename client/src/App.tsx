@@ -29,6 +29,7 @@ import Invoices from "./pages/Invoices";
 import Fridges from "./pages/Fridges";
 import DocumentArchive from "./pages/DocumentArchive";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import MultiStoreEditor from "./pages/MultiStoreEditor";
 
 function Router() {
   return (
@@ -37,6 +38,7 @@ function Router() {
       <Route path={"/recipes"} component={Recipes} />
       <Route path={"/dashboard"} component={Dashboard} />
       <Route path={"/super-admin"} component={SuperAdminDashboard} />
+      <Route path={"/multi-store-editor"} component={MultiStoreEditor} />
       <Route path={"/404"} component={NotFound} />
       <Route path={"/ingredients"} component={Ingredients} />
 

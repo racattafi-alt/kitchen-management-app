@@ -1249,6 +1249,7 @@ const usersRouter = router({  list: protectedProcedure.query(async ({ ctx }) => 
 });
 
 import { auditLogRouter } from "./auditLogRouter";
+import { multiStoreEditorRouter } from "./multiStoreEditorRouter";
 
 export const appRouter = router({
   auth: authRouter,
@@ -1273,6 +1274,7 @@ export const appRouter = router({
   orders: ordersRouter,
   orderSessions: orderSessionsRouter,
   auditLog: auditLogRouter,
+  multiStoreEditor: multiStoreEditorRouter,
   system: systemRouter,
 });
 

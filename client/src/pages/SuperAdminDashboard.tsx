@@ -2,7 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Building2, Users, Package, ChefHat, TrendingUp, Plus, ArrowLeft } from "lucide-react";
+import { Building2, Users, Package, ChefHat, TrendingUp, Plus, ArrowLeft, Edit3 } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -88,14 +88,22 @@ export default function SuperAdminDashboard() {
           </div>
         </div>
 
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Nuovo Negozio
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={() => window.location.href = "/multi-store-editor"}
+          >
+            <Edit3 className="h-4 w-4 mr-2" />
+            Editor Multi-Store
+          </Button>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Nuovo Negozio
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
             <DialogHeader>
               <DialogTitle>Crea Nuovo Negozio</DialogTitle>
               <DialogDescription>
@@ -151,6 +159,7 @@ export default function SuperAdminDashboard() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Statistiche Aggregate */}
