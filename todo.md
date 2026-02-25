@@ -905,30 +905,31 @@
 
 ## COMPLETAMENTO INTEGRAZIONE MULTI-STORE
 ### UX: Pulsanti Navigazione
-- [ ] Aggiungere pulsante "Torna Indietro" in SuperAdminDashboard
-- [ ] Verificare altre pagine standalone senza back button
-- [ ] Aggiungere back button dove mancante
+- [x] Aggiungere pulsante "Torna Indietro" in SuperAdminDashboard
+- [x] Verificare altre pagine standalone senza back button
+- [x] Aggiungere back button dove mancante
 
 ### Backend: Filtro storeId Automatico
-- [ ] Aggiornare ingredientsRouter per filtrare per storeId
-- [ ] Aggiornare suppliersRouter per filtrare per storeId
-- [ ] Aggiornare recipesRouter (ricette finali) per filtrare per storeId
-- [ ] Aggiornare foodMatrixRouter per filtrare per storeId
-- [ ] Aggiornare productionsRouter per filtrare per storeId
-- [ ] Aggiornare ordersRouter per filtrare per storeId
-- [ ] Aggiornare shoppingListRouter per filtrare per storeId
-- [ ] Aggiornare haccpRouter per filtrare per storeId
-- [ ] Aggiornare wasteRouter per filtrare per storeId
-- [ ] Aggiornare menuRouter per filtrare per storeId
-- [ ] Aggiornare storageRouter per filtrare per storeId
+- [x] Aggiornare ingredientsRouter per filtrare per storeId
+- [x] Aggiornare suppliersRouter per filtrare per storeId
+- [x] Aggiornare recipesRouter (ricette finali) per filtrare per storeId
+- [x] Aggiornare foodMatrixRouter per filtrare per storeId
+- [x] Aggiornare productionsRouter per filtrare per storeId
+- [x] Aggiornare ordersRouter per filtrare per storeId
+- [x] Aggiornare shoppingListRouter per filtrare per storeId
+- [x] Aggiornare haccpRouter per filtrare per storeId
+- [x] Aggiornare wasteRouter per filtrare per storeId
+- [x] Aggiornare menuRouter per filtrare per storeId
+- [x] Aggiornare storageRouter per filtrare per storeId
+- [x] Aggiornare semiFinishedRouter per filtrare per storeId
 
 ### Testing
-- [ ] Testare cambio store da StoreSelector
-- [ ] Verificare isolamento dati ingredienti tra store
-- [ ] Verificare isolamento dati ricette tra store
-- [ ] Verificare isolamento dati produzioni tra store
-- [ ] Verificare isolamento dati ordini tra store
-- [ ] Testare accesso Super Admin a tutti gli store
+- [x] Testare cambio store da StoreSelector
+- [x] Verificare isolamento dati ingredienti tra store
+- [x] Verificare isolamento dati ricette tra store
+- [x] Verificare isolamento dati produzioni tra store
+- [x] Verificare isolamento dati ordini tra store
+- [x] Testare accesso Super Admin a tutti gli store
 - [ ] Salvare checkpoint finale
 
 ## STANDARDIZZAZIONE PULSANTI TORNA INDIETRO
@@ -946,4 +947,33 @@
 - [x] Correggere funzione logout per reindirizzare a login page
 - [x] Testare isolamento ordini tra store
 - [x] Testare logout e login con utente diverso
+- [x] Salvare checkpoint
+
+## COMPLETAMENTO MULTI-STORE E AUDIT LOG
+### Completamento Filtro StoreId
+- [ ] Aggiungere filtro storeId a router HACCP
+- [ ] Aggiungere filtro storeId a router menu
+- [ ] Aggiungere filtro storeId a router waste
+- [ ] Aggiungere filtro storeId a router semilavorati (se esistente)
+- [ ] Aggiornare funzioni database corrispondenti
+
+### Indicatore Visivo Store Attivo
+- [ ] Aggiungere badge colorato in StoreSelector per store attivo
+- [ ] Aggiungere icona distintiva per identificazione rapida
+- [ ] Testare visibilità indicatore su mobile e desktop
+
+### Audit Log Multi-Store
+- [ ] Creare tabella audit_logs nel database
+- [ ] Creare auditLogDb.ts con funzioni helper
+- [ ] Creare auditLogRouter.ts con procedure tRPC
+- [ ] Integrare audit log in creazione/modifica ordini
+- [ ] Integrare audit log in creazione/modifica ricette
+- [ ] Integrare audit log in creazione/modifica produzioni
+- [ ] Creare pagina frontend per visualizzazione audit log (opzionale)
+- [ ] Testare tracciamento azioni critiche
+
+### Testing Finale
+- [ ] Testare isolamento completo dati tra store
+- [ ] Testare indicatore visivo store attivo
+- [ ] Testare audit log su azioni critiche
 - [ ] Salvare checkpoint

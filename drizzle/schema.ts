@@ -134,6 +134,7 @@ export type InsertIngredient = typeof ingredients.$inferInsert;
  */
 export const semiFinishedRecipes = mysqlTable("semi_finished_recipes", {
   id: varchar("id", { length: 36 }).primaryKey(),
+  storeId: varchar("storeId", { length: 36 }).notNull(),
   code: varchar("code", { length: 50 }).notNull().unique(),
   name: varchar("name", { length: 255 }).notNull(),
   category: mysqlEnum("category", ["SPEZIE", "SALSE", "VERDURA", "CARNE", "ALTRO"]).notNull(),
@@ -189,6 +190,7 @@ export type InsertFinalRecipe = typeof finalRecipes.$inferInsert;
  */
 export const foodMatrix = mysqlTable("food_matrix", {
   id: varchar("id", { length: 36 }).primaryKey(),
+  storeId: varchar("storeId", { length: 36 }).notNull(),
   sourceType: mysqlEnum("sourceType", ["INGREDIENT", "SEMI_FINISHED", "FINAL_RECIPE"]).notNull(),
   sourceId: varchar("sourceId", { length: 36 }).notNull(),
   code: varchar("code", { length: 50 }).notNull().unique(),
@@ -254,6 +256,7 @@ export type InsertWeeklyProduction = typeof weeklyProductions.$inferInsert;
  */
 export const menuTypes = mysqlTable("menu_types", {
   id: varchar("id", { length: 36 }).primaryKey(),
+  storeId: varchar("storeId", { length: 36 }).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   serviceType: mysqlEnum("serviceType", ["DINE_IN", "DELIVERY", "TAKEAWAY", "EVENT"]).notNull(),
   fixedCosts: json("fixedCosts") as unknown as any,
@@ -269,6 +272,7 @@ export type InsertMenuType = typeof menuTypes.$inferInsert;
  */
 export const menuItems = mysqlTable("menu_items", {
   id: varchar("id", { length: 36 }).primaryKey(),
+  storeId: varchar("storeId", { length: 36 }).notNull(),
   menuTypeId: varchar("menuTypeId", { length: 36 }).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   category: mysqlEnum("category", [
@@ -295,6 +299,7 @@ export type InsertMenuItem = typeof menuItems.$inferInsert;
  */
 export const wasteRecords = mysqlTable("waste_records", {
   id: varchar("id", { length: 36 }).primaryKey(),
+  storeId: varchar("storeId", { length: 36 }).notNull(),
   productionBatchId: varchar("productionBatchId", { length: 36 }),
   componentId: varchar("componentId", { length: 36 }).notNull(),
   wasteType: mysqlEnum("wasteType", ["PRODUCTION", "SERVICE"]).notNull(),
@@ -312,6 +317,7 @@ export type InsertWasteRecord = typeof wasteRecords.$inferInsert;
  */
 export const productionBatches = mysqlTable("production_batches", {
   id: varchar("id", { length: 36 }).primaryKey(),
+  storeId: varchar("storeId", { length: 36 }).notNull(),
   batchCode: varchar("batchCode", { length: 50 }).notNull().unique(),
   recipeFinalId: varchar("recipeFinalId", { length: 36 }).notNull(),
   plannedDate: datetime("plannedDate").notNull(),
@@ -330,6 +336,7 @@ export type InsertProductionBatch = typeof productionBatches.$inferInsert;
  */
 export const haccp = mysqlTable("haccp", {
   id: varchar("id", { length: 36 }).primaryKey(),
+  storeId: varchar("storeId", { length: 36 }).notNull(),
   productionBatchId: varchar("productionBatchId", { length: 36 }).notNull(),
   recipeName: varchar("recipeName", { length: 255 }).notNull(),
   batchId: varchar("batchId", { length: 50 }).notNull(),
@@ -351,6 +358,7 @@ export type InsertHACCPRecord = typeof haccp.$inferInsert;
  */
 export const cloudStorage = mysqlTable("cloud_storage", {
   id: varchar("id", { length: 36 }).primaryKey(),
+  storeId: varchar("storeId", { length: 36 }).notNull(),
   fileKey: varchar("fileKey", { length: 500 }).notNull(),
   fileUrl: varchar("fileUrl", { length: 500 }).notNull(),
   documentType: mysqlEnum("documentType", [
@@ -611,3 +619,22 @@ export type HaccpWeeklySheet = typeof haccpWeeklySheets.$inferSelect;
 export type NewHaccpWeeklySheet = typeof haccpWeeklySheets.$inferInsert;
 export type HaccpProductionCheck = typeof haccpProductionChecks.$inferSelect;
 export type NewHaccpProductionCheck = typeof haccpProductionChecks.$inferInsert;
+
+/**
+ * Audit Logs: Tracciamento azioni critiche
+ */
+export const auditLogs = mysqlTable("audit_logs", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  storeId: varchar("storeId", { length: 36 }).notNull(),
+  userId: varchar("userId", { length: 36 }).notNull(),
+  action: varchar("action", { length: 100 }).notNull(),
+  entityType: varchar("entityType", { length: 50 }).notNull(),
+  entityId: varchar("entityId", { length: 36 }),
+  details: json("details"),
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type NewAuditLog = typeof auditLogs.$inferInsert;

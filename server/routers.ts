@@ -251,8 +251,8 @@ const ingredientsRouter = router({
 
 // ============ PROCEDURE SEMILAVORATI ============
 const semiFinishedRouter = router({
-  list: protectedProcedure.query(async () => {
-    return db.getSemiFinishedRecipes();
+  list: protectedProcedure.query(async ({ ctx }) => {
+    return db.getSemiFinishedRecipes(ctx.currentStoreId);
   }),
   getById: protectedProcedure
     .input(z.object({ id: z.string() }))
@@ -324,8 +324,8 @@ const foodMatrixRouter = router({
         tag: z.string().optional(),
       }).optional()
     )
-    .query(async ({ input }) => {
-      return db.getFoodMatrixItems(input);
+    .query(async ({ ctx, input }) => {
+      return db.getFoodMatrixItems(ctx.currentStoreId, input);
     }),
   search: protectedProcedure
     .input(z.object({ searchTerm: z.string() }))
@@ -622,13 +622,13 @@ const productionRouter = router({
 
 // ============ PROCEDURE MENU ============
 const menuRouter = router({
-  listTypes: protectedProcedure.query(async () => {
-    return db.getMenuTypes();
+  listTypes: protectedProcedure.query(async ({ ctx }) => {
+    return db.getMenuTypes(ctx.currentStoreId);
   }),
   listItems: protectedProcedure
     .input(z.object({ menuTypeId: z.string().optional() }).optional())
-    .query(async ({ input }) => {
-      return db.getMenuItems(input?.menuTypeId);
+    .query(async ({ ctx, input }) => {
+      return db.getMenuItems(ctx.currentStoreId, input?.menuTypeId);
     }),
   createType: protectedProcedure
     .input(
@@ -986,8 +986,8 @@ const wasteRouter = router({
         wasteType: z.string().optional(),
       }).optional()
     )
-    .query(async ({ input }) => {
-      return db.getWasteRecords(input);
+    .query(async ({ ctx, input }) => {
+      return db.getWasteRecords(ctx.currentStoreId, input);
     }),
   create: protectedProcedure
     .input(
@@ -1014,11 +1014,11 @@ const wasteRouter = router({
 
 // ============ PROCEDURE HACCP ============
 const haccpRouter = router({
-  listBatches: protectedProcedure.query(async () => {
-    return db.getProductionBatches();
+  listBatches: protectedProcedure.query(async ({ ctx }) => {
+    return db.getProductionBatches(ctx.currentStoreId);
   }),
-  listRecords: protectedProcedure.query(async () => {
-    return db.getHACCPRecords();
+  listRecords: protectedProcedure.query(async ({ ctx }) => {
+    return db.getHACCPRecords(ctx.currentStoreId);
   }),
   createBatch: protectedProcedure
     .input(
@@ -1070,8 +1070,8 @@ const storageRouter = router({
         relatedEntityId: z.string().optional(),
       }).optional()
     )
-    .query(async ({ input }) => {
-      return db.getCloudStorageFiles(input);
+    .query(async ({ ctx, input }) => {
+      return db.getCloudStorageFiles(ctx.currentStoreId, input);
     }),
   create: protectedProcedure
     .input(
@@ -1248,6 +1248,8 @@ const usersRouter = router({  list: protectedProcedure.query(async ({ ctx }) => 
     }),
 });
 
+import { auditLogRouter } from "./auditLogRouter";
+
 export const appRouter = router({
   auth: authRouter,
   users: usersRouter,
@@ -1270,6 +1272,7 @@ export const appRouter = router({
   suppliers: suppliersRouter,
   orders: ordersRouter,
   orderSessions: orderSessionsRouter,
+  auditLog: auditLogRouter,
   system: systemRouter,
 });
 

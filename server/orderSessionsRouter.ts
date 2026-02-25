@@ -12,6 +12,7 @@ import {
   clearShoppingListSession,
 } from "./orderSessionsDb";
 import { TRPCError } from "@trpc/server";
+import { logAction, AuditActions, EntityTypes } from "./auditLogHelper";
 
 export const orderSessionsRouter = router({
   // Ottiene il carrello dell'utente corrente
@@ -89,6 +90,19 @@ export const orderSessionsRouter = router({
 
       // Svuota carrello
       await clearUserOrderSession(ctx.user.id);
+
+      // Log audit
+      await logAction({
+        storeId: ctx.currentStoreId,
+        userId: ctx.user.openId,
+        action: AuditActions.ORDER_SUBMITTED,
+        entityType: EntityTypes.ORDER,
+        entityId: orderId,
+        details: {
+          itemCount: cartItems.length,
+          notes: input.notes,
+        },
+      });
 
       return {
         success: true,

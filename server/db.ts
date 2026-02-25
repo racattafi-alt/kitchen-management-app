@@ -234,10 +234,11 @@ export async function createSemiFinished(data: Omit<SemiFinishedRecipe, "created
   return data;
 }
 
-export async function getSemiFinishedRecipes() {
+export async function getSemiFinishedRecipes(storeId?: string | null) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(semiFinishedRecipes);
+  if (!storeId) return [];
+  return db.select().from(semiFinishedRecipes).where(eq(semiFinishedRecipes.storeId, storeId));
 }
 
 export async function getSemiFinishedById(id: string) {
@@ -350,10 +351,11 @@ export async function createFoodMatrixItem(data: Omit<FoodMatrixItem, "createdAt
   return data;
 }
 
-export async function getFoodMatrixItems(filters?: { category?: string; tag?: string }) {
+export async function getFoodMatrixItems(storeId?: string | null, filters?: { category?: string; tag?: string }) {
   const db = await getDb();
   if (!db) return [];
-  let query: any = db.select().from(foodMatrix);
+  if (!storeId) return [];
+  let query: any = db.select().from(foodMatrix).where(eq(foodMatrix.storeId, storeId));
   if (filters?.category) {
     query = query.where(eq(foodMatrix.categoryForMenu, filters.category as any));
   }
@@ -474,10 +476,11 @@ export async function createMenuType(data: Omit<MenuType, "createdAt" | "updated
   return data;
 }
 
-export async function getMenuTypes() {
+export async function getMenuTypes(storeId?: string | null) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(menuTypes);
+  if (!storeId) return [];
+  return db.select().from(menuTypes).where(eq(menuTypes.storeId, storeId));
 }
 
 export async function createMenuItem(data: Omit<MenuItem, "createdAt" | "updatedAt">) {
@@ -487,10 +490,11 @@ export async function createMenuItem(data: Omit<MenuItem, "createdAt" | "updated
   return data;
 }
 
-export async function getMenuItems(menuTypeId?: string) {
+export async function getMenuItems(storeId?: string | null, menuTypeId?: string) {
   const db = await getDb();
   if (!db) return [];
-  let query: any = db.select().from(menuItems);
+  if (!storeId) return [];
+  let query: any = db.select().from(menuItems).where(eq(menuItems.storeId, storeId));
   if (menuTypeId) {
     query = query.where(eq(menuItems.menuTypeId, menuTypeId));
   }
@@ -506,10 +510,11 @@ export async function createWasteRecord(data: Omit<WasteRecord, "createdAt">) {
   return data;
 }
 
-export async function getWasteRecords(filters?: { componentId?: string; wasteType?: string }) {
+export async function getWasteRecords(storeId?: string | null, filters?: { componentId?: string; wasteType?: string }) {
   const db = await getDb();
   if (!db) return [];
-  let query: any = db.select().from(wasteRecords);
+  if (!storeId) return [];
+  let query: any = db.select().from(wasteRecords).where(eq(wasteRecords.storeId, storeId));
   if (filters?.componentId) {
     query = query.where(eq(wasteRecords.componentId, filters.componentId));
   }
@@ -528,10 +533,11 @@ export async function createProductionBatch(data: Omit<ProductionBatch, "created
   return data;
 }
 
-export async function getProductionBatches() {
+export async function getProductionBatches(storeId?: string | null) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(productionBatches);
+  if (!storeId) return [];
+  return db.select().from(productionBatches).where(eq(productionBatches.storeId, storeId));
 }
 
 export async function createHACCPRecord(data: Omit<HACCPRecord, "createdAt" | "updatedAt">) {
@@ -541,10 +547,11 @@ export async function createHACCPRecord(data: Omit<HACCPRecord, "createdAt" | "u
   return data;
 }
 
-export async function getHACCPRecords() {
+export async function getHACCPRecords(storeId?: string | null) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(haccp);
+  if (!storeId) return [];
+  return db.select().from(haccp).where(eq(haccp.storeId, storeId));
 }
 
 // ============ CLOUD STORAGE ============
@@ -556,10 +563,11 @@ export async function createCloudStorageFile(data: Omit<CloudStorageFile, "creat
   return data;
 }
 
-export async function getCloudStorageFiles(filters?: { documentType?: string; relatedEntityId?: string }) {
+export async function getCloudStorageFiles(storeId?: string | null, filters?: { documentType?: string; relatedEntityId?: string }) {
   const db = await getDb();
   if (!db) return [];
-  let query: any = db.select().from(cloudStorage);
+  if (!storeId) return [];
+  let query: any = db.select().from(cloudStorage).where(eq(cloudStorage.storeId, storeId));
   if (filters?.documentType) {
     query = query.where(eq(cloudStorage.documentType, filters.documentType as any));
   }
