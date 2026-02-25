@@ -124,7 +124,7 @@ export default function RecipeDetails() {
               Visualizza tutte le ricette con dettagli completi
             </p>
           </div>
-          <Button variant="outline" onClick={() => navigate("/")}>
+          <Button variant="outline" onClick={() => window.history.back()}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Indietro
           </Button>

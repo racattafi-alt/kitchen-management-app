@@ -94,7 +94,7 @@ export default function Users() {
         <div className="container flex items-center justify-between h-16">
           <Button
             variant="ghost"
-            onClick={() => setLocation("/")}
+            onClick={() => window.history.back()}
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />

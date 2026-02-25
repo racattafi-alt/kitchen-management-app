@@ -871,13 +871,13 @@
 - [x] Aggiungere route protetta per super admin panel
 
 ### Testing & Validation
-- [ ] Testare creazione nuovo store
-- [ ] Testare associazione utente a store
-- [ ] Testare isolamento dati tra store
-- [ ] Testare switch store e persistenza preferenza
-- [ ] Testare super admin dashboard con dati aggregati
-- [ ] Verificare performance query con indici storeId
-- [ ] Salvare checkpoint
+- [x] Testare creazione nuovo store
+- [x] Testare associazione utente a store
+- [x] Testare isolamento dati tra store
+- [x] Testare switch store e persistenza preferenza
+- [x] Testare super admin dashboard con dati aggregati
+- [x] Verificare performance query con indici storeId
+- [x] Salvare checkpoint
 
 ## MIGRAZIONE MULTI-STORE COMPLETATA ✅
 ### Backend
@@ -930,3 +930,11 @@
 - [ ] Verificare isolamento dati ordini tra store
 - [ ] Testare accesso Super Admin a tutti gli store
 - [ ] Salvare checkpoint finale
+
+## STANDARDIZZAZIONE PULSANTI TORNA INDIETRO
+- [x] Cercare tutti i pulsanti "Torna Indietro" che usano navigate('/')
+- [x] Sostituire navigate('/') con window.history.back() in tutti i pulsanti back
+- [x] Correggere OrderHistory.tsx, OrdersNew.tsx, Users.tsx, RecipeDetails.tsx
+- [x] Testare navigazione back da Storico Ordini
+- [x] Testare navigazione back da tutte le altre pagine
+- [ ] Salvare checkpoint

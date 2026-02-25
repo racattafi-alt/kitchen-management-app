@@ -37,7 +37,7 @@ export default function OrderHistory() {
       <div className="sticky top-0 z-10 bg-white border-b shadow-sm">
         <div className="container py-3 md:py-4">
           <div className="flex items-center gap-2 md:gap-4">
-            <Button variant="ghost" size="icon" onClick={() => setLocation("/")}>
+            <Button variant="ghost" size="icon" onClick={() => window.history.back()}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex-1 min-w-0">
