@@ -1,14 +1,109 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "7a6bd9f1-0acb-417b-805e-84403ea76da2",
+  "id": "b48ea712-2f09-4a07-9207-38f135295053",
   "prevId": "b8a7d2cd-4404-4160-b532-cc5440694176",
   "tables": {
+    "audit_logs": {
+      "name": "audit_logs",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "storeId": {
+          "name": "storeId",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "userId": {
+          "name": "userId",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "action": {
+          "name": "action",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "entityType": {
+          "name": "entityType",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "entityId": {
+          "name": "entityId",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "details": {
+          "name": "details",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ipAddress": {
+          "name": "ipAddress",
+          "type": "varchar(45)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "userAgent": {
+          "name": "userAgent",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "audit_logs_id": {
+          "name": "audit_logs_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
     "cloud_storage": {
       "name": "cloud_storage",
       "columns": {
         "id": {
           "name": "id",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "storeId": {
+          "name": "storeId",
           "type": "varchar(36)",
           "primaryKey": false,
           "notNull": true,
@@ -83,6 +178,13 @@
       "columns": {
         "id": {
           "name": "id",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "storeId": {
+          "name": "storeId",
           "type": "varchar(36)",
           "primaryKey": false,
           "notNull": true,
@@ -277,6 +379,13 @@
       "columns": {
         "id": {
           "name": "id",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "storeId": {
+          "name": "storeId",
           "type": "varchar(36)",
           "primaryKey": false,
           "notNull": true,
@@ -595,6 +704,13 @@
       "columns": {
         "id": {
           "name": "id",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "storeId": {
+          "name": "storeId",
           "type": "varchar(36)",
           "primaryKey": false,
           "notNull": true,
@@ -1005,6 +1121,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "storeId": {
+          "name": "storeId",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "name": {
           "name": "name",
           "type": "varchar(255)",
@@ -1200,6 +1323,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "storeId": {
+          "name": "storeId",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "menuTypeId": {
           "name": "menuTypeId",
           "type": "varchar(36)",
@@ -1293,6 +1423,13 @@
       "columns": {
         "id": {
           "name": "id",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "storeId": {
+          "name": "storeId",
           "type": "varchar(36)",
           "primaryKey": false,
           "notNull": true,
@@ -1627,6 +1764,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "storeId": {
+          "name": "storeId",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "orderDate": {
           "name": "orderDate",
           "type": "timestamp",
@@ -1705,6 +1849,13 @@
       "columns": {
         "id": {
           "name": "id",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "storeId": {
+          "name": "storeId",
           "type": "varchar(36)",
           "primaryKey": false,
           "notNull": true,
@@ -1870,6 +2021,13 @@
       "columns": {
         "id": {
           "name": "id",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "storeId": {
+          "name": "storeId",
           "type": "varchar(36)",
           "primaryKey": false,
           "notNull": true,
@@ -2126,6 +2284,13 @@
       "columns": {
         "id": {
           "name": "id",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "storeId": {
+          "name": "storeId",
           "type": "varchar(36)",
           "primaryKey": false,
           "notNull": true,
@@ -2410,6 +2575,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "storeId": {
+          "name": "storeId",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "productionBatchId": {
           "name": "productionBatchId",
           "type": "varchar(36)",
@@ -2480,6 +2652,13 @@
       "columns": {
         "id": {
           "name": "id",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "storeId": {
+          "name": "storeId",
           "type": "varchar(36)",
           "primaryKey": false,
           "notNull": true,

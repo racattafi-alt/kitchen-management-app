@@ -1068,3 +1068,11 @@
 - [x] 3. Migliorare UX ricerca - filtri categoria, ordinamento prezzo, preview costo
 - [x] Test completo funzionalità (9/9 test passati)
 - [ ] Salvare checkpoint finale
+
+## VALIDAZIONE SERVER-SIDE RICETTE - COMPLETATA
+- [x] Creare modulo shared/recipeValidation.ts con validateRecipe
+- [x] Integrare validazione in finalRecipesRouter.create
+- [x] Integrare validazione in finalRecipesRouter.update
+- [x] Scrivere test vitest per validazione server-side (8/8 test passati)
+- [x] Verificare errori restituiti al client con messaggi chiari
+- [ ] Salvare checkpoint finale

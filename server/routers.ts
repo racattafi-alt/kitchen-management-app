@@ -14,6 +14,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+import { validateRecipe } from "../shared/recipeValidation";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -709,6 +710,35 @@ const finalRecipesRouter = router({
         throw new Error("Unauthorized: Only admins can create recipes");
       }
 
+      // Validazione dati ricetta
+      const validation = validateRecipe(
+        {
+          name: input.name,
+          code: input.code,
+          category: input.category,
+          yieldPercentage: input.yieldPercentage,
+          serviceWastePercentage: input.serviceWastePercentage,
+          conservationMethod: input.conservationMethod,
+          maxConservationTime: input.maxConservationTime,
+          isSellable: input.isSellable ?? true,
+          isSemiFinished: input.isSemiFinished ?? false,
+        },
+        input.components.map(c => ({
+          type: c.type,
+          componentId: c.componentId,
+          componentName: c.componentName,
+          quantity: c.quantity,
+          unit: c.unit,
+          name: c.componentName,
+          pricePerUnit: c.pricePerUnit || 0,
+          costType: c.costType,
+        }))
+      );
+
+      if (!validation.valid) {
+        throw new Error(validation.error || 'Dati ricetta non validi');
+      }
+
       // Verifica unicità codice
       const existing = await db.getFinalRecipeByCode(input.code);
       if (existing) {
@@ -780,6 +810,40 @@ const finalRecipesRouter = router({
       // Solo admin può modificare ricette
       if (ctx.user?.role !== "admin") {
         throw new Error("Unauthorized: Only admins can update recipes");
+      }
+
+      // Validazione dati ricetta (se forniti componenti)
+      if (input.components && input.components.length > 0) {
+        const currentRecipe = await db.getFinalRecipeById(input.id);
+        if (currentRecipe) {
+          const validation = validateRecipe(
+            {
+              name: input.name || currentRecipe.name,
+              code: currentRecipe.code, // Il codice non si modifica
+              category: (input.category || currentRecipe.category) as any,
+              yieldPercentage: input.yieldPercentage ?? parseFloat(currentRecipe.yieldPercentage || '0'),
+              serviceWastePercentage: input.serviceWastePercentage ?? parseFloat(currentRecipe.serviceWastePercentage || '0'),
+              conservationMethod: currentRecipe.conservationMethod,
+              maxConservationTime: currentRecipe.maxConservationTime,
+              isSellable: input.isSellable ?? currentRecipe.isSellable,
+              isSemiFinished: input.isSemiFinished ?? currentRecipe.isSemiFinished,
+            },
+            input.components.map(c => ({
+              type: c.type,
+              componentId: c.componentId,
+              componentName: c.componentName,
+              quantity: c.quantity,
+              unit: c.unit,
+              name: c.componentName,
+              pricePerUnit: c.pricePerUnit || 0,
+              costType: c.costType,
+            }))
+          );
+
+          if (!validation.valid) {
+            throw new Error(validation.error || 'Dati ricetta non validi');
+          }
+        }
       }
 
       // Salva versione corrente prima di modificare
