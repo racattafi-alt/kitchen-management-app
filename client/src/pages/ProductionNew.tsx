@@ -196,29 +196,32 @@ export default function ProductionNew() {
                   return (
                     <div
                       key={recipe.id}
-                      className={`border rounded-lg p-4 transition-all ${
+                      className={`border rounded-lg p-3 sm:p-4 transition-all ${
                         hasQuantity ? 'border-green-500 bg-green-50' : 'border-border'
                       }`}
                     >
-                      <div className="flex flex-col md:flex-row md:items-center gap-4">
-                        {/* Info Ricetta */}
+                      <div className="flex flex-col gap-3">
+                        {/* Info Ricetta - Mobile Optimized */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-semibold text-lg truncate">{recipe.name}</h3>
-                            <Badge variant="outline" className="shrink-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
+                            <h3 className="font-semibold text-base sm:text-lg break-words">{recipe.name}</h3>
+                            <Badge variant="outline" className="self-start text-xs">
                               {recipe.code}
                             </Badge>
                           </div>
-                          <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-                            <span>Costo: €{Number(recipe.totalCost || 0).toFixed(2)}/kg</span>
+                          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
+                            <span className="font-medium">Costo: €{Number(recipe.totalCost || 0).toFixed(2)}/kg</span>
                             {recipe.pieceWeight && (
-                              <span>• Peso pezzo: {Number(recipe.pieceWeight).toFixed(3)} kg</span>
+                              <span className="hidden sm:inline">•</span>
+                            )}
+                            {recipe.pieceWeight && (
+                              <span>Peso pezzo: {Number(recipe.pieceWeight).toFixed(3)} kg</span>
                             )}
                           </div>
                         </div>
 
-                        {/* Input Quantità */}
-                        <div className="flex items-center gap-2 md:w-64">
+                        {/* Input Quantità - Full Width Mobile */}
+                        <div className="flex items-center gap-2">
                           <div className="flex-1">
                             <Label htmlFor={`qty-${recipe.id}`} className="sr-only">
                               Quantità per {recipe.name}
@@ -231,10 +234,10 @@ export default function ProductionNew() {
                               placeholder={recipe.measurementType === 'unit_only' ? "Pezzi" : "kg"}
                               value={quantity}
                               onChange={(e) => handleQuantityChange(recipe.id, e.target.value)}
-                              className={hasQuantity ? 'border-green-500' : ''}
+                              className={`text-base ${hasQuantity ? 'border-green-500' : ''}`}
                             />
                           </div>
-                          <span className="text-sm text-muted-foreground w-12 text-right">
+                          <span className="text-sm font-medium text-muted-foreground w-10 text-right">
                             {recipe.measurementType === 'unit_only' ? 'pz' : 'kg'}
                           </span>
                         </div>

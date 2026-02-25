@@ -1076,3 +1076,16 @@
 - [x] Scrivere test vitest per validazione server-side (8/8 test passati)
 - [x] Verificare errori restituiti al client con messaggi chiari
 - [ ] Salvare checkpoint finale
+
+## FIX UX MOBILE
+- [ ] Ingredienti: Rendere visibile menu paginazione su mobile (overflow, scroll, responsive)
+- [ ] Produzione: Ottimizzare display ricette per mobile (card layout, testo completo visibile)
+- [ ] Testare su viewport mobile (375px width)
+- [ ] Verificare best practice UX mobile per tabelle/liste
+- [ ] Salvare checkpoint
+
+## FIX UX MOBILE
+- [x] Ingredienti: Aggiungere paginazione visibile (20 item/pagina, controlli responsive)
+- [x] Produzione: Ottimizzare layout card ricette per mobile (layout verticale, codice visibile, input full-width)
+- [x] Testato su viewport mobile (entrambe le pagine funzionanti)
+- [ ] Salvare checkpoint

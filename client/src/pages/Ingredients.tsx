@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { trpc } from "@/lib/trpc";
 import { Plus, Package, Pencil, Trash2, Download, Upload } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect as React_useEffect } from "react";
+import * as React from "react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { STANDARD_ALLERGENS } from "../../../shared/allergens";
@@ -28,6 +29,13 @@ export default function Ingredients() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedFoodType, setSelectedFoodType] = useState<string>("all"); // all, food, non-food
   const [sortBy, setSortBy] = useState<"name" | "category" | "supplier">("name");
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  // Reset pagina quando cambiano i filtri
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, selectedFoodType, sortBy]);
+  const itemsPerPage = 20;
   const [formData, setFormData] = useState({
     name: "",
     supplier: "",
@@ -89,6 +97,12 @@ export default function Ingredients() {
       if (compareA > compareB) return 1;
       return 0;
     });
+
+  // Calcolo paginazione
+  const totalPages = Math.ceil((ingredients?.length || 0) / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedIngredients = ingredients?.slice(startIndex, endIndex);
   const createMutation = trpc.ingredients.create.useMutation({
     onSuccess: () => {
       utils.ingredients.list.invalidate();
@@ -927,7 +941,7 @@ export default function Ingredients() {
           <CardContent>
             {isLoading ? (
               <div className="text-center py-8">Caricamento...</div>
-            ) : ingredients && ingredients.length > 0 ? (
+            ) : paginatedIngredients && paginatedIngredients.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -941,7 +955,7 @@ export default function Ingredients() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {ingredients.map((ingredient: any) => (
+                  {paginatedIngredients.map((ingredient: any) => (
                     <TableRow key={ingredient.id}>
                       <TableCell className="font-medium">{ingredient.name}</TableCell>
                       <TableCell>
@@ -991,7 +1005,58 @@ export default function Ingredients() {
                   ))}
                 </TableBody>
               </Table>
-            ) : (
+            ) : null}
+            
+            {/* Controlli Paginazione */}
+            {!isLoading && ingredients && ingredients.length > itemsPerPage && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t">
+                <div className="text-sm text-muted-foreground">
+                  Mostrando {startIndex + 1}-{Math.min(endIndex, ingredients.length)} di {ingredients.length} ingredienti
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                  >
+                    Prima
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Precedente
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-medium px-3 py-1 bg-primary text-primary-foreground rounded">
+                      {currentPage}
+                    </span>
+                    <span className="text-sm text-muted-foreground">di {totalPages}</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Successiva
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                  >
+                    Ultima
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            {!isLoading && (!paginatedIngredients || paginatedIngredients.length === 0) && (
               <div className="text-center py-8 text-slate-500">
                 <Package className="h-12 w-12 mx-auto mb-3 text-slate-300" />
                 <p>Nessun ingrediente trovato</p>
