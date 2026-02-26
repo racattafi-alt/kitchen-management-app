@@ -13,23 +13,24 @@ import { ENV } from "./env";
 import { getDb } from "../db";
 
 async function runMigrations() {
+  console.log("[Migrations] Starting...");
   if (!process.env.DATABASE_URL) {
-    console.log("[Migrations] DATABASE_URL not set, skipping.");
+    console.log("[Migrations] DATABASE_URL not set — skipping.");
     return;
   }
+  const migrationsFolder = path.resolve(process.cwd(), "drizzle");
+  console.log(`[Migrations] Folder: ${migrationsFolder}`);
   try {
     const { migrate } = await import("drizzle-orm/mysql2/migrator");
     const db = await getDb();
     if (!db) {
-      console.warn("[Migrations] DB not available, skipping.");
-      return;
+      throw new Error("Database connection unavailable");
     }
-    const migrationsFolder = path.resolve(process.cwd(), "drizzle");
     await migrate(db, { migrationsFolder });
-    console.log("[Migrations] Applied successfully.");
+    console.log("[Migrations] ✓ Done.");
   } catch (err) {
-    console.error("[Migrations] Failed:", err);
-    throw err;
+    console.error("[Migrations] ✗ Failed:", err);
+    process.exit(1); // fail hard so Railway marks deploy as failed
   }
 }
 
