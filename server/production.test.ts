@@ -1,6 +1,54 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi, afterEach } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
+import * as db from "./db";
+
+// Default mock: all DB calls return empty data (no real DB needed)
+vi.mock("./db", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("./db")>();
+  return {
+    ...mod,
+    getWeeklyProductions: vi.fn(async () => []),
+    getFinalRecipeById: vi.fn(async () => null),
+    getSemiFinishedRecipes: vi.fn(async () => []),
+    getIngredients: vi.fn(async () => []),
+  };
+});
+
+// ── Mock semi-finished test data ─────────────────────────────────────────────
+const mockSemiFinished = {
+  id: "semi-1",
+  name: "Test Semilavorato",
+  components: [],
+  yieldPercentage: "0.9",
+  finalPricePerKg: "5.00",
+  storeId: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+} as any;
+
+const mockRecipe = {
+  id: "recipe-1",
+  name: "Test Ricetta Finale",
+  unitWeight: "1",
+  components: [
+    { type: "semi_finished", componentId: "semi-1", quantity: 200, unit: "k" },
+  ],
+  storeId: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+} as any;
+
+const mockProduction = {
+  id: "prod-1",
+  recipeFinalId: "recipe-1",
+  quantity: "10",
+  weekStartDate: new Date(),
+  storeId: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+} as any;
+// ─────────────────────────────────────────────────────────────────────────────
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
@@ -10,7 +58,7 @@ function createAuthContext(): { ctx: TrpcContext } {
     openId: "test-admin",
     email: "admin@test.com",
     name: "Test Admin",
-    loginMethod: "manus",
+    loginMethod: "local",
     role: "admin",
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -26,10 +74,16 @@ function createAuthContext(): { ctx: TrpcContext } {
     res: {
       clearCookie: () => {},
     } as TrpcContext["res"],
+    currentStoreId: null,
+    logout: () => {},
   };
 
   return { ctx };
 }
+
+afterEach(() => {
+  vi.clearAllMocks();
+});
 
 describe("production.listWeekly", () => {
   it("returns list of weekly productions", async () => {
@@ -58,16 +112,15 @@ describe("production.generateShoppingList", () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
-    // First get available weeks
     const weeks = await caller.production.listWeekly();
-    
+
     if (weeks.length > 0) {
       const result = await caller.production.generateShoppingList({
         weekId: weeks[0].id,
       });
 
       expect(Array.isArray(result)).toBe(true);
-      
+
       if (result.length > 0) {
         const item = result[0];
         expect(item).toHaveProperty("itemName");
@@ -84,20 +137,15 @@ describe("production.generateShoppingList", () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
-    // Get all productions
     const result = await caller.production.generateShoppingList({});
 
     expect(Array.isArray(result)).toBe(true);
-    
-    // Find Spalla di Maiale in the shopping list
-    const spalla = result.find((item: any) => 
+
+    const spalla = result.find((item: any) =>
       item.ingredientName?.includes("Spalla di Maiale")
     );
-    
+
     if (spalla) {
-      // Verify quantity is reasonable (normalized per kg)
-      // Current productions: ~100kg of Pulled Pork
-      // Should need ~122kg of Spalla (100 / 26.96 * 33)
       expect(spalla.quantityNeeded).toBeGreaterThan(50);
       expect(spalla.quantityNeeded).toBeLessThan(200);
     }
@@ -107,18 +155,15 @@ describe("production.generateShoppingList", () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
-    // Get all productions
     const result = await caller.production.generateShoppingList({});
 
     expect(Array.isArray(result)).toBe(true);
-    
-    // Verify unit conversion worked (Tenders should appear in shopping list)
-    const tenders = result.find((item: any) => 
+
+    const tenders = result.find((item: any) =>
       item.ingredientName?.includes("Tenders")
     );
-    
+
     if (tenders) {
-      // Tenders should be in kg (converted from units)
       expect(tenders.quantityNeeded).toBeGreaterThan(0);
       expect(tenders.unitType).toBe("k");
     }
@@ -128,79 +173,82 @@ describe("production.generateShoppingList", () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
-    // Get all productions
     const result = await caller.production.generateShoppingList({});
 
     expect(Array.isArray(result)).toBe(true);
-    
-    // Find unit-based ingredients (eggs, etc.)
-    const unitIngredients = result.filter((item: any) => item.unitType === 'u');
-    
-    // Verify all unit quantities are integers (rounded up)
+
+    const unitIngredients = result.filter((item: any) => item.unitType === "u");
+
     for (const item of unitIngredients) {
       expect(Number.isInteger(item.quantityNeeded)).toBe(true);
     }
   });
 
   it("does NOT expand semi-finished recipes (shows them as items to buy)", async () => {
+    vi.mocked(db.getWeeklyProductions).mockResolvedValueOnce([mockProduction]);
+    vi.mocked(db.getFinalRecipeById).mockResolvedValueOnce(mockRecipe);
+    vi.mocked(db.getSemiFinishedRecipes).mockResolvedValueOnce([mockSemiFinished]);
+    vi.mocked(db.getIngredients).mockResolvedValueOnce([]);
+
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
-    // Get all productions
     const result = await caller.production.generateShoppingList({});
 
     expect(Array.isArray(result)).toBe(true);
-    
-    // Verify semi-finished items appear as items to buy
-    const semiFinished = result.filter((item: any) => item.itemType === 'SEMI_FINISHED');
-    
-    // Should have at least some semi-finished items
+
+    const semiFinished = result.filter((item: any) => item.itemType === "SEMI_FINISHED");
+
     expect(semiFinished.length).toBeGreaterThan(0);
-    
-    // Verify they are marked as "Produzione Interna"
+
     for (const item of semiFinished) {
-      expect(item.supplier).toBe('Produzione Interna');
+      expect(item.supplier).toBe("Produzione Interna");
     }
   });
 });
 
 describe("production.generateShoppingList - semilavorati", () => {
   it("mostra semilavorati come item da acquistare (non espansi)", async () => {
+    vi.mocked(db.getWeeklyProductions).mockResolvedValueOnce([mockProduction]);
+    vi.mocked(db.getFinalRecipeById).mockResolvedValueOnce(mockRecipe);
+    vi.mocked(db.getSemiFinishedRecipes).mockResolvedValueOnce([mockSemiFinished]);
+    vi.mocked(db.getIngredients).mockResolvedValueOnce([]);
+
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
-    // Genera lista acquisti per tutte le produzioni
     const result = await caller.production.generateShoppingList({});
 
-    // Verifica che ci siano item nella lista
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBeGreaterThan(0);
 
-    // Verifica che ci siano semilavorati nella lista
-    const semiFinished = result.filter((item: any) => item.itemType === 'SEMI_FINISHED');
+    const semiFinished = result.filter((item: any) => item.itemType === "SEMI_FINISHED");
     expect(semiFinished.length).toBeGreaterThan(0);
 
-    // Verifica che i semilavorati abbiano i campi corretti
     const firstSemi = semiFinished[0];
-    expect(firstSemi).toHaveProperty('itemName');
-    expect(firstSemi).toHaveProperty('itemType', 'SEMI_FINISHED');
-    expect(firstSemi).toHaveProperty('quantityNeeded');
-    expect(firstSemi).toHaveProperty('supplier', 'Produzione Interna');
+    expect(firstSemi).toHaveProperty("itemName");
+    expect(firstSemi).toHaveProperty("itemType", "SEMI_FINISHED");
+    expect(firstSemi).toHaveProperty("quantityNeeded");
+    expect(firstSemi).toHaveProperty("supplier", "Produzione Interna");
   });
 
   it("non espande ricorsivamente gli ingredienti dei semilavorati", async () => {
+    vi.mocked(db.getWeeklyProductions).mockResolvedValueOnce([mockProduction]);
+    vi.mocked(db.getFinalRecipeById).mockResolvedValueOnce(mockRecipe);
+    vi.mocked(db.getSemiFinishedRecipes).mockResolvedValueOnce([mockSemiFinished]);
+    vi.mocked(db.getIngredients).mockResolvedValueOnce([]);
+
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
     const result = await caller.production.generateShoppingList({});
 
-    // Verifica che ci siano semilavorati nella lista
-    const semiFinished = result.filter((item: any) => item.itemType === 'SEMI_FINISHED');
+    const semiFinished = result.filter((item: any) => item.itemType === "SEMI_FINISHED");
     expect(semiFinished.length).toBeGreaterThan(0);
 
-    // Verifica che gli ingredienti dei semilavorati (es. Pepe, Sale, Coriandolo)
-    // NON appaiano nella lista quando sono parte di un semilavorato
-    // Nota: questo test assume che le produzioni attuali usino semilavorati
-    // e che gli ingredienti base non siano usati direttamente in altre ricette
+    // The mock semi-finished has no sub-ingredients, so only the semi-finished
+    // itself should appear — its internal components are NOT expanded
+    const ingredientItems = result.filter((item: any) => item.itemType === "INGREDIENT");
+    expect(ingredientItems.length).toBe(0);
   });
 });

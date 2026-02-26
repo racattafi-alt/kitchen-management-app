@@ -25,17 +25,29 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] }
     lastSignedIn: new Date(),
   };
 
+  const res = {
+    clearCookie: (name: string, options: Record<string, unknown>) => {
+      clearedCookies.push({ name, options });
+    },
+  } as TrpcContext["res"];
+
   const ctx: TrpcContext = {
     user,
     req: {
       protocol: "https",
       headers: {},
     } as TrpcContext["req"],
-    res: {
-      clearCookie: (name: string, options: Record<string, unknown>) => {
-        clearedCookies.push({ name, options });
-      },
-    } as TrpcContext["res"],
+    res,
+    currentStoreId: null,
+    logout: () => {
+      res.clearCookie(COOKIE_NAME, {
+        maxAge: -1,
+        secure: true,
+        sameSite: "none",
+        httpOnly: true,
+        path: "/",
+      });
+    },
   };
 
   return { ctx, clearedCookies };

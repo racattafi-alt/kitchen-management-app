@@ -112,12 +112,14 @@ describe("role-based access control", () => {
     
     await expect(
       caller.ingredients.create({
+        id: "test-id",
         name: "Test Ingredient",
-        supplier: "Test Supplier",
+        supplierId: "test-supplier-id",
         category: "Altro",
         unitType: "k",
         packageQuantity: 1,
         packagePrice: 10,
+        pricePerKgOrUnit: 10,
       })
     ).rejects.toThrow("Unauthorized");
   });

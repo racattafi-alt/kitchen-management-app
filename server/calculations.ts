@@ -114,8 +114,8 @@ export async function aggregateProductionRequirements(
     multiplier: number
   ): void {
     for (const component of components) {
-      // Le quantità nel database sono già in kg, non servono conversioni
-      const quantityNeeded = component.quantity * multiplier;
+      // Quantities are stored in grams; convert to kg
+      const quantityNeeded = (component.quantity / 1000) * multiplier;
 
       if (component.type === "INGREDIENT") {
         const currentQty = ingredients.get(component.componentId) || 0;
