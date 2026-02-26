@@ -30,10 +30,12 @@ import Fridges from "./pages/Fridges";
 import DocumentArchive from "./pages/DocumentArchive";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import MultiStoreEditor from "./pages/MultiStoreEditor";
+import LocalLogin from "./pages/LocalLogin";
 
 function Router() {
   return (
     <Switch>
+      <Route path={"/login"} component={LocalLogin} />
       <Route path={"/"} component={Home} />
       <Route path={"/recipes"} component={Recipes} />
       <Route path={"/dashboard"} component={Dashboard} />

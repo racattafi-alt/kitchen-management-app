@@ -150,7 +150,11 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+const manusPlugins = process.env.VITE_APP_ID
+  ? [vitePluginManusRuntime(), vitePluginManusDebugCollector()]
+  : [];
+
+const plugins = [react(), tailwindcss(), jsxLocPlugin(), ...manusPlugins];
 
 export default defineConfig({
   plugins,
@@ -171,13 +175,11 @@ export default defineConfig({
   server: {
     host: true,
     allowedHosts: [
-      ".manuspre.computer",
-      ".manus.computer",
-      ".manus-asia.computer",
-      ".manuscomputer.ai",
-      ".manusvm.computer",
       "localhost",
       "127.0.0.1",
+      ...(process.env.VITE_APP_ID
+        ? [".manuspre.computer", ".manus.computer", ".manus-asia.computer", ".manuscomputer.ai", ".manusvm.computer"]
+        : []),
     ],
     fs: {
       strict: true,

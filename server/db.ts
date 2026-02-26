@@ -683,3 +683,25 @@ export async function getRecipeVersions(recipeId: string, recipeType: "final" | 
     .where(and(eq(recipeVersions.recipeId, recipeId), eq(recipeVersions.recipeType, recipeType)))
     .orderBy(desc(recipeVersions.versionNumber));
 }
+
+// ============ LOCAL AUTH HELPERS ============
+
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function updateUserPasswordHash(userId: number, hash: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set({ passwordHash: hash }).where(eq(users.id, userId));
+}
+
+export async function countUsers(): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select().from(users);
+  return result.length;
+}
