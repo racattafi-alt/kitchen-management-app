@@ -1,6 +1,19 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
+
+// Mock order-session DB so order-history tests don't need a real DB
+vi.mock("./orderSessionsDb", () => ({
+  getUserOrderSession: vi.fn(async () => []),
+  upsertOrderSessionItem: vi.fn(async () => {}),
+  clearUserOrderSession: vi.fn(async () => {}),
+  saveOrderToHistory: vi.fn(async () => {}),
+  getUserOrderHistory: vi.fn(async () => []),
+  getAllOrderHistory: vi.fn(async () => []),
+  getShoppingListSession: vi.fn(async () => null),
+  saveShoppingListSession: vi.fn(async () => ({ success: true })),
+  clearShoppingListSession: vi.fn(async () => ({ success: true })),
+}));
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
@@ -10,7 +23,7 @@ function createAdminContext(): TrpcContext {
     openId: "admin-user",
     email: "admin@example.com",
     name: "Admin User",
-    loginMethod: "manus",
+    loginMethod: "local",
     role: "admin",
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -26,6 +39,8 @@ function createAdminContext(): TrpcContext {
     res: {
       clearCookie: () => {},
     } as TrpcContext["res"],
+    currentStoreId: "test-store",
+    logout: () => {},
   };
 }
 
@@ -35,7 +50,7 @@ function createUserContext(userId: number = 2): TrpcContext {
     openId: "regular-user",
     email: "user@example.com",
     name: "Regular User",
-    loginMethod: "manus",
+    loginMethod: "local",
     role: "user",
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -51,6 +66,8 @@ function createUserContext(userId: number = 2): TrpcContext {
     res: {
       clearCookie: () => {},
     } as TrpcContext["res"],
+    currentStoreId: "test-store",
+    logout: () => {},
   };
 }
 
@@ -59,9 +76,6 @@ describe("Bug Fix: Ingredient update includes supplier field", () => {
     const ctx = createAdminContext();
     const caller = appRouter.createCaller(ctx);
 
-    // Verify the update procedure exists and accepts supplier field
-    // We test the schema validation by checking that it doesn't throw on valid input
-    // (actual DB update would require a real ingredient ID)
     try {
       await caller.ingredients.update({
         id: "nonexistent-id",
@@ -84,7 +98,6 @@ describe("Bug Fix: Ingredient update includes supplier field", () => {
         category: "Caffè",
       });
     } catch (e: any) {
-      // "Ingredient not found" means Caffè passed Zod validation
       expect(e.message).toBe("Ingredient not found");
     }
   });
@@ -105,7 +118,6 @@ describe("Bug Fix: Ingredient update includes supplier field", () => {
           category: category as any,
         });
       } catch (e: any) {
-        // "Ingredient not found" means category passed Zod validation
         expect(e.message).toBe("Ingredient not found");
       }
     }
@@ -117,7 +129,6 @@ describe("Bug Fix: Order history visibility", () => {
     const ctx = createAdminContext();
     const caller = appRouter.createCaller(ctx);
 
-    // Admin should be able to call getAllHistory
     const result = await caller.orderSessions.getAllHistory();
     expect(Array.isArray(result)).toBe(true);
   });
@@ -139,11 +150,9 @@ describe("Bug Fix: Shopping list generation", () => {
     const result = await caller.production.generateShoppingList();
     expect(Array.isArray(result)).toBe(true);
 
-    // If there are items, verify they have the category field
     if (result.length > 0) {
       for (const item of result) {
         expect(item).toHaveProperty("category");
-        // Category should be a non-empty string
         expect(typeof item.category).toBe("string");
         expect(item.category.length).toBeGreaterThan(0);
       }
@@ -161,7 +170,6 @@ describe("Bug Fix: Shopping list generation", () => {
       for (const item of result) {
         expect(item).toHaveProperty("supplier");
         expect(typeof item.supplier).toBe("string");
-        // Supplier should not be "N/A" for items with a known supplier
       }
     }
   });

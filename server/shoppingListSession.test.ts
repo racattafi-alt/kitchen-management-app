@@ -1,6 +1,27 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
+
+// ── In-memory session store used by the mock ─────────────────────────────────
+const _sessionStore = new Map<number, { orderQuantities: Record<string, number>; orderPackages: Record<string, number> }>();
+
+vi.mock("./orderSessionsDb", () => ({
+  getUserOrderSession: vi.fn(async () => []),
+  upsertOrderSessionItem: vi.fn(async () => {}),
+  clearUserOrderSession: vi.fn(async () => {}),
+  saveOrderToHistory: vi.fn(async () => {}),
+  getUserOrderHistory: vi.fn(async () => []),
+  getAllOrderHistory: vi.fn(async () => []),
+  getShoppingListSession: vi.fn(async (userId: number) => _sessionStore.get(userId) ?? null),
+  saveShoppingListSession: vi.fn(async (userId: number, orderQuantities: Record<string, number>, orderPackages: Record<string, number>) => {
+    _sessionStore.set(userId, { orderQuantities, orderPackages });
+    return { success: true };
+  }),
+  clearShoppingListSession: vi.fn(async (userId: number) => {
+    _sessionStore.delete(userId);
+    return { success: true };
+  }),
+}));
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
@@ -11,13 +32,17 @@ function createTestContext(): { ctx: TrpcContext; caller: any } {
     email: "test@example.com",
     name: "Test User",
     role: "admin",
+    loginMethod: "local",
     createdAt: new Date(),
+    updatedAt: new Date(),
+    lastSignedIn: new Date(),
   };
 
   const ctx: TrpcContext = {
     req: {} as any,
     res: {} as any,
     user,
+    currentStoreId: null,
     logout: () => {},
   };
 
@@ -36,15 +61,11 @@ describe("Shopping List Session Persistence", () => {
     ctx = testContext.ctx;
     caller = testContext.caller;
     testUserId = ctx.user!.id;
+    _sessionStore.clear();
   });
 
   afterEach(async () => {
-    // Cleanup: cancella sessione test
-    try {
-      await caller.orderSessions.clearShoppingListSession();
-    } catch (e) {
-      // Ignora errori di cleanup
-    }
+    _sessionStore.clear();
   });
 
   it("should save shopping list session with quantities and packages", async () => {
