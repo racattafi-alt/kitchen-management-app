@@ -1,0 +1,12 @@
+[build]
+builder = "NIXPACKS"
+buildCommand = "pnpm install --frozen-lockfile && pnpm build"
+
+[deploy]
+# Push schema to DB (creates/updates tables), then start the server.
+# DATABASE_URL must be set in Railway environment variables.
+startCommand = "pnpm db:push:prod && node dist/index.js"
+healthcheckPath = "/"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
