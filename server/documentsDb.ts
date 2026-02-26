@@ -1,7 +1,13 @@
 import mysql from "mysql2/promise";
 import { v4 as uuidv4 } from "uuid";
 
-const pool = mysql.createPool(process.env.DATABASE_URL!);
+let _pool: mysql.Pool | null = null;
+function getPool(): mysql.Pool {
+  if (!_pool) {
+    _pool = mysql.createPool(process.env.DATABASE_URL!);
+  }
+  return _pool;
+}
 
 export interface DocumentCategory {
   id: string;
@@ -33,7 +39,7 @@ export interface Document {
 }
 
 export async function getAllCategories(): Promise<DocumentCategory[]> {
-  const conn = await pool.getConnection();
+  const conn = await getPool().getConnection();
   try {
     const [rows] = await conn.query<any[]>(
       "SELECT * FROM document_categories ORDER BY name"
@@ -60,7 +66,7 @@ export async function createDocument(data: {
   tags?: string;
   notes?: string;
 }): Promise<Document> {
-  const conn = await pool.getConnection();
+  const conn = await getPool().getConnection();
   try {
     const id = uuidv4();
     
@@ -103,7 +109,7 @@ export async function createDocument(data: {
 }
 
 export async function getDocumentsByCategory(categoryId: string): Promise<Document[]> {
-  const conn = await pool.getConnection();
+  const conn = await getPool().getConnection();
   try {
     const [rows] = await conn.query<any[]>(
       `SELECT d.*, dc.name as category_name
@@ -120,7 +126,7 @@ export async function getDocumentsByCategory(categoryId: string): Promise<Docume
 }
 
 export async function getAllDocuments(): Promise<Document[]> {
-  const conn = await pool.getConnection();
+  const conn = await getPool().getConnection();
   try {
     const [rows] = await conn.query<any[]>(
       `SELECT d.*, dc.name as category_name
@@ -135,7 +141,7 @@ export async function getAllDocuments(): Promise<Document[]> {
 }
 
 export async function getExpiringDocuments(daysAhead: number = 30): Promise<Document[]> {
-  const conn = await pool.getConnection();
+  const conn = await getPool().getConnection();
   try {
     const [rows] = await conn.query<any[]>(
       `SELECT d.*, dc.name as category_name
@@ -154,7 +160,7 @@ export async function getExpiringDocuments(daysAhead: number = 30): Promise<Docu
 }
 
 export async function deleteDocument(id: string): Promise<void> {
-  const conn = await pool.getConnection();
+  const conn = await getPool().getConnection();
   try {
     await conn.query("DELETE FROM documents WHERE id = ?", [id]);
   } finally {

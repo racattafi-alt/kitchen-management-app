@@ -1,6 +1,8 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import type { User } from "../../drizzle/schema";
 import { sdk } from "./sdk";
+import { COOKIE_NAME } from "../../shared/const";
+import { getSessionCookieOptions } from "./cookies";
 
 export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
@@ -28,7 +30,10 @@ export async function createContext(
     user,
     currentStoreId: user?.preferredStoreId || null,
     logout: () => {
-      opts.res.clearCookie('session');
+      opts.res.clearCookie(COOKIE_NAME, {
+        maxAge: -1,
+        ...getSessionCookieOptions(opts.req),
+      });
     },
   };
 }

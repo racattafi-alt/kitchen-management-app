@@ -1,7 +1,13 @@
 import mysql from "mysql2/promise";
 import { v4 as uuidv4 } from "uuid";
 
-const pool = mysql.createPool(process.env.DATABASE_URL!);
+let _pool: mysql.Pool | null = null;
+function getPool(): mysql.Pool {
+  if (!_pool) {
+    _pool = mysql.createPool(process.env.DATABASE_URL!);
+  }
+  return _pool;
+}
 
 export interface NonConformity {
   id: string;
@@ -42,7 +48,7 @@ export async function createNonConformity(data: {
   immediateAction?: string;
   productTreatment?: string;
 }): Promise<NonConformity> {
-  const conn = await pool.getConnection();
+  const conn = await getPool().getConnection();
   try {
     const id = uuidv4();
     
@@ -89,7 +95,7 @@ export async function updateNonConformity(
   id: string,
   data: Partial<Omit<NonConformity, "id" | "ncCode" | "createdAt" | "updatedAt">>
 ): Promise<void> {
-  const conn = await pool.getConnection();
+  const conn = await getPool().getConnection();
   try {
     const updates: string[] = [];
     const values: any[] = [];
@@ -164,7 +170,7 @@ export async function updateNonConformity(
 }
 
 export async function getNonConformityById(id: string): Promise<NonConformity | null> {
-  const conn = await pool.getConnection();
+  const conn = await getPool().getConnection();
   try {
     const [rows] = await conn.query<any[]>(
       "SELECT * FROM non_conformities WHERE id = ?",
@@ -180,7 +186,7 @@ export async function getAllNonConformities(filters?: {
   status?: string;
   year?: number;
 }): Promise<NonConformity[]> {
-  const conn = await pool.getConnection();
+  const conn = await getPool().getConnection();
   try {
     let query = "SELECT * FROM non_conformities WHERE 1=1";
     const params: any[] = [];
@@ -206,7 +212,7 @@ export async function getAllNonConformities(filters?: {
 export async function getNonConformitiesByProductionCheck(
   productionCheckId: string
 ): Promise<NonConformity[]> {
-  const conn = await pool.getConnection();
+  const conn = await getPool().getConnection();
   try {
     const [rows] = await conn.query<any[]>(
       "SELECT * FROM non_conformities WHERE production_check_id = ? ORDER BY date DESC",
@@ -219,7 +225,7 @@ export async function getNonConformitiesByProductionCheck(
 }
 
 export async function deleteNonConformity(id: string): Promise<void> {
-  const conn = await pool.getConnection();
+  const conn = await getPool().getConnection();
   try {
     await conn.query("DELETE FROM non_conformities WHERE id = ?", [id]);
   } finally {
