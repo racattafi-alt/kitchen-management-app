@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
+import path from "path";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerLocalAuthRoutes } from "./localAuthRoutes";
@@ -9,6 +10,28 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { ENV } from "./env";
+import { getDb } from "../db";
+
+async function runMigrations() {
+  if (!process.env.DATABASE_URL) {
+    console.log("[Migrations] DATABASE_URL not set, skipping.");
+    return;
+  }
+  try {
+    const { migrate } = await import("drizzle-orm/mysql2/migrator");
+    const db = await getDb();
+    if (!db) {
+      console.warn("[Migrations] DB not available, skipping.");
+      return;
+    }
+    const migrationsFolder = path.resolve(process.cwd(), "drizzle");
+    await migrate(db, { migrationsFolder });
+    console.log("[Migrations] Applied successfully.");
+  } catch (err) {
+    console.error("[Migrations] Failed:", err);
+    throw err;
+  }
+}
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -30,6 +53,8 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  await runMigrations();
+
   const app = express();
   const server = createServer(app);
   // Configure body parser with larger size limit for file uploads

@@ -8,4 +8,4 @@ cmds = ["pnpm install --frozen-lockfile"]
 cmds = ["pnpm build"]
 
 [start]
-cmd = "pnpm db:push:prod && node dist/index.js"
+cmd = "node dist/index.js"
