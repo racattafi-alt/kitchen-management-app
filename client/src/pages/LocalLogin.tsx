@@ -31,15 +31,16 @@ export default function LocalLogin() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
-        redirect: "follow",
+        credentials: "same-origin",
       });
 
-      if (res.ok || res.redirected) {
-        window.location.href = res.url || "/";
+      const json = await res.json().catch(() => ({}));
+
+      if (res.ok && json.success) {
+        window.location.href = "/";
         return;
       }
 
-      const json = await res.json().catch(() => ({}));
       setError(json.error ?? "An error occurred. Please try again.");
     } catch {
       setError("Network error. Please try again.");
