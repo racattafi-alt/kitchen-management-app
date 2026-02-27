@@ -5,7 +5,7 @@ builder = "NIXPACKS"
 # The server applies DB migrations automatically on startup via drizzle-orm/mysql2/migrator.
 # DATABASE_URL must be set in Railway environment variables.
 startCommand = "node dist/migrate.js && node dist/index.js"
-healthcheckPath = "/"
+healthcheckPath = "/healthz"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3

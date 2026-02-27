@@ -12,6 +12,8 @@ import { ENV } from "./env";
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  // Health check — must be first so Railway healthcheck passes even if static files are missing
+  app.get("/healthz", (_req, res) => res.json({ status: "ok" }));
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
