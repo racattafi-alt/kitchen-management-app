@@ -2,10 +2,10 @@
 nixPkgs = ["nodejs_22"]
 
 [phases.install]
-cmds = ["npm config set prefix /usr/local && npm install -g pnpm@10.4.1 && pnpm install --frozen-lockfile"]
+cmds = ["npm config set prefix /usr/local && npm install -g pnpm@10.4.1 && /usr/local/bin/pnpm install --frozen-lockfile"]
 
 [phases.build]
-cmds = ["pnpm build"]
+cmds = ["/usr/local/bin/pnpm build"]
 
 [start]
 cmd = "node dist/migrate.js && node dist/index.js"
