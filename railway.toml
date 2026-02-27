@@ -1,6 +1,5 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "pnpm install --frozen-lockfile && pnpm build"
 
 [deploy]
 # The server applies DB migrations automatically on startup via drizzle-orm/mysql2/migrator.
