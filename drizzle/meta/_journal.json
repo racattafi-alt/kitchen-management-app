@@ -218,6 +218,13 @@
       "when": 1772100002000,
       "tag": "0030_add_password_hash",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "5",
+      "when": 1772100003000,
+      "tag": "0031_seed_initial_data",
+      "breakpoints": true
     }
   ]
 }
