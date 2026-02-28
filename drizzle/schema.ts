@@ -97,6 +97,7 @@ export const ingredients = mysqlTable("ingredients", {
     "Alcolici",
     "Bevande",
     "Birra",
+    "Caffè",
     "Carni",
     "Farine",
     "Latticini",
