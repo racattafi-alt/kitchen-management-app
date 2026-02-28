@@ -225,6 +225,13 @@
       "when": 1772100003000,
       "tag": "0031_seed_initial_data",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "5",
+      "when": 1772200000000,
+      "tag": "0032_perf_indexes_and_order_history_storeId",
+      "breakpoints": true
     }
   ]
 }

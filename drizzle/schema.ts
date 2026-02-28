@@ -470,6 +470,7 @@ export const orderHistory = mysqlTable("order_history", {
   pdfUrl: text("pdfUrl"),
   totalItems: int("totalItems").notNull().default(0),
   notes: text("notes"),
+  storeId: varchar("storeId", { length: 36 }).notNull().default("default-store-001"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
