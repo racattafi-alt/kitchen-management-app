@@ -163,13 +163,8 @@ export const orderSessionsRouter = router({
 
   // Ottiene storico ordini dell'utente
   getMyHistory: protectedProcedure.query(async ({ ctx }) => {
-    if (!ctx.currentStoreId) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Nessuno store selezionato",
-      });
-    }
-    const history = await getUserOrderHistory(ctx.user.id, ctx.currentStoreId);
+    const storeId = ctx.currentStoreId || 'default-store-001';
+    const history = await getUserOrderHistory(ctx.user.id, storeId);
     return history;
   }),
 
@@ -181,14 +176,8 @@ export const orderSessionsRouter = router({
         message: "Solo gli amministratori possono vedere tutti gli ordini",
       });
     }
-
-    if (!ctx.currentStoreId) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Nessuno store selezionato",
-      });
-    }
-    const history = await getAllOrderHistory(ctx.currentStoreId);
+    const storeId = ctx.currentStoreId || 'default-store-001';
+    const history = await getAllOrderHistory(storeId);
     return history;
   }),
 

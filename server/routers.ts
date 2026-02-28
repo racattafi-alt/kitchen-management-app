@@ -62,7 +62,7 @@ const ingredientsRouter = router({
       }
       return db.createIngredient({
         ...input,
-        storeId: ctx.currentStoreId || 'default-store',
+        storeId: ctx.currentStoreId || 'default-store-001',
         packageQuantity: input.packageQuantity.toString(),
         packagePrice: input.packagePrice.toString(),
         pricePerKgOrUnit: input.pricePerKgOrUnit.toString(),
@@ -208,7 +208,7 @@ const ingredientsRouter = router({
               // Crea nuovo
               await db.createIngredient({
                 id: crypto.randomBytes(16).toString('hex'),
-                storeId: ctx.currentStoreId || 'default-store',
+                storeId: ctx.currentStoreId || 'default-store-001',
                 name: row.name,
                 supplierId: null,
                 supplier: row.supplier || 'Non specificato',
@@ -418,7 +418,7 @@ const productionRouter = router({
       }
       const result = await db.createWeeklyProduction({
         id: crypto.randomUUID(),
-        storeId: ctx.currentStoreId || 'default-store',
+        storeId: ctx.currentStoreId || 'default-store-001',
         recipeFinalId: input.recipeFinalId || null,
         semiFinishedId: input.semiFinishedId || null,
         productionType: input.productionType,
@@ -487,7 +487,7 @@ const productionRouter = router({
         const productionId = crypto.randomUUID();
         const result = await db.createWeeklyProduction({
           id: productionId,
-          storeId: ctx.currentStoreId || 'default-store',
+          storeId: ctx.currentStoreId || 'default-store-001',
           recipeFinalId: prod.recipeFinalId,
           semiFinishedId: null,
           productionType: "final",
@@ -754,7 +754,7 @@ const finalRecipesRouter = router({
       const newId = crypto.randomUUID();
       return db.createFinalRecipe({
         id: newId,
-        storeId: ctx.currentStoreId || 'default-store',
+        storeId: ctx.currentStoreId || 'default-store-001',
         name: input.name,
         code: input.code,
         category: input.category,
@@ -1143,7 +1143,7 @@ const suppliersRouter = router({
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
-      return db.createSupplier({ ...input, storeId: ctx.currentStoreId || 'default-store' } as any);
+      return db.createSupplier({ ...input, storeId: ctx.currentStoreId || 'default-store-001' } as any);
     }),
   update: protectedProcedure
     .input(
@@ -1210,7 +1210,7 @@ const ordersRouter = router({
       }
       return db.createOrder({
         ...input,
-        storeId: ctx.currentStoreId || 'default-store',
+        storeId: ctx.currentStoreId || 'default-store-001',
         totalAmount: input.totalAmount.toString(),
       } as any);
     }),

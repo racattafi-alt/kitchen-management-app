@@ -253,6 +253,13 @@
       "when": 1772500000000,
       "tag": "0035_add_shopping_list_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "5",
+      "when": 1772600000000,
+      "tag": "0036_assign_users_to_stores",
+      "breakpoints": true
     }
   ]
 }

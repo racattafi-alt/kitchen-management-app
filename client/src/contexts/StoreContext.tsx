@@ -31,16 +31,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (preferredStore?.storeId) {
       setCurrentStoreIdState(preferredStore.storeId);
       localStorage.setItem("currentStoreId", preferredStore.storeId);
-    } else {
-      // Fallback a localStorage
+    } else if (stores.length > 0) {
+      // Fallback a localStorage o primo store disponibile
       const savedStoreId = localStorage.getItem("currentStoreId");
-      if (savedStoreId && stores.some((s) => s.storeId === savedStoreId)) {
-        setCurrentStoreIdState(savedStoreId);
-      } else if (stores.length > 0) {
-        // Usare primo store disponibile
-        setCurrentStoreIdState(stores[0].storeId);
-        localStorage.setItem("currentStoreId", stores[0].storeId);
-      }
+      const storeId = (savedStoreId && stores.some((s) => s.storeId === savedStoreId))
+        ? savedStoreId
+        : stores[0].storeId;
+      setCurrentStoreIdState(storeId);
+      localStorage.setItem("currentStoreId", storeId);
+      // Persiste la preferenza nel DB così ctx.currentStoreId è sempre valorizzato
+      setPreferredMutation.mutate({ storeId });
     }
   }, [preferredStore, stores]);
 
