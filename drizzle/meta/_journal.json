@@ -232,6 +232,13 @@
       "when": 1772200000000,
       "tag": "0032_perf_indexes_and_order_history_storeId",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "5",
+      "when": 1772300000000,
+      "tag": "0033_seed_semi_finished_recipes",
+      "breakpoints": true
     }
   ]
 }
