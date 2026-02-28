@@ -268,7 +268,11 @@ export default function ShoppingList() {
   
   // Copia testo ordine
   const handleCopyText = async () => {
-    await navigator.clipboard.writeText(orderText);
+    try {
+      await navigator.clipboard.writeText(orderText);
+    } catch (error) {
+      console.error("Errore copia testo:", error);
+    }
     try {
       await saveOrder();
       await clearSessionMutation.mutateAsync();

@@ -129,19 +129,14 @@ export const orderSessionsRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      if (!ctx.currentStoreId) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Nessuno store selezionato",
-        });
-      }
-      
       if (input.items.length === 0) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Nessun articolo da ordinare",
         });
       }
+
+      const storeId = ctx.currentStoreId || 'default-store-001';
 
       // Prepara dati ordine
       const orderData = {
@@ -156,7 +151,7 @@ export const orderSessionsRouter = router({
         orderData,
         null,
         input.notes || null,
-        ctx.currentStoreId
+        storeId
       );
 
       return {
