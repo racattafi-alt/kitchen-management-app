@@ -209,7 +209,36 @@ export async function getIngredients(storeId?: string | null) {
 export async function getIngredientById(id: string) {
   const db = await getDb();
   if (!db) return null;
-  const result = await db.select().from(ingredients).where(eq(ingredients.id, id)).limit(1);
+  const result = await db
+    .select({
+      id: ingredients.id,
+      storeId: ingredients.storeId,
+      name: ingredients.name,
+      supplier: ingredients.supplier,
+      supplierId: ingredients.supplierId,
+      category: ingredients.category,
+      unitType: ingredients.unitType,
+      packageType: ingredients.packageType,
+      department: ingredients.department,
+      packageQuantity: ingredients.packageQuantity,
+      packagePrice: ingredients.packagePrice,
+      pricePerKgOrUnit: ingredients.pricePerKgOrUnit,
+      minOrderQuantity: ingredients.minOrderQuantity,
+      brand: ingredients.brand,
+      notes: ingredients.notes,
+      isActive: ingredients.isActive,
+      isFood: ingredients.isFood,
+      isOrderable: ingredients.isOrderable,
+      isSellable: ingredients.isSellable,
+      isSalaItem: ingredients.isSalaItem,
+      subcategory: ingredients.subcategory,
+      allergens: ingredients.allergens,
+      createdAt: ingredients.createdAt,
+      updatedAt: ingredients.updatedAt,
+    })
+    .from(ingredients)
+    .where(eq(ingredients.id, id))
+    .limit(1);
   return result.length > 0 ? result[0] : null;
 }
 
@@ -237,7 +266,9 @@ export async function createSemiFinished(data: Omit<SemiFinishedRecipe, "created
 export async function getSemiFinishedRecipes(storeId?: string | null) {
   const db = await getDb();
   if (!db) return [];
-  if (!storeId) return [];
+  if (!storeId) {
+    return db.select().from(semiFinishedRecipes);
+  }
   return db.select().from(semiFinishedRecipes).where(eq(semiFinishedRecipes.storeId, storeId));
 }
 

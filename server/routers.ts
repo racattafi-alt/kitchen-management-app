@@ -812,40 +812,6 @@ const finalRecipesRouter = router({
         throw new Error("Unauthorized: Only admins can update recipes");
       }
 
-      // Validazione dati ricetta (se forniti componenti)
-      if (input.components && input.components.length > 0) {
-        const currentRecipe = await db.getFinalRecipeById(input.id);
-        if (currentRecipe) {
-          const validation = validateRecipe(
-            {
-              name: input.name || currentRecipe.name,
-              code: currentRecipe.code, // Il codice non si modifica
-              category: (input.category || currentRecipe.category) as any,
-              yieldPercentage: input.yieldPercentage ?? parseFloat(currentRecipe.yieldPercentage || '0'),
-              serviceWastePercentage: input.serviceWastePercentage ?? parseFloat(currentRecipe.serviceWastePercentage || '0'),
-              conservationMethod: currentRecipe.conservationMethod,
-              maxConservationTime: currentRecipe.maxConservationTime,
-              isSellable: input.isSellable ?? currentRecipe.isSellable,
-              isSemiFinished: input.isSemiFinished ?? currentRecipe.isSemiFinished,
-            },
-            input.components.map(c => ({
-              type: c.type,
-              componentId: c.componentId,
-              componentName: c.componentName,
-              quantity: c.quantity,
-              unit: c.unit,
-              name: c.componentName,
-              pricePerUnit: c.pricePerUnit || 0,
-              costType: c.costType,
-            }))
-          );
-
-          if (!validation.valid) {
-            throw new Error(validation.error || 'Dati ricetta non validi');
-          }
-        }
-      }
-
       // Salva versione corrente prima di modificare
       const currentRecipe = await db.getFinalRecipeById(input.id);
       if (currentRecipe) {

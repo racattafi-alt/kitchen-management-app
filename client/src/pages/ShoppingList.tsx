@@ -269,40 +269,51 @@ export default function ShoppingList() {
   // Copia testo ordine
   const handleCopyText = async () => {
     await navigator.clipboard.writeText(orderText);
-    await saveOrder();
-    // Cancella sessione e quantità
-    await clearSessionMutation.mutateAsync();
+    try {
+      await saveOrder();
+      await clearSessionMutation.mutateAsync();
+    } catch (error) {
+      console.error("Errore salvataggio ordine:", error);
+    }
     setOrderQuantities({});
     setOrderPackages({});
     toast.success("Testo copiato e ordine salvato!");
     setShowOrderDialog(false);
   };
-  
+
   // Apri WhatsApp
   const handleWhatsApp = async () => {
     const whatsappMessage = encodeURIComponent(orderText);
     const whatsappUrl = `https://wa.me/?text=${whatsappMessage}`;
-    await saveOrder();
-    // Cancella sessione e quantità
-    await clearSessionMutation.mutateAsync();
+    // Open before awaits to avoid browser popup blocker
+    window.open(whatsappUrl, '_blank');
+    try {
+      await saveOrder();
+      await clearSessionMutation.mutateAsync();
+    } catch (error) {
+      console.error("Errore salvataggio ordine:", error);
+    }
     setOrderQuantities({});
     setOrderPackages({});
-    window.open(whatsappUrl, '_blank');
     toast.success("Ordine inviato su WhatsApp!");
     setShowOrderDialog(false);
   };
-  
+
   // Apri Email
   const handleEmail = async () => {
     const subject = encodeURIComponent(`Ordine Settimanale - ${selectedWeekGroup || 'Tutte'}`);
     const body = encodeURIComponent(orderText);
     const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
-    await saveOrder();
-    // Cancella sessione e quantità
-    await clearSessionMutation.mutateAsync();
+    // Navigate before awaits to avoid browser popup blocker
+    window.location.href = mailtoLink;
+    try {
+      await saveOrder();
+      await clearSessionMutation.mutateAsync();
+    } catch (error) {
+      console.error("Errore salvataggio ordine:", error);
+    }
     setOrderQuantities({});
     setOrderPackages({});
-    window.location.href = mailtoLink;
     toast.success("Email preparata e ordine salvato!");
     setShowOrderDialog(false);
   };
@@ -370,11 +381,16 @@ export default function ShoppingList() {
     URL.revokeObjectURL(url);
     
     // Salva ordine e cancella sessione
-    await saveOrder();
-    await clearSessionMutation.mutateAsync();
+    try {
+      await saveOrder();
+      await clearSessionMutation.mutateAsync();
+    } catch (error) {
+      console.error("Errore salvataggio ordine:", error);
+    }
     setOrderQuantities({});
     setOrderPackages({});
     toast.success("Ordine esportato e salvato!");
+    setShowOrderDialog(false);
   };
 
   // Esporta ordine per email (senza prezzi)
