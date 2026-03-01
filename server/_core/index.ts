@@ -7,6 +7,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import { migrate } from "drizzle-orm/mysql2/migrator";
 import { registerOAuthRoutes } from "./oauth";
 import { registerLocalAuthRoutes } from "./localAuthRoutes";
+import { registerGoogleAuthRoutes } from "./googleAuthRoutes";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -59,6 +60,8 @@ async function startServer() {
   } else {
     registerOAuthRoutes(app);
   }
+  // Google OAuth — always registered if GOOGLE_CLIENT_ID/SECRET are set
+  registerGoogleAuthRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",

@@ -6,9 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Save, AlertTriangle, Check } from "lucide-react";
+import { ArrowLeft, Save, AlertTriangle, Check, ArrowRight, Database } from "lucide-react";
 import { useStore } from "@/contexts/StoreContext";
 import RecipeForm, { RecipeFormData, ComponentWithDetails } from "@/components/RecipeForm";
+import { toast } from "sonner";
 
 type EntityType = "ingredient" | "recipe" | "supplier";
 
@@ -48,6 +49,53 @@ export default function MultiStoreEditor() {
   );
 
   const { data: stores } = trpc.stores.list.useQuery();
+
+  // Stato per migrazione bulk store
+  const [migrationSourceStoreId, setMigrationSourceStoreId] = useState<string>("");
+  const [migrationDestStoreIds, setMigrationDestStoreIds] = useState<string[]>([]);
+  const [migrationEntityTypes, setMigrationEntityTypes] = useState<string[]>(["ingredient", "recipe", "supplier"]);
+
+  const bulkMigrateMutation = trpc.multiStoreEditor.bulkMigrateFromStore.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Migrazione completata: ${result.totalMigrated} entità copiate`);
+      setMigrationDestStoreIds([]);
+    },
+    onError: (error) => {
+      toast.error(`Errore migrazione: ${error.message}`);
+    },
+  });
+
+  const handleBulkMigrate = () => {
+    if (!migrationSourceStoreId) {
+      toast.error("Seleziona lo store sorgente");
+      return;
+    }
+    if (migrationDestStoreIds.length === 0) {
+      toast.error("Seleziona almeno uno store di destinazione");
+      return;
+    }
+    if (migrationEntityTypes.length === 0) {
+      toast.error("Seleziona almeno un tipo di dato da migrare");
+      return;
+    }
+    bulkMigrateMutation.mutate({
+      sourceStoreId: migrationSourceStoreId,
+      destinationStoreIds: migrationDestStoreIds,
+      entityTypes: migrationEntityTypes as any,
+    });
+  };
+
+  const toggleMigrationDest = (storeId: string) => {
+    setMigrationDestStoreIds(prev =>
+      prev.includes(storeId) ? prev.filter(id => id !== storeId) : [...prev, storeId]
+    );
+  };
+
+  const toggleMigrationEntityType = (type: string) => {
+    setMigrationEntityTypes(prev =>
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    );
+  };
 
   const updateMutation = trpc.multiStoreEditor.updateEntityAcrossStores.useMutation({
     onSuccess: () => {
@@ -217,6 +265,108 @@ export default function MultiStoreEditor() {
           </div>
         </div>
       </div>
+
+      {/* Sezione Migrazione Bulk Store */}
+      <Card className="mb-6 border-blue-200 bg-blue-50">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Database className="h-5 w-5 text-blue-600" />
+            <CardTitle className="text-blue-900">Migrazione Dati tra Store</CardTitle>
+          </div>
+          <CardDescription>
+            Copia tutti i dati (ingredienti, ricette, fornitori) da uno store sorgente verso uno o più store destinazione
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-12 gap-4 items-start">
+            {/* Store sorgente */}
+            <div className="col-span-3">
+              <Label className="text-sm font-semibold">Store Sorgente</Label>
+              <p className="text-xs text-muted-foreground mb-2">Prendi i dati da questo store</p>
+              <Select value={migrationSourceStoreId} onValueChange={setMigrationSourceStoreId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleziona store..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {stores?.map((store) => (
+                    <SelectItem key={store.storeId} value={store.storeId}>
+                      {store.storeName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Freccia */}
+            <div className="col-span-1 flex items-center justify-center pt-8">
+              <ArrowRight className="h-6 w-6 text-blue-500" />
+            </div>
+
+            {/* Store destinazione */}
+            <div className="col-span-4">
+              <Label className="text-sm font-semibold">Store Destinazione</Label>
+              <p className="text-xs text-muted-foreground mb-2">Copia i dati in questi store</p>
+              <div className="space-y-2 border rounded-md p-3 bg-white">
+                {stores?.filter(s => s.storeId !== migrationSourceStoreId).map((store) => (
+                  <div key={store.storeId} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`dest-${store.storeId}`}
+                      checked={migrationDestStoreIds.includes(store.storeId)}
+                      onCheckedChange={() => toggleMigrationDest(store.storeId)}
+                    />
+                    <label htmlFor={`dest-${store.storeId}`} className="text-sm cursor-pointer">
+                      {store.storeName}
+                    </label>
+                  </div>
+                ))}
+                {!stores || stores.filter(s => s.storeId !== migrationSourceStoreId).length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Seleziona prima lo store sorgente</p>
+                ) : null}
+              </div>
+            </div>
+
+            {/* Tipi da migrare */}
+            <div className="col-span-2">
+              <Label className="text-sm font-semibold">Dati da migrare</Label>
+              <p className="text-xs text-muted-foreground mb-2">Scegli cosa copiare</p>
+              <div className="space-y-2 border rounded-md p-3 bg-white">
+                {[
+                  { value: "ingredient", label: "Ingredienti" },
+                  { value: "recipe", label: "Ricette" },
+                  { value: "supplier", label: "Fornitori" },
+                ].map(({ value, label }) => (
+                  <div key={value} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`type-${value}`}
+                      checked={migrationEntityTypes.includes(value)}
+                      onCheckedChange={() => toggleMigrationEntityType(value)}
+                    />
+                    <label htmlFor={`type-${value}`} className="text-sm cursor-pointer">{label}</label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Bottone migra */}
+            <div className="col-span-2 flex items-end">
+              <Button
+                className="w-full"
+                onClick={handleBulkMigrate}
+                disabled={bulkMigrateMutation.isPending || !migrationSourceStoreId || migrationDestStoreIds.length === 0}
+              >
+                {bulkMigrateMutation.isPending ? (
+                  "Migrazione in corso..."
+                ) : (
+                  <>
+                    <Database className="h-4 w-4 mr-2" />
+                    Migra Dati
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-12 gap-6">
         {/* Colonna 1: Selezione */}

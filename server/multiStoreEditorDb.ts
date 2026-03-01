@@ -244,6 +244,23 @@ export async function listRecipesGrouped() {
 }
 
 /**
+ * Recupera tutte le entità di un tipo da uno store specifico
+ */
+export async function getAllEntitiesFromStore(entityType: EntityType, storeId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  switch (entityType) {
+    case "ingredient":
+      return db.select().from(ingredients).where(eq(ingredients.storeId, storeId));
+    case "recipe":
+      return db.select().from(finalRecipes).where(eq(finalRecipes.storeId, storeId));
+    case "supplier":
+      return db.select().from(suppliers).where(eq(suppliers.storeId, storeId));
+  }
+}
+
+/**
  * Lista tutti i fornitori aggregati per nome
  */
 export async function listSuppliersGrouped() {
