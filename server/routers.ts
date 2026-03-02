@@ -598,6 +598,7 @@ const productionRouter = router({
           packageType: ing.packageType || null,
           department: ing.department || 'Cucina',
           packageQuantity: ing.packageQuantity ? parseFloat(ing.packageQuantity) : null,
+          isSoldByPackage: ing.isSoldByPackage ?? false,
           totalCost: 0,
           minOrderQuantity: ing.minOrderQuantity ? parseFloat(ing.minOrderQuantity) : null,
         });

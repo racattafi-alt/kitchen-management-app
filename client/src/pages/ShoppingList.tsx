@@ -144,16 +144,26 @@ export default function ShoppingList() {
     return packages * packageQuantity;
   };
 
+  // Determina se un articolo va ordinato in confezioni (ha isSoldByPackage o packageQuantity > 1)
+  const isPkgMode = (item: any): boolean =>
+    item.isSoldByPackage === true || (item.packageQuantity && item.packageQuantity > 1);
+
+  // Restituisce la packageQuantity effettiva: se isSoldByPackage ma pkgQty mancante, usa 1
+  const effPkgQty = (item: any): number => {
+    if (item.packageQuantity && item.packageQuantity > 0) return item.packageQuantity;
+    return item.isSoldByPackage ? 1 : 0;
+  };
+
   // Aggiorna quantità da ordinare (deprecato, ora usiamo confezioni)
   const handleQuantityChange = (itemId: string, value: number) => {
     setOrderQuantities(prev => ({ ...prev, [itemId]: value }));
   };
-  
+
   // Aggiorna confezioni da ordinare
   const handlePackagesChange = (itemId: string, packages: number, item: any) => {
     setOrderPackages(prev => ({ ...prev, [itemId]: packages }));
     // Calcola quantità totale basata su confezioni
-    const totalQty = calculateTotalQuantity(packages, item.packageQuantity);
+    const totalQty = packages * effPkgQty(item);
     setOrderQuantities(prev => ({ ...prev, [itemId]: totalQty }));
   };
   
@@ -192,12 +202,16 @@ export default function ShoppingList() {
       const packages = orderPackages[item.id];
       const totalQty = orderQuantities[item.id] || 0;
       const unit = item.unitType === 'k' ? 'kg' : 'pz';
-      
-      // Mostra confezioni se disponibili, altrimenti quantità
-      if (packages && item.packageQuantity && item.packageQuantity > 0) {
+      const pkgQty = effPkgQty(item);
+
+      if (packages && isPkgMode(item)) {
+        const pkgLabel = item.packageType?.toLowerCase() || 'conf.';
+        const qtyDetail = pkgQty > 1
+          ? ` (${pkgQty.toFixed(2)} ${unit}/conf) = ${totalQty.toFixed(2)} ${unit}`
+          : '';
         supplierGroups[supplier].push({
           name: item.itemName,
-          qty: `${packages} conf. (${item.packageQuantity.toFixed(2)} ${unit}/conf) = ${totalQty.toFixed(2)} ${unit}`,
+          qty: `${packages} ${pkgLabel}${qtyDetail}`,
           unit: '',
         });
       } else {
@@ -208,7 +222,7 @@ export default function ShoppingList() {
         });
       }
     });
-    
+
     // Aggiungi articoli extra
     validExtraItems.forEach(item => {
       const supplier = item.supplier || 'Senza Fornitore';
@@ -407,13 +421,12 @@ export default function ShoppingList() {
     
     filteredList.forEach((item: any) => {
       if (item.quantityNeeded > 0 && !orderQuantities[item.id]) {
-        // Calcola confezioni necessarie
-        if (item.packageQuantity && item.packageQuantity > 0) {
-          const packages = calculatePackages(item.quantityNeeded, item.packageQuantity);
+        if (isPkgMode(item)) {
+          const pkgQty = effPkgQty(item);
+          const packages = pkgQty > 0 ? Math.ceil(item.quantityNeeded / pkgQty) : 1;
           newPackages[item.id] = packages;
-          newQuantities[item.id] = calculateTotalQuantity(packages, item.packageQuantity);
+          newQuantities[item.id] = packages * pkgQty;
         } else {
-          // Fallback: usa quantità necessaria
           newQuantities[item.id] = item.quantityNeeded;
         }
         count++;
@@ -444,11 +457,16 @@ export default function ShoppingList() {
       const packages = orderPackages[item.id];
       const totalQty = orderQuantities[item.id] || 0;
       const unit = item.unitType === 'k' ? 'kg' : 'pz';
-      
-      if (packages && item.packageQuantity && item.packageQuantity > 0) {
+      const pkgQty = effPkgQty(item);
+
+      if (packages && isPkgMode(item)) {
+        const pkgLabel = item.packageType?.toLowerCase() || 'conf.';
+        const qtyDetail = pkgQty > 1
+          ? ` (${pkgQty.toFixed(2)} ${unit}/conf) = ${totalQty.toFixed(2)} ${unit}`
+          : '';
         supplierGroups[supplier].push({
           name: item.itemName,
-          qty: `${packages} conf. (${item.packageQuantity.toFixed(2)} ${unit}/conf) = ${totalQty.toFixed(2)} ${unit}`,
+          qty: `${packages} ${pkgLabel}${qtyDetail}`,
           unit: '',
         });
       } else {
@@ -773,7 +791,7 @@ export default function ShoppingList() {
                               </div>
                             </div>
                             <div className="flex flex-row md:flex-col items-center md:items-end gap-3 md:gap-2 w-full md:w-auto">
-                              {item.packageQuantity && item.packageQuantity > 1 ? (
+                              {isPkgMode(item) ? (
                                 <>
                                   <div className="text-xs text-muted-foreground text-right">
                                     Confezioni:
@@ -786,9 +804,9 @@ export default function ShoppingList() {
                                     placeholder="0"
                                     onFocus={(e) => {
                                       e.target.select();
-                                      // Auto-calcola se vuoto
                                       if (!orderPackages[item.id] && item.quantityNeeded > 0) {
-                                        const packages = calculatePackages(item.quantityNeeded, item.packageQuantity);
+                                        const pkgQty = effPkgQty(item);
+                                        const packages = pkgQty > 0 ? Math.ceil(item.quantityNeeded / pkgQty) : 1;
                                         handlePackagesChange(item.id, packages, item);
                                       }
                                     }}
@@ -797,7 +815,9 @@ export default function ShoppingList() {
                                   />
                                   {orderPackages[item.id] > 0 && (
                                     <div className="text-xs text-muted-foreground text-right">
-                                      {orderPackages[item.id]} {item.packageType?.toLowerCase() || 'conf.'} × {item.packageQuantity.toFixed(2)} {item.unitType === 'k' ? 'kg' : 'pz'} = {orderQty.toFixed(2)} {item.unitType === 'k' ? 'kg' : 'pz'}
+                                      {effPkgQty(item) > 1
+                                        ? `${orderPackages[item.id]} ${item.packageType?.toLowerCase() || 'conf.'} × ${effPkgQty(item).toFixed(2)} ${item.unitType === 'k' ? 'kg' : 'pz'} = ${orderQty.toFixed(2)} ${item.unitType === 'k' ? 'kg' : 'pz'}`
+                                        : `${orderPackages[item.id]} ${item.packageType?.toLowerCase() || 'confezioni'}`}
                                     </div>
                                   )}
                                 </>
@@ -895,7 +915,7 @@ export default function ShoppingList() {
                             )}
                           </TableCell>
                           <TableCell className="text-right">
-                            {item.packageQuantity && item.packageQuantity > 1 ? (
+                            {isPkgMode(item) ? (
                               <div className="flex flex-col items-end gap-1">
                                 <Input
                                   type="number"
@@ -906,16 +926,17 @@ export default function ShoppingList() {
                                   onFocus={(e) => {
                                     e.target.select();
                                     if (!orderPackages[item.id] && item.quantityNeeded > 0) {
-                                      const packages = calculatePackages(item.quantityNeeded, item.packageQuantity);
+                                      const pkgQty = effPkgQty(item);
+                                      const packages = pkgQty > 0 ? Math.ceil(item.quantityNeeded / pkgQty) : 1;
                                       handlePackagesChange(item.id, packages, item);
                                     }
                                   }}
                                   onChange={(e) => handlePackagesChange(item.id, parseInt(e.target.value) || 0, item)}
                                   className="w-20 text-right"
                                 />
-                                {orderPackages[item.id] > 0 && (
+                                {orderPackages[item.id] > 0 && effPkgQty(item) > 1 && (
                                   <span className="text-xs text-muted-foreground">
-                                    {item.packageQuantity.toFixed(2)} {item.unitType === 'k' ? 'kg' : 'pz'}/{item.packageType?.toLowerCase() || 'conf.'}
+                                    {effPkgQty(item).toFixed(2)} {item.unitType === 'k' ? 'kg' : 'pz'}/{item.packageType?.toLowerCase() || 'conf.'}
                                   </span>
                                 )}
                               </div>
