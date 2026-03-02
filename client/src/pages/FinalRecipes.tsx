@@ -989,6 +989,7 @@ export default function FinalRecipes() {
                   <Button variant="outline" size="sm" onClick={() => navigateRecipe("next")}>
                     Successivo<ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
+                </div>
               </div>
             </div>
           )}
