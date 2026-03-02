@@ -1,6 +1,7 @@
 import { router, protectedProcedure } from "./_core/trpc";
 import { z } from "zod";
 import { eq, and, desc } from "drizzle-orm";
+import { v4 as uuidv4 } from "uuid";
 import { getDb } from "./db";
 import {
   foodMatrixEntries,
@@ -131,7 +132,6 @@ const entriesRouter = router({
         storeId
       );
 
-      const { v4: uuidv4 } = await import("uuid");
       const entryId = input.id ?? uuidv4();
 
       if (input.id) {
@@ -271,7 +271,6 @@ export const foodMatrixV2Router = router({
         };
       });
 
-      const { v4: uuidv4 } = await import("uuid");
       await database.insert(foodMatrixSnapshots).values({
         id: uuidv4(),
         storeId,
@@ -321,7 +320,6 @@ export const foodMatrixV2Router = router({
         }),
       };
 
-      const { v4: uuidv4 } = await import("uuid");
       await database.insert(foodMatrixSnapshots).values({
         id: uuidv4(),
         storeId,

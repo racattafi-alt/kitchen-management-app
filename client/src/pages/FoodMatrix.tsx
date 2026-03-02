@@ -509,8 +509,12 @@ export default function FoodMatrix() {
   const [editEntry, setEditEntry] = useState<any>(null);
 
   // Data queries
-  const { data: entries, refetch: refetchEntries } =
-    trpc.foodMatrixV2.entries.list.useQuery();
+  const {
+    data: entries,
+    refetch: refetchEntries,
+    isLoading: entriesLoading,
+    isError: entriesError,
+  } = trpc.foodMatrixV2.entries.list.useQuery();
   const { data: snapshots } = trpc.foodMatrixV2.snapshots.list.useQuery();
   const { data: allIngredients } = trpc.ingredients.list.useQuery();
   const { data: allSemiFinished } = trpc.semiFinished.list.useQuery();
@@ -815,7 +819,26 @@ export default function FoodMatrix() {
             {/* Product table */}
             <Card>
               <CardContent className="pt-4">
-                {filteredEntries.length === 0 ? (
+                {entriesLoading ? (
+                  <div className="text-center py-12 text-slate-500">
+                    <div className="animate-spin h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-3" />
+                    <div className="text-sm">Caricamento prodotti...</div>
+                  </div>
+                ) : entriesError ? (
+                  <div className="text-center py-12 text-red-500">
+                    <BarChart3 className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                    <div className="font-medium">Errore nel caricamento</div>
+                    <div className="text-sm mt-1 text-slate-500">
+                      Tabelle non ancora create — riavviare il server per applicare le migrazioni
+                    </div>
+                    <button
+                      className="mt-3 text-sm text-blue-600 underline"
+                      onClick={() => refetchEntries()}
+                    >
+                      Riprova
+                    </button>
+                  </div>
+                ) : filteredEntries.length === 0 ? (
                   <div className="text-center py-12 text-slate-500">
                     <BarChart3 className="h-12 w-12 mx-auto mb-3 opacity-30" />
                     <div className="font-medium">Nessun prodotto nella Food Matrix</div>
