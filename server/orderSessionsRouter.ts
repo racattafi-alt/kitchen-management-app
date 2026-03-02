@@ -168,14 +168,8 @@ export const orderSessionsRouter = router({
     return history;
   }),
 
-  // Ottiene tutti gli ordini (solo admin)
+  // Ottiene tutti gli ordini dello store (visibile a tutti gli utenti)
   getAllHistory: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "Solo gli amministratori possono vedere tutti gli ordini",
-      });
-    }
     const storeId = ctx.currentStoreId || 'default-store-001';
     const history = await getAllOrderHistory(storeId);
     return history;
