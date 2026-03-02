@@ -44,6 +44,7 @@ export const stores = mysqlTable("stores", {
   email: varchar("email", { length: 320 }),
   settings: json("settings"),
   isActive: boolean("isActive").default(true).notNull(),
+  isGlobal: boolean("isGlobal").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

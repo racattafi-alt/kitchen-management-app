@@ -2,7 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Building2, Users, Package, ChefHat, TrendingUp, Plus, ArrowLeft, Edit3, Shield, UserCog } from "lucide-react";
+import { Building2, Users, Package, ChefHat, TrendingUp, Plus, ArrowLeft, Edit3, Shield, UserCog, Globe } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -44,6 +44,16 @@ export default function SuperAdminDashboard() {
   const [isEditRoleOpen, setIsEditRoleOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<{ id: number; name: string; role: string } | null>(null);
   const [newRole, setNewRole] = useState<string>("");
+  const updateStoreMutation = trpc.stores.update.useMutation({
+    onSuccess: () => {
+      toast.success("Store aggiornato!");
+      utils.stores.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Errore aggiornamento store");
+    },
+  });
+
   const updateRoleMutation = trpc.users.updateRole.useMutation({
     onSuccess: () => {
       toast.success("Ruolo utente aggiornato!");
@@ -263,9 +273,16 @@ export default function SuperAdminDashboard() {
                         <CardTitle className="text-lg">{store.storeName}</CardTitle>
                         <CardDescription className="line-clamp-2">{store.storeAddress || "Nessun indirizzo"}</CardDescription>
                       </div>
-                      <Badge variant={store.storeIsActive ? "default" : "secondary"}>
-                        {store.storeIsActive ? "Attivo" : "Inattivo"}
-                      </Badge>
+                      <div className="flex flex-col items-end gap-1">
+                        <Badge variant={store.storeIsActive ? "default" : "secondary"}>
+                          {store.storeIsActive ? "Attivo" : "Inattivo"}
+                        </Badge>
+                        {(store as any).storeIsGlobal && (
+                          <Badge className="bg-amber-100 text-amber-800 border-amber-200">
+                            <Globe className="h-3 w-3 mr-1" />Globale
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
@@ -285,10 +302,19 @@ export default function SuperAdminDashboard() {
                         <span className="font-medium text-xs">{store.storeEmail}</span>
                       </div>
                     )}
-                    <div className="pt-2">
-                      <Button variant="outline" size="sm" className="w-full">
-                        <TrendingUp className="h-4 w-4 mr-2" />
-                        Vedi Statistiche
+                    <div className="pt-2 space-y-2">
+                      <Button
+                        variant={(store as any).storeIsGlobal ? "default" : "outline"}
+                        size="sm"
+                        className={`w-full ${(store as any).storeIsGlobal ? "bg-amber-500 hover:bg-amber-600 text-white" : ""}`}
+                        onClick={() => updateStoreMutation.mutate({
+                          storeId: store.storeId,
+                          isGlobal: !(store as any).storeIsGlobal,
+                        })}
+                        disabled={updateStoreMutation.isPending}
+                      >
+                        <Globe className="h-4 w-4 mr-2" />
+                        {(store as any).storeIsGlobal ? "Store Globale (attivo)" : "Imposta come Store Globale"}
                       </Button>
                     </div>
                   </CardContent>

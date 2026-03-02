@@ -12,8 +12,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { trpc } from "@/lib/trpc";
 import { Plus, Package, Pencil, Trash2, Download, Upload, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumb";
-import { useState, useEffect as React_useEffect, useEffect, useCallback } from "react";
+import { useState, useEffect as React_useEffect, useCallback } from "react";
 import * as React from "react";
+import { useArrowNav } from "@/hooks/useArrowNav";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { STANDARD_ALLERGENS } from "../../../shared/allergens";
@@ -359,23 +360,7 @@ export default function Ingredients() {
     loadIngredientToEdit(ingredients[newIndex]);
   }, [editingIndex, ingredients]);
 
-  useEffect(() => {
-    if (!isEditOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement).tagName;
-      // Only navigate when not typing in an input/textarea/select
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-      if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        navigateIngredient("prev");
-      } else if (e.key === "ArrowRight") {
-        e.preventDefault();
-        navigateIngredient("next");
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isEditOpen, navigateIngredient]);
+  useArrowNav(isEditOpen, navigateIngredient);
 
   const handleUpdateSubmit = (e: React.FormEvent) => {
     e.preventDefault();

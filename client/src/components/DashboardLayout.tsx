@@ -23,7 +23,8 @@ import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import GlobalSearch from "@/components/GlobalSearch";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Package, Utensils, ChefHat, BarChart3, Calendar, DollarSign, AlertTriangle, Shield, FolderOpen, Bot, ShoppingCart, Building2, History, TrendingUp, Crown } from "lucide-react";
+import { useStore } from "@/contexts/StoreContext";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Package, Utensils, ChefHat, BarChart3, Calendar, DollarSign, AlertTriangle, Shield, FolderOpen, Bot, ShoppingCart, Building2, History, TrendingUp, Crown, Globe } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -135,6 +136,7 @@ function DashboardLayoutContent({
   setSidebarWidth,
 }: DashboardLayoutContentProps) {
   const { user, logout } = useAuth();
+  const { isCurrentStoreGlobal } = useStore();
   const [location, setLocation] = useLocation();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
@@ -301,10 +303,10 @@ function DashboardLayoutContent({
       </div>
 
       <SidebarInset>
-        {user?.role === "superadmin" && (
+        {isCurrentStoreGlobal && (
           <div className="sticky top-0 z-50 flex items-center justify-center gap-2 bg-amber-500 text-white text-sm font-semibold px-4 py-2 shadow-md">
-            <Crown className="h-4 w-4 shrink-0" />
-            <span>MODALITÀ SUPER UTENTE — le modifiche si applicano a tutti gli store</span>
+            <Globe className="h-4 w-4 shrink-0" />
+            <span>STORE GLOBALE — le modifiche si applicano a tutti gli store</span>
           </div>
         )}
         {isMobile && (

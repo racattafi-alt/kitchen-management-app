@@ -288,6 +288,13 @@
       "when": 1773000000000,
       "tag": "0040_add_superadmin_role",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "5",
+      "when": 1773100000000,
+      "tag": "0041_add_isGlobal_to_stores",
+      "breakpoints": true
     }
   ]
 }

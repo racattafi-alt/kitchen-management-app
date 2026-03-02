@@ -20,7 +20,7 @@ import {
   updateSupplierAcrossStores,
   updateRecipeAcrossStores,
 } from "./multiStoreEditorDb.js";
-import { getAllStores } from "./storesDb.js";
+import { getAllStores, isStoreGlobal } from "./storesDb.js";
 
 async function getAllActiveStoreIds(): Promise<string[]> {
   const stores = await getAllStores();
@@ -91,7 +91,7 @@ const ingredientsRouter = router({
         isSoldByPackage: input.isSoldByPackage ?? false,
         allergens: input.allergens || [],
       };
-      if (role === "superadmin") {
+      if (await isStoreGlobal(ctx.currentStoreId)) {
         const storeIds = await getAllActiveStoreIds();
         await updateIngredientAcrossStores(input.name, ingredientData as any, storeIds);
         return { ...ingredientData, id: input.id, name: input.name, storeId: "all" };
@@ -165,7 +165,7 @@ const ingredientsRouter = router({
       if (input.isFood !== undefined) updateData.isFood = input.isFood;
       if (input.isSoldByPackage !== undefined) updateData.isSoldByPackage = input.isSoldByPackage;
       if (input.allergens !== undefined) updateData.allergens = input.allergens;
-      if (role === "superadmin") {
+      if (await isStoreGlobal(ctx.currentStoreId)) {
         const storeIds = await getAllActiveStoreIds();
         await updateIngredientAcrossStores(currentIngredient.name, updateData, storeIds);
         return;
@@ -813,7 +813,7 @@ const finalRecipesRouter = router({
         isActive: true,
         sellingPrice: null,
       };
-      if (ctx.user?.role === "superadmin") {
+      if (await isStoreGlobal(ctx.currentStoreId)) {
         const storeIds = await getAllActiveStoreIds();
         await updateRecipeAcrossStores(input.name, recipeData as any, storeIds);
         return { ...recipeData, id: newId, storeId: "all" };
@@ -921,7 +921,7 @@ const finalRecipesRouter = router({
         updateData.components = JSON.stringify(input.components);
       }
 
-      if (role === "superadmin" && currentRecipe) {
+      if (currentRecipe && await isStoreGlobal(ctx.currentStoreId)) {
         const storeIds = await getAllActiveStoreIds();
         await updateRecipeAcrossStores(currentRecipe.name, updateData, storeIds);
         return;
@@ -1217,7 +1217,7 @@ const suppliersRouter = router({
         throw new Error("Unauthorized");
       }
       const { id, name, ...supplierData } = input;
-      if (role === "superadmin") {
+      if (await isStoreGlobal(ctx.currentStoreId)) {
         const storeIds = await getAllActiveStoreIds();
         await updateSupplierAcrossStores(name, supplierData as any, storeIds);
         return { ...supplierData, id, name, storeId: "all" };
@@ -1242,7 +1242,7 @@ const suppliersRouter = router({
         throw new Error("Unauthorized");
       }
       const { id, ...updateData } = input;
-      if (role === "superadmin" && input.name) {
+      if (input.name && await isStoreGlobal(ctx.currentStoreId)) {
         const storeIds = await getAllActiveStoreIds();
         await updateSupplierAcrossStores(input.name, updateData as any, storeIds);
         return;

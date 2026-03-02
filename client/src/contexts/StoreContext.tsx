@@ -8,7 +8,9 @@ interface StoreContextType {
     storeId: string;
     storeName: string;
     role: string;
+    storeIsGlobal?: boolean;
   }>;
+  isCurrentStoreGlobal: boolean;
   isLoading: boolean;
 }
 
@@ -57,6 +59,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   };
 
   const isLoading = storesLoading || preferredLoading;
+  const isCurrentStoreGlobal = stores.some(
+    (s) => s.storeId === currentStoreId && (s as any).storeIsGlobal === true
+  );
 
   return (
     <StoreContext.Provider
@@ -64,6 +69,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         currentStoreId,
         setCurrentStoreId,
         stores,
+        isCurrentStoreGlobal,
         isLoading,
       }}
     >

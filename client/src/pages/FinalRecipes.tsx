@@ -9,11 +9,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
-import { ChefHat, Plus, Eye, Pencil, Trash2, Search, FileSpreadsheet, History, EyeOff, ArrowLeft } from "lucide-react";
+import { ChefHat, Plus, Eye, Pencil, Trash2, Search, FileSpreadsheet, History, EyeOff, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import RecipeForm, { ComponentWithDetails } from "@/components/RecipeForm";
 import Breadcrumb from "@/components/Breadcrumb";
 import { toast } from "sonner";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
+import { useArrowNav } from "@/hooks/useArrowNav";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -79,6 +80,7 @@ export default function FinalRecipes() {
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<any>(null);
+  const [editingIndex, setEditingIndex] = useState<number>(-1);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [selectedRecipeForHistory, setSelectedRecipeForHistory] = useState<string | null>(null);
   
@@ -170,9 +172,6 @@ export default function FinalRecipes() {
   const updateMutation = trpc.finalRecipes.update.useMutation({
     onSuccess: () => {
       toast.success("Ricetta aggiornata con successo!");
-      setIsEditOpen(false);
-      setEditFormData(null);
-      setEditComponents([]);
       utils.finalRecipes.list.invalidate();
     },
     onError: (error) => {
@@ -276,7 +275,21 @@ export default function FinalRecipes() {
     return [];
   }, [searchTerm, searchType, ingredients, semiFinished, operations]);
 
+  const navigateRecipe = useCallback(async (direction: "prev" | "next") => {
+    if (!recipes || recipes.length === 0) return;
+    const newIndex = direction === "prev"
+      ? (editingIndex - 1 + recipes.length) % recipes.length
+      : (editingIndex + 1) % recipes.length;
+    setEditingIndex(newIndex);
+    await handleEdit(recipes[newIndex]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingIndex, recipes]);
+
+  useArrowNav(isEditOpen, (dir) => { navigateRecipe(dir); });
+
   const handleEdit = async (recipe: any) => {
+    const idx = recipes?.findIndex((r: any) => r.id === recipe.id) ?? -1;
+    if (idx !== -1) setEditingIndex(idx);
     setEditFormData({
       id: recipe.id,
       name: recipe.name,
@@ -919,13 +932,25 @@ export default function FinalRecipes() {
       </Dialog>
 
       {/* Dialog Modifica Ricetta */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+      <Dialog open={isEditOpen} onOpenChange={(open) => { setIsEditOpen(open); if (!open) { setEditFormData(null); setEditComponents([]); } }}>
         <DialogContent className="max-w-[95vw] w-[1400px] max-h-[95vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Modifica Ricetta</DialogTitle>
-            <DialogDescription>
-              Modifica categoria, resa produzione, scarto al servizio e componenti
-            </DialogDescription>
+            <div className="flex items-center justify-between gap-2">
+              <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => navigateRecipe("prev")} title="Ricetta precedente (←)">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="flex-1 text-center">
+                <DialogTitle className="text-2xl truncate">{editFormData?.name || "Modifica Ricetta"}</DialogTitle>
+                <DialogDescription>
+                  {recipes && recipes.length > 0
+                    ? `${editingIndex + 1} / ${recipes.length} · Modifica categoria, resa, componenti · usa ← → per navigare`
+                    : "Modifica categoria, resa produzione, scarto al servizio e componenti"}
+                </DialogDescription>
+              </div>
+              <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => navigateRecipe("next")} title="Ricetta successiva (→)">
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </DialogHeader>
           {editFormData && (
             <div className="flex-1 overflow-y-auto space-y-6 pr-2">
@@ -938,25 +963,32 @@ export default function FinalRecipes() {
               />
 
               {/* Pulsanti */}
-              <div className="flex justify-end gap-3 pt-4">
-                <Button variant="outline" onClick={() => setIsEditOpen(false)}>
-                  Annulla
+              <div className="flex justify-between gap-3 pt-4">
+                <Button variant="ghost" onClick={() => { setIsEditOpen(false); setEditFormData(null); setEditComponents([]); }}>
+                  Chiudi
                 </Button>
-                <Button
-                  onClick={handleExportPDF}
-                  variant="outline"
-                  className="border-blue-600 text-blue-600 hover:bg-blue-50"
-                >
-                  <FileSpreadsheet className="mr-2 h-4 w-4" />
-                  Scarica PDF
-                </Button>
-                <Button
-                  onClick={handleUpdateSubmit}
-                  disabled={updateMutation.isPending}
-                  className="bg-orange-600 hover:bg-orange-700"
-                >
-                  {updateMutation.isPending ? "Salvataggio..." : "Salva Modifiche"}
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => navigateRecipe("prev")}>
+                    <ChevronLeft className="h-4 w-4 mr-1" />Precedente
+                  </Button>
+                  <Button
+                    onClick={handleExportPDF}
+                    variant="outline"
+                    className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                  >
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    Scarica PDF
+                  </Button>
+                  <Button
+                    onClick={handleUpdateSubmit}
+                    disabled={updateMutation.isPending}
+                    className="bg-orange-600 hover:bg-orange-700"
+                  >
+                    {updateMutation.isPending ? "Salvataggio..." : "Salva Modifiche"}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => navigateRecipe("next")}>
+                    Successivo<ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
               </div>
             </div>
           )}

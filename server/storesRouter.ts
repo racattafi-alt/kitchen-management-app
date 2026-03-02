@@ -5,11 +5,25 @@ import * as storesDb from "./storesDb";
 
 export const storesRouter = router({
   /**
-   * Recuperare tutti gli store accessibili dall'utente corrente
+   * Recuperare tutti gli store accessibili dall'utente corrente.
+   * I superadmin vedono tutti gli store attivi.
    */
   list: protectedProcedure.query(async ({ ctx }) => {
-    const userId = ctx.user.id;
-    return await storesDb.getUserStores(userId);
+    if (ctx.user.role === "superadmin") {
+      const all = await storesDb.getAllStores();
+      return all.map((s) => ({
+        storeId: s.id,
+        role: "admin" as const,
+        storeName: s.name,
+        storeAddress: s.address,
+        storePhone: s.phone,
+        storeEmail: s.email,
+        storeIsActive: s.isActive,
+        storeIsGlobal: s.isGlobal,
+        storeCreatedAt: s.createdAt,
+      }));
+    }
+    return await storesDb.getUserStores(ctx.user.id);
   }),
 
   /**
@@ -46,8 +60,8 @@ export const storesRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Solo admin possono creare nuovi store
-      if (ctx.user.role !== "admin") {
+      // Solo admin e superadmin possono creare nuovi store
+      if (ctx.user.role !== "admin" && ctx.user.role !== "superadmin") {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Solo gli admin possono creare nuovi store",
@@ -79,18 +93,29 @@ export const storesRouter = router({
         email: z.string().email().optional(),
         settings: z.any().optional(),
         isActive: z.boolean().optional(),
+        isGlobal: z.boolean().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.user.id;
       const { storeId, ...updateData } = input;
 
-      // Verificare che l'utente sia admin dello store
-      const role = await storesDb.getUserStoreRole(userId, storeId);
-      if (role !== "admin") {
+      // Superadmin possono modificare qualsiasi store; altrimenti deve essere admin dello store
+      if (ctx.user.role !== "superadmin") {
+        const role = await storesDb.getUserStoreRole(userId, storeId);
+        if (role !== "admin") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Solo gli admin dello store possono modificarlo",
+          });
+        }
+      }
+
+      // Solo superadmin possono impostare isGlobal
+      if (updateData.isGlobal !== undefined && ctx.user.role !== "superadmin" && ctx.user.role !== "admin") {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: "Solo gli admin dello store possono modificarlo",
+          message: "Solo i superadmin possono impostare uno store come globale",
         });
       }
 
