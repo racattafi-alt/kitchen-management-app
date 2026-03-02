@@ -125,6 +125,7 @@ export const ingredients = mysqlTable("ingredients", {
   isOrderable: boolean("isOrderable").default(true).notNull(),
   isSellable: boolean("isSellable").default(true).notNull(),
   isSalaItem: boolean("isSalaItem").default(false).notNull(),
+  isSoldByPackage: boolean("isSoldByPackage").default(false).notNull(),
   subcategory: varchar("subcategory", { length: 100 }),
   allergens: json("allergens").$type<string[]>().default([]),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

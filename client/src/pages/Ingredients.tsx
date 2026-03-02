@@ -48,6 +48,7 @@ export default function Ingredients() {
     packagePrice: 0,
     brand: "",
     notes: "",
+    isSoldByPackage: false,
     allergens: [] as string[],
   });
   const [editFormData, setEditFormData] = useState({
@@ -63,6 +64,7 @@ export default function Ingredients() {
     brand: "",
     notes: "",
     isFood: true,
+    isSoldByPackage: false,
     allergens: [] as string[],
   });
 
@@ -276,6 +278,7 @@ export default function Ingredients() {
       packagePrice: 0,
       brand: "",
       notes: "",
+      isSoldByPackage: false,
       allergens: [] as string[],
     });
   };
@@ -316,6 +319,7 @@ export default function Ingredients() {
       pricePerKgOrUnit: pricePerUnit,
       brand: formData.brand || undefined,
       notes: formData.notes || undefined,
+      isSoldByPackage: formData.isSoldByPackage,
       allergens: formData.allergens,
     });
   };
@@ -335,6 +339,7 @@ export default function Ingredients() {
       brand: ingredient.brand || "",
       notes: ingredient.notes || "",
       isFood: ingredient.isFood !== false,
+      isSoldByPackage: ingredient.isSoldByPackage === true,
       allergens: ingredient.allergens || [],
     });
     setIsEditOpen(true);
@@ -381,6 +386,7 @@ export default function Ingredients() {
       brand: editFormData.brand || undefined,
       notes: editFormData.notes || undefined,
       isFood: editFormData.isFood,
+      isSoldByPackage: editFormData.isSoldByPackage,
       allergens: editFormData.allergens,
     });
   };
@@ -617,6 +623,21 @@ export default function Ingredients() {
                       />
                     </div>
                     <div className="col-span-2">
+                      <Label className="mb-2 block">Modalità vendita</Label>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, isSoldByPackage: !formData.isSoldByPackage })}
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-all ${
+                          formData.isSoldByPackage
+                            ? "bg-blue-100 border-blue-400 text-blue-700"
+                            : "bg-gray-100 border-gray-300 text-gray-500"
+                        }`}
+                      >
+                        <Package className="h-4 w-4" />
+                        Venduto per confezione
+                      </button>
+                    </div>
+                    <div className="col-span-2">
                       <Label>Allergeni</Label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 p-4 border rounded-lg max-h-48 overflow-y-auto">
                         {STANDARD_ALLERGENS.map((allergen) => (
@@ -820,6 +841,21 @@ export default function Ingredients() {
                   />
                 </div>
                 <div className="col-span-2">
+                  <Label className="mb-2 block">Modalità vendita</Label>
+                  <button
+                    type="button"
+                    onClick={() => setEditFormData({ ...editFormData, isSoldByPackage: !editFormData.isSoldByPackage })}
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-all ${
+                      editFormData.isSoldByPackage
+                        ? "bg-blue-100 border-blue-400 text-blue-700"
+                        : "bg-gray-100 border-gray-300 text-gray-500"
+                    }`}
+                  >
+                    <Package className="h-4 w-4" />
+                    Venduto per confezione
+                  </button>
+                </div>
+                <div className="col-span-2">
                   <div className="flex items-center space-x-2">
                     <input
                       type="checkbox"
@@ -978,13 +1014,21 @@ export default function Ingredients() {
                         </TableCell>
                       )}
                       <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          ingredient.isFood === false 
-                            ? 'bg-orange-100 text-orange-700' 
-                            : 'bg-green-100 text-green-700'
-                        }`}>
-                          {ingredient.isFood === false ? 'Non-Food' : 'Food'}
-                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            ingredient.isFood === false
+                              ? 'bg-orange-100 text-orange-700'
+                              : 'bg-green-100 text-green-700'
+                          }`}>
+                            {ingredient.isFood === false ? 'Non-Food' : 'Food'}
+                          </span>
+                          {ingredient.isSoldByPackage && (
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 flex items-center gap-1">
+                              <Package className="h-3 w-3" />
+                              Confezione
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       {canEdit && (
                         <TableCell>
