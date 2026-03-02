@@ -50,6 +50,7 @@ const menuItems = [
 
 const adminMenuItems = [
   { icon: Crown, label: "Super Admin", path: "/super-admin" },
+  { icon: TrendingUp, label: "Aggiorna Prezzi", path: "/price-update" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

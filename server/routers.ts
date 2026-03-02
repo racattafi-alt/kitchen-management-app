@@ -286,6 +286,40 @@ const ingredientsRouter = router({
         throw new Error(`Errore durante import Excel: ${error.message}`);
       }
     }),
+
+  bulkUpdatePrices: protectedProcedure
+    .input(
+      z.array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+          packagePrice: z.number(),
+          packageQuantity: z.number(),
+          pricePerKgOrUnit: z.number(),
+        })
+      )
+    )
+    .mutation(async ({ input, ctx }) => {
+      const role = ctx.user?.role;
+      if (role !== "admin" && role !== "manager" && role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      const isGlobal = await isStoreGlobal(ctx.currentStoreId);
+      for (const item of input) {
+        const updateData: Record<string, string> = {
+          packagePrice: item.packagePrice.toString(),
+          packageQuantity: item.packageQuantity.toString(),
+          pricePerKgOrUnit: item.pricePerKgOrUnit.toString(),
+        };
+        if (isGlobal) {
+          const storeIds = await getAllActiveStoreIds();
+          await updateIngredientAcrossStores(item.name, updateData as any, storeIds);
+        } else {
+          await db.updateIngredient(item.id, updateData as any);
+        }
+      }
+      return { success: true, updated: input.length };
+    }),
 });
 
 // ============ PROCEDURE SEMILAVORATI ============
@@ -1365,6 +1399,7 @@ const usersRouter = router({  list: protectedProcedure.query(async ({ ctx }) => 
 
 import { auditLogRouter } from "./auditLogRouter";
 import { multiStoreEditorRouter } from "./multiStoreEditorRouter";
+import { foodMatrixV2Router } from "./foodMatrixV2Router";
 
 export const appRouter = router({
   auth: authRouter,
@@ -1390,6 +1425,7 @@ export const appRouter = router({
   orderSessions: orderSessionsRouter,
   auditLog: auditLogRouter,
   multiStoreEditor: multiStoreEditorRouter,
+  foodMatrixV2: foodMatrixV2Router,
   system: systemRouter,
 });
 

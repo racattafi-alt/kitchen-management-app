@@ -227,6 +227,52 @@ export type FoodMatrixItem = typeof foodMatrix.$inferSelect;
 export type InsertFoodMatrixItem = typeof foodMatrix.$inferInsert;
 
 /**
+ * Food Matrix V2: Componente di una ricetta semplificata
+ */
+export type FoodMatrixComponent =
+  | { type: "INGREDIENT"; sourceId: string; name: string; quantity: number; unit: string }
+  | { type: "SEMI_FINISHED"; sourceId: string; name: string; quantity: number; unit: string }
+  | { type: "FINAL_RECIPE"; sourceId: string; name: string; quantity: number; unit: string }
+  | { type: "MANUAL"; name: string; quantity: number; unit: string; pricePerUnit: number };
+
+/**
+ * Food Matrix V2: Voci vendibili (ricette semplificate con varianti di porzione)
+ */
+export const foodMatrixEntries = mysqlTable("food_matrix_entries", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  storeId: varchar("storeId", { length: 36 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  category: varchar("category", { length: 100 }).notNull().default("Altro"),
+  servingSize: decimal("servingSize", { precision: 10, scale: 3 }).notNull().default("1.000"),
+  servingUnit: varchar("servingUnit", { length: 50 }).notNull().default("porzione"),
+  sellingPrice: decimal("sellingPrice", { precision: 10, scale: 2 }),
+  components: json("components").notNull().$type<FoodMatrixComponent[]>(),
+  costPerServing: decimal("costPerServing", { precision: 10, scale: 4 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type FoodMatrixEntry = typeof foodMatrixEntries.$inferSelect;
+export type InsertFoodMatrixEntry = typeof foodMatrixEntries.$inferInsert;
+
+/**
+ * Food Matrix V2: Snapshot storici (fotografie datate dei costi)
+ */
+export const foodMatrixSnapshots = mysqlTable("food_matrix_snapshots", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  storeId: varchar("storeId", { length: 36 }).notNull(),
+  snapshotType: mysqlEnum("snapshotType", ["PRICE_UPDATE", "PRICE_EDIT"]).notNull().default("PRICE_EDIT"),
+  description: text("description"),
+  data: json("data").notNull(),
+  createdBy: varchar("createdBy", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type FoodMatrixSnapshot = typeof foodMatrixSnapshots.$inferSelect;
+export type InsertFoodMatrixSnapshot = typeof foodMatrixSnapshots.$inferInsert;
+
+/**
  * Operazioni: Costi di lavoro e energia
  */
 export const operations = mysqlTable("operations", {
