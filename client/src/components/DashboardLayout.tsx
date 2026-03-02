@@ -230,7 +230,7 @@ function DashboardLayoutContent({
               })}
             </SidebarMenu>
 
-            {user?.role === "admin" && (
+            {(user?.role === "admin" || user?.role === "superadmin") && (
               <>
                 <div className="px-4 py-2">
                   <div className="h-px bg-border" />
@@ -301,6 +301,12 @@ function DashboardLayoutContent({
       </div>
 
       <SidebarInset>
+        {user?.role === "superadmin" && (
+          <div className="sticky top-0 z-50 flex items-center justify-center gap-2 bg-amber-500 text-white text-sm font-semibold px-4 py-2 shadow-md">
+            <Crown className="h-4 w-4 shrink-0" />
+            <span>MODALITÀ SUPER UTENTE — le modifiche si applicano a tutti gli store</span>
+          </div>
+        )}
         {isMobile && (
           <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
             <div className="flex items-center gap-2">

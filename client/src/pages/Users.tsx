@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Users as UsersIcon, Shield, UserCog, ChefHat, ArrowLeft } from "lucide-react";
+import { Users as UsersIcon, Shield, UserCog, ChefHat, ArrowLeft, Crown } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Users() {
@@ -43,6 +43,8 @@ export default function Users() {
 
   const getRoleIcon = (role: string) => {
     switch (role) {
+      case "superadmin":
+        return <Crown className="h-5 w-5 text-amber-600" />;
       case "admin":
         return <Shield className="h-5 w-5 text-red-600" />;
       case "manager":
@@ -56,6 +58,8 @@ export default function Users() {
 
   const getRoleLabel = (role: string) => {
     switch (role) {
+      case "superadmin":
+        return "Super Utente";
       case "admin":
         return "Amministratore";
       case "manager":
@@ -69,6 +73,8 @@ export default function Users() {
 
   const getRoleBadgeClass = (role: string) => {
     switch (role) {
+      case "superadmin":
+        return "bg-amber-100 text-amber-800 border-amber-200";
       case "admin":
         return "bg-red-100 text-red-800 border-red-200";
       case "manager":
@@ -197,6 +203,12 @@ export default function Users() {
                   <SelectValue placeholder="Seleziona ruolo" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="superadmin">
+                    <div className="flex items-center gap-2">
+                      <Crown className="h-4 w-4 text-amber-600" />
+                      <span>Super Utente (modifica su tutti gli store)</span>
+                    </div>
+                  </SelectItem>
                   <SelectItem value="admin">
                     <div className="flex items-center gap-2">
                       <Shield className="h-4 w-4 text-red-600" />

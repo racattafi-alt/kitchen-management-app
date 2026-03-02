@@ -79,6 +79,7 @@ export default function SuperAdminDashboard() {
 
   const getRoleIcon = (role: string) => {
     switch (role) {
+      case "superadmin": return <Shield className="h-5 w-5 text-amber-600" />;
       case "admin": return <Shield className="h-5 w-5 text-red-600" />;
       case "manager": return <UserCog className="h-5 w-5 text-blue-600" />;
       case "cook": return <ChefHat className="h-5 w-5 text-green-600" />;
@@ -88,6 +89,7 @@ export default function SuperAdminDashboard() {
 
   const getRoleBadgeClass = (role: string) => {
     switch (role) {
+      case "superadmin": return "bg-amber-100 text-amber-800 border-amber-200";
       case "admin": return "bg-red-100 text-red-800 border-red-200";
       case "manager": return "bg-blue-100 text-blue-800 border-blue-200";
       case "cook": return "bg-green-100 text-green-800 border-green-200";
@@ -97,6 +99,7 @@ export default function SuperAdminDashboard() {
 
   const getRoleLabel = (role: string) => {
     switch (role) {
+      case "superadmin": return "Super Utente";
       case "admin": return "Amministratore";
       case "manager": return "Manager";
       case "cook": return "Cuoco";
@@ -386,6 +389,9 @@ export default function SuperAdminDashboard() {
                   <SelectValue placeholder="Seleziona ruolo" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="superadmin">
+                    <div className="flex items-center gap-2"><Shield className="h-4 w-4 text-amber-600" /><span>Super Utente (modifica su tutti gli store)</span></div>
+                  </SelectItem>
                   <SelectItem value="admin">
                     <div className="flex items-center gap-2"><Shield className="h-4 w-4 text-red-600" /><span>Amministratore (tutti i permessi)</span></div>
                   </SelectItem>

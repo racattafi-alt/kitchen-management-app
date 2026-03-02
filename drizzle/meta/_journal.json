@@ -281,6 +281,13 @@
       "when": 1772900000000,
       "tag": "0039_add_isSoldByPackage_to_ingredients",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "5",
+      "when": 1773000000000,
+      "tag": "0040_add_superadmin_role",
+      "breakpoints": true
     }
   ]
 }

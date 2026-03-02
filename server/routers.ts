@@ -15,6 +15,17 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { validateRecipe } from "../shared/recipeValidation";
+import {
+  updateIngredientAcrossStores,
+  updateSupplierAcrossStores,
+  updateRecipeAcrossStores,
+} from "./multiStoreEditorDb.js";
+import { getAllStores } from "./storesDb.js";
+
+async function getAllActiveStoreIds(): Promise<string[]> {
+  const stores = await getAllStores();
+  return stores.map(s => s.id);
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -58,21 +69,38 @@ const ingredientsRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+      const role = ctx.user?.role;
+      if (role !== "admin" && role !== "manager" && role !== "superadmin") {
         throw new Error("Unauthorized");
       }
-      return db.createIngredient({
-        ...input,
-        storeId: ctx.currentStoreId || 'default-store-001',
+      const ingredientData = {
+        supplierId: input.supplierId,
+        category: input.category,
+        unitType: input.unitType,
+        packageType: input.packageType,
+        department: input.department,
         packageQuantity: input.packageQuantity.toString(),
         packagePrice: input.packagePrice.toString(),
         pricePerKgOrUnit: input.pricePerKgOrUnit.toString(),
         minOrderQuantity: input.minOrderQuantity?.toString() || null,
         packageSize: input.packageSize?.toString() || null,
+        brand: input.brand,
+        notes: input.notes,
         isActive: true,
         isFood: input.isFood ?? true,
         isSoldByPackage: input.isSoldByPackage ?? false,
         allergens: input.allergens || [],
+      };
+      if (role === "superadmin") {
+        const storeIds = await getAllActiveStoreIds();
+        await updateIngredientAcrossStores(input.name, ingredientData as any, storeIds);
+        return { ...ingredientData, id: input.id, name: input.name, storeId: "all" };
+      }
+      return db.createIngredient({
+        ...ingredientData,
+        id: input.id,
+        name: input.name,
+        storeId: ctx.currentStoreId || 'default-store-001',
       } as any);
     }),
   update: protectedProcedure
@@ -99,7 +127,8 @@ const ingredientsRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+      const role = ctx.user?.role;
+      if (role !== "admin" && role !== "manager" && role !== "superadmin") {
         throw new Error("Unauthorized");
       }
 
@@ -136,12 +165,17 @@ const ingredientsRouter = router({
       if (input.isFood !== undefined) updateData.isFood = input.isFood;
       if (input.isSoldByPackage !== undefined) updateData.isSoldByPackage = input.isSoldByPackage;
       if (input.allergens !== undefined) updateData.allergens = input.allergens;
+      if (role === "superadmin") {
+        const storeIds = await getAllActiveStoreIds();
+        await updateIngredientAcrossStores(currentIngredient.name, updateData, storeIds);
+        return;
+      }
       return db.updateIngredient(input.id, updateData);
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager" && ctx.user?.role !== "superadmin") {
         throw new Error("Unauthorized");
       }
       return db.deleteIngredient(input.id);
@@ -710,8 +744,8 @@ const finalRecipesRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      // Solo admin può creare ricette
-      if (ctx.user?.role !== "admin") {
+      // Solo admin e superadmin possono creare ricette
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
         throw new Error("Unauthorized: Only admins can create recipes");
       }
 
@@ -757,6 +791,33 @@ const finalRecipesRouter = router({
       }, 0);
 
       const newId = crypto.randomUUID();
+      const recipeData = {
+        name: input.name,
+        code: input.code,
+        category: input.category,
+        yieldPercentage: input.yieldPercentage.toString(),
+        serviceWastePercentage: input.serviceWastePercentage.toString(),
+        conservationMethod: input.conservationMethod,
+        maxConservationTime: input.maxConservationTime,
+        totalCost: totalCost.toFixed(2),
+        components: JSON.stringify(input.components),
+        unitType: "k",
+        unitWeight: null,
+        producedQuantity: null,
+        measurementType: "weight_only",
+        pieceWeight: null,
+        productionOperations: null,
+        serviceWastePerIngredient: null,
+        isSemiFinished: input.isSemiFinished ?? false,
+        isSellable: input.isSellable ?? true,
+        isActive: true,
+        sellingPrice: null,
+      };
+      if (ctx.user?.role === "superadmin") {
+        const storeIds = await getAllActiveStoreIds();
+        await updateRecipeAcrossStores(input.name, recipeData as any, storeIds);
+        return { ...recipeData, id: newId, storeId: "all" };
+      }
       return db.createFinalRecipe({
         id: newId,
         storeId: ctx.currentStoreId || 'default-store-001',
@@ -812,8 +873,9 @@ const finalRecipesRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      // Solo admin può modificare ricette
-      if (ctx.user?.role !== "admin") {
+      const role = ctx.user?.role;
+      // Solo admin e superadmin possono modificare ricette
+      if (role !== "admin" && role !== "superadmin") {
         throw new Error("Unauthorized: Only admins can update recipes");
       }
 
@@ -859,6 +921,11 @@ const finalRecipesRouter = router({
         updateData.components = JSON.stringify(input.components);
       }
 
+      if (role === "superadmin" && currentRecipe) {
+        const storeIds = await getAllActiveStoreIds();
+        await updateRecipeAcrossStores(currentRecipe.name, updateData, storeIds);
+        return;
+      }
       return db.updateFinalRecipe(input.id, updateData);
     }),
 
@@ -1145,8 +1212,15 @@ const suppliersRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+      const role = ctx.user?.role;
+      if (role !== "admin" && role !== "manager" && role !== "superadmin") {
         throw new Error("Unauthorized");
+      }
+      const { id, name, ...supplierData } = input;
+      if (role === "superadmin") {
+        const storeIds = await getAllActiveStoreIds();
+        await updateSupplierAcrossStores(name, supplierData as any, storeIds);
+        return { ...supplierData, id, name, storeId: "all" };
       }
       return db.createSupplier({ ...input, storeId: ctx.currentStoreId || 'default-store-001' } as any);
     }),
@@ -1163,16 +1237,22 @@ const suppliersRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+      const role = ctx.user?.role;
+      if (role !== "admin" && role !== "manager" && role !== "superadmin") {
         throw new Error("Unauthorized");
       }
       const { id, ...updateData } = input;
+      if (role === "superadmin" && input.name) {
+        const storeIds = await getAllActiveStoreIds();
+        await updateSupplierAcrossStores(input.name, updateData as any, storeIds);
+        return;
+      }
       return db.updateSupplier(id, updateData);
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager" && ctx.user?.role !== "superadmin") {
         throw new Error("Unauthorized");
       }
       return db.deleteSupplier(input.id);
@@ -1264,7 +1344,7 @@ const systemRouter = router({
 
 // ============ PROCEDURE GESTIONE UTENTI ============
 const usersRouter = router({  list: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user?.role !== "admin") {
+    if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
       throw new Error("Unauthorized: Only admins can view users");
     }
     return db.getAllUsers();
@@ -1273,10 +1353,10 @@ const usersRouter = router({  list: protectedProcedure.query(async ({ ctx }) => 
   updateRole: protectedProcedure
     .input(z.object({
       userId: z.number(),
-      role: z.enum(["user", "admin", "manager", "cook"])
+      role: z.enum(["user", "admin", "manager", "cook", "superadmin"])
     }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin") {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
         throw new Error("Unauthorized: Only admins can change user roles");
       }
       return db.updateUserRole(input.userId, input.role);
