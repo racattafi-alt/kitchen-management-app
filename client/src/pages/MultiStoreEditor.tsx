@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Save, AlertTriangle, Check, ArrowRight, Database } from "lucide-react";
+import { ArrowLeft, Save, AlertTriangle, Check, ArrowRight, Database, GitCompare, Copy, ChevronDown, ChevronUp } from "lucide-react";
 import { useStore } from "@/contexts/StoreContext";
 import RecipeForm, { RecipeFormData, ComponentWithDetails } from "@/components/RecipeForm";
 import { toast } from "sonner";
@@ -55,10 +55,52 @@ export default function MultiStoreEditor() {
   const [migrationDestStoreIds, setMigrationDestStoreIds] = useState<string[]>([]);
   const [migrationEntityTypes, setMigrationEntityTypes] = useState<string[]>(["ingredient", "recipe", "supplier"]);
 
+  // Stato per confronto store
+  const [compareStoreA, setCompareStoreA] = useState<string>("");
+  const [compareStoreB, setCompareStoreB] = useState<string>("");
+  const [compareEntityType, setCompareEntityType] = useState<EntityType>("ingredient");
+  const [compareEnabled, setCompareEnabled] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
+
+  const { data: compareData, isLoading: compareLoading, refetch: refetchCompare } =
+    trpc.multiStoreEditor.compareStores.useQuery(
+      { entityType: compareEntityType, storeIdA: compareStoreA, storeIdB: compareStoreB },
+      { enabled: compareEnabled && !!compareStoreA && !!compareStoreB && compareStoreA !== compareStoreB }
+    );
+
+  const handleCompare = () => {
+    if (!compareStoreA || !compareStoreB) {
+      toast.error("Seleziona entrambi gli store da confrontare");
+      return;
+    }
+    if (compareStoreA === compareStoreB) {
+      toast.error("Seleziona due store diversi");
+      return;
+    }
+    setCompareEnabled(true);
+    setCompareOpen(true);
+    refetchCompare();
+  };
+
+  const copySingleToStore = (name: string, fromStoreId: string, toStoreId: string) => {
+    bulkMigrateMutation.mutate({
+      sourceStoreId: fromStoreId,
+      destinationStoreIds: [toStoreId],
+      entityTypes: [compareEntityType],
+    });
+  };
+
   const bulkMigrateMutation = trpc.multiStoreEditor.bulkMigrateFromStore.useMutation({
     onSuccess: (result) => {
-      toast.success(`Migrazione completata: ${result.totalMigrated} entità copiate`);
+      const errMsg = result.errors.length > 0
+        ? ` (${result.errors.length} errori)`
+        : "";
+      toast.success(`Migrazione completata: ${result.totalMigrated} entità copiate${errMsg}`);
+      if (result.errors.length > 0) {
+        console.error("Errori migrazione:", result.errors);
+      }
       setMigrationDestStoreIds([]);
+      if (compareEnabled) refetchCompare();
     },
     onError: (error) => {
       toast.error(`Errore migrazione: ${error.message}`);
@@ -366,6 +408,173 @@ export default function MultiStoreEditor() {
             </div>
           </div>
         </CardContent>
+      </Card>
+
+      {/* Sezione Confronto Store */}
+      <Card className="mb-6 border-purple-200 bg-purple-50">
+        <CardHeader
+          className="cursor-pointer select-none"
+          onClick={() => setCompareOpen(prev => !prev)}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <GitCompare className="h-5 w-5 text-purple-600" />
+              <CardTitle className="text-purple-900">Confronta Store</CardTitle>
+            </div>
+            {compareOpen ? <ChevronUp className="h-4 w-4 text-purple-600" /> : <ChevronDown className="h-4 w-4 text-purple-600" />}
+          </div>
+          <CardDescription>
+            Scopri quali prodotti esistono in uno store ma non nell'altro e copia selettivamente
+          </CardDescription>
+        </CardHeader>
+        {compareOpen && (
+          <CardContent>
+            {/* Controlli confronto */}
+            <div className="flex flex-wrap gap-4 items-end mb-4">
+              <div className="flex-1 min-w-[180px]">
+                <Label className="text-sm font-semibold">Store A</Label>
+                <Select value={compareStoreA} onValueChange={v => { setCompareStoreA(v); setCompareEnabled(false); }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleziona store A..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stores?.map(s => (
+                      <SelectItem key={s.storeId} value={s.storeId}>{s.storeName}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex-1 min-w-[180px]">
+                <Label className="text-sm font-semibold">Store B</Label>
+                <Select value={compareStoreB} onValueChange={v => { setCompareStoreB(v); setCompareEnabled(false); }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleziona store B..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stores?.filter(s => s.storeId !== compareStoreA).map(s => (
+                      <SelectItem key={s.storeId} value={s.storeId}>{s.storeName}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex-1 min-w-[140px]">
+                <Label className="text-sm font-semibold">Tipo</Label>
+                <Select value={compareEntityType} onValueChange={v => { setCompareEntityType(v as EntityType); setCompareEnabled(false); }}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ingredient">Ingredienti</SelectItem>
+                    <SelectItem value="recipe">Ricette</SelectItem>
+                    <SelectItem value="supplier">Fornitori</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button
+                onClick={handleCompare}
+                disabled={compareLoading || !compareStoreA || !compareStoreB}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                <GitCompare className="h-4 w-4 mr-2" />
+                {compareLoading ? "Confronto..." : "Confronta"}
+              </Button>
+            </div>
+
+            {/* Risultati confronto */}
+            {compareData && (
+              <div className="grid grid-cols-3 gap-4">
+                {/* Solo in A */}
+                <div className="rounded border border-orange-200 bg-orange-50 p-3">
+                  <div className="font-semibold text-orange-800 mb-2 flex items-center gap-1">
+                    <AlertTriangle className="h-4 w-4" />
+                    Solo in {stores?.find(s => s.storeId === compareStoreA)?.storeName ?? "Store A"} ({compareData.onlyInA.length})
+                  </div>
+                  {compareData.onlyInA.length === 0 ? (
+                    <p className="text-xs text-gray-500">Nessuno</p>
+                  ) : (
+                    <div className="space-y-1 max-h-60 overflow-y-auto">
+                      {compareData.onlyInA.map(name => (
+                        <div key={name} className="flex items-center justify-between gap-2 text-sm bg-white rounded px-2 py-1">
+                          <span className="truncate">{name}</span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 px-2 text-xs shrink-0"
+                            disabled={bulkMigrateMutation.isPending}
+                            onClick={() => copySingleToStore(name, compareStoreA, compareStoreB)}
+                            title={`Copia in ${stores?.find(s => s.storeId === compareStoreB)?.storeName}`}
+                          >
+                            <Copy className="h-3 w-3 mr-1" />→B
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* In entrambi */}
+                <div className="rounded border border-green-200 bg-green-50 p-3">
+                  <div className="font-semibold text-green-800 mb-2 flex items-center gap-1">
+                    <Check className="h-4 w-4" />
+                    In entrambi ({compareData.inBoth.length})
+                  </div>
+                  {compareData.inBoth.length === 0 ? (
+                    <p className="text-xs text-gray-500">Nessuno</p>
+                  ) : (
+                    <div className="space-y-1 max-h-60 overflow-y-auto">
+                      {compareData.inBoth.map(item => (
+                        <div key={item.name} className="flex items-center gap-2 text-sm bg-white rounded px-2 py-1">
+                          {item.hasDiff ? (
+                            <AlertTriangle className="h-3 w-3 text-orange-500 shrink-0" title="Valori diversi tra i due store" />
+                          ) : (
+                            <Check className="h-3 w-3 text-green-500 shrink-0" />
+                          )}
+                          <span className="truncate">{item.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Solo in B */}
+                <div className="rounded border border-blue-200 bg-blue-50 p-3">
+                  <div className="font-semibold text-blue-800 mb-2 flex items-center gap-1">
+                    <AlertTriangle className="h-4 w-4" />
+                    Solo in {stores?.find(s => s.storeId === compareStoreB)?.storeName ?? "Store B"} ({compareData.onlyInB.length})
+                  </div>
+                  {compareData.onlyInB.length === 0 ? (
+                    <p className="text-xs text-gray-500">Nessuno</p>
+                  ) : (
+                    <div className="space-y-1 max-h-60 overflow-y-auto">
+                      {compareData.onlyInB.map(name => (
+                        <div key={name} className="flex items-center justify-between gap-2 text-sm bg-white rounded px-2 py-1">
+                          <span className="truncate">{name}</span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 px-2 text-xs shrink-0"
+                            disabled={bulkMigrateMutation.isPending}
+                            onClick={() => copySingleToStore(name, compareStoreB, compareStoreA)}
+                            title={`Copia in ${stores?.find(s => s.storeId === compareStoreA)?.storeName}`}
+                          >
+                            <Copy className="h-3 w-3 mr-1" />→A
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {compareEnabled && !compareLoading && !compareData && (
+              <p className="text-center text-sm text-gray-500 mt-4">Nessun dato disponibile</p>
+            )}
+          </CardContent>
+        )}
       </Card>
 
       <div className="grid grid-cols-12 gap-6">

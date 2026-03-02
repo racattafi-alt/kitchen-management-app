@@ -9,6 +9,7 @@ import {
   boolean,
   json,
   datetime,
+  unique,
 } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
 
@@ -70,7 +71,7 @@ export type InsertStoreUser = typeof storeUsers.$inferInsert;
 export const suppliers = mysqlTable("suppliers", {
   id: varchar("id", { length: 36 }).primaryKey(),
   storeId: varchar("storeId", { length: 36 }).notNull(),
-  name: varchar("name", { length: 255 }).notNull().unique(),
+  name: varchar("name", { length: 255 }).notNull(),
   contact: varchar("contact", { length: 255 }),
   email: varchar("email", { length: 320 }),
   phone: varchar("phone", { length: 50 }),
@@ -78,7 +79,9 @@ export const suppliers = mysqlTable("suppliers", {
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  nameStoreUnique: unique("suppliers_name_storeId_unique").on(table.name, table.storeId),
+}));
 
 export type Supplier = typeof suppliers.$inferSelect;
 export type InsertSupplier = typeof suppliers.$inferInsert;

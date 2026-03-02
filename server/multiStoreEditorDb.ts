@@ -261,6 +261,51 @@ export async function getAllEntitiesFromStore(entityType: EntityType, storeId: s
 }
 
 /**
+ * Confronta entità tra due store: restituisce cosa c'è solo in A, solo in B, e in entrambi (con flag diff)
+ */
+export async function compareStoreEntities(
+  entityType: EntityType,
+  storeIdA: string,
+  storeIdB: string
+) {
+  const [entitiesA, entitiesB] = await Promise.all([
+    getAllEntitiesFromStore(entityType, storeIdA),
+    getAllEntitiesFromStore(entityType, storeIdB),
+  ]);
+
+  const mapA = new Map(entitiesA.map((e: any) => [e.name, e]));
+  const mapB = new Map(entitiesB.map((e: any) => [e.name, e]));
+
+  const COMPARE_FIELDS_BY_TYPE: Record<EntityType, string[]> = {
+    ingredient: ["category", "unitType", "packageType", "department", "packageQuantity", "packagePrice", "pricePerKgOrUnit", "minOrderQuantity", "packageSize", "brand", "notes"],
+    recipe: ["category", "yieldPercentage", "totalCost", "conservationMethod", "maxConservationTime", "serviceWastePercentage", "unitType", "unitWeight", "producedQuantity", "isSellable", "isActive"],
+    supplier: ["contact", "email", "phone", "address", "notes"],
+  };
+
+  const compareFields = COMPARE_FIELDS_BY_TYPE[entityType];
+
+  const onlyInA = entitiesA
+    .filter((e: any) => !mapB.has(e.name))
+    .map((e: any) => e.name);
+
+  const onlyInB = entitiesB
+    .filter((e: any) => !mapA.has(e.name))
+    .map((e: any) => e.name);
+
+  const inBoth = entitiesA
+    .filter((e: any) => mapB.has(e.name))
+    .map((e: any) => {
+      const b = mapB.get(e.name)!;
+      const hasDiff = compareFields.some(
+        (f) => String((e as any)[f] ?? "") !== String((b as any)[f] ?? "")
+      );
+      return { name: e.name, hasDiff };
+    });
+
+  return { onlyInA, onlyInB, inBoth };
+}
+
+/**
  * Lista tutti i fornitori aggregati per nome
  */
 export async function listSuppliersGrouped() {
