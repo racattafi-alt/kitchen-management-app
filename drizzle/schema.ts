@@ -140,7 +140,7 @@ export type InsertIngredient = typeof ingredients.$inferInsert;
 export const semiFinishedRecipes = mysqlTable("semi_finished_recipes", {
   id: varchar("id", { length: 36 }).primaryKey(),
   storeId: varchar("storeId", { length: 36 }).notNull(),
-  code: varchar("code", { length: 50 }).notNull().unique(),
+  code: varchar("code", { length: 50 }).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   category: mysqlEnum("category", ["SPEZIE", "SALSE", "VERDURA", "CARNE", "ALTRO"]).notNull(),
   finalPricePerKg: decimal("finalPricePerKg", { precision: 10, scale: 2 }).notNull(),
@@ -152,7 +152,9 @@ export const semiFinishedRecipes = mysqlTable("semi_finished_recipes", {
   productionSteps: json("productionSteps"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  codeStoreUnique: unique("semi_finished_recipes_code_storeId_unique").on(table.code, table.storeId),
+}));
 
 export type SemiFinishedRecipe = typeof semiFinishedRecipes.$inferSelect;
 export type InsertSemiFinishedRecipe = typeof semiFinishedRecipes.$inferInsert;
@@ -163,7 +165,7 @@ export type InsertSemiFinishedRecipe = typeof semiFinishedRecipes.$inferInsert;
 export const finalRecipes = mysqlTable("final_recipes", {
   id: varchar("id", { length: 36 }).primaryKey(),
   storeId: varchar("storeId", { length: 36 }).notNull(),
-  code: varchar("code", { length: 50 }).notNull().unique(),
+  code: varchar("code", { length: 50 }).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   category: mysqlEnum("category", ["Pane", "Carne", "Salse", "Verdure", "Formaggi", "Altro"]).notNull(),
   components: json("components"),
@@ -185,7 +187,9 @@ export const finalRecipes = mysqlTable("final_recipes", {
   sellingPrice: decimal("sellingPrice", { precision: 10, scale: 2 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  codeStoreUnique: unique("final_recipes_code_storeId_unique").on(table.code, table.storeId),
+}));
 
 export type FinalRecipe = typeof finalRecipes.$inferSelect;
 export type InsertFinalRecipe = typeof finalRecipes.$inferInsert;
