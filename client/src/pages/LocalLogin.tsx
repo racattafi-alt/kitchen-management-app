@@ -7,6 +7,11 @@ import { useState, useEffect } from "react";
 
 type Mode = "login" | "register";
 
+interface StoreOption {
+  id: string;
+  name: string;
+}
+
 const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
   google_cancelled: "Accesso con Google annullato.",
   google_token_failed: "Errore durante il collegamento con Google. Riprova.",
@@ -20,6 +25,21 @@ export default function LocalLogin() {
   const [mode, setMode] = useState<Mode>("login");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [stores, setStores] = useState<StoreOption[]>([]);
+  const [storeId, setStoreId] = useState("");
+
+  // Carica i locali disponibili quando si entra in modalità registrazione
+  useEffect(() => {
+    if (mode === "register" && stores.length === 0) {
+      fetch("/api/auth/stores")
+        .then((r) => r.json())
+        .then((data: StoreOption[]) => {
+          setStores(data);
+          if (data.length === 1) setStoreId(data[0].id);
+        })
+        .catch(() => {});
+    }
+  }, [mode]);
 
   // Leggi errori OAuth dal query string (es. /login?error=email_already_registered)
   useEffect(() => {
@@ -36,6 +56,12 @@ export default function LocalLogin() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+
+    if (mode === "register" && !storeId) {
+      setError("Seleziona il locale in cui lavori.");
+      return;
+    }
+
     setLoading(true);
 
     const form = e.currentTarget;
@@ -44,6 +70,8 @@ export default function LocalLogin() {
     data.forEach((value, key) => {
       body[key] = value as string;
     });
+
+    if (mode === "register") body.storeId = storeId;
 
     const url = mode === "login" ? "/api/auth/login" : "/api/auth/register";
 
@@ -121,10 +149,31 @@ export default function LocalLogin() {
             {/* Form email/password */}
             <form onSubmit={handleSubmit} className="space-y-4">
               {mode === "register" && (
-                <div className="space-y-1">
-                  <Label htmlFor="name">Nome e Cognome</Label>
-                  <Input id="name" name="name" type="text" required placeholder="Mario Rossi" />
-                </div>
+                <>
+                  <div className="space-y-1">
+                    <Label htmlFor="name">Nome e Cognome</Label>
+                    <Input id="name" name="name" type="text" required placeholder="Mario Rossi" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="storeSelect">Locale di lavoro *</Label>
+                    {stores.length === 0 ? (
+                      <p className="text-sm text-slate-500">Caricamento locali…</p>
+                    ) : (
+                      <select
+                        id="storeSelect"
+                        value={storeId}
+                        onChange={(e) => setStoreId(e.target.value)}
+                        required
+                        className="w-full border border-slate-200 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      >
+                        <option value="">— Scegli un locale —</option>
+                        {stores.map((s) => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                </>
               )}
 
               <div className="space-y-1">
