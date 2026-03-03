@@ -251,18 +251,17 @@ function AddProductDialog({
             </div>
             <div>
               <Label>Categoria</Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                list="fme-categories"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="Es. Bevande, Antipasti..."
+              />
+              <datalist id="fme-categories">
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
             </div>
             <div>
               <Label>Prezzo vendita (€)</Label>
