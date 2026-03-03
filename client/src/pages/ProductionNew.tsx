@@ -99,25 +99,25 @@ export default function ProductionNew() {
 
   return (
     <DashboardLayout>
-      <div className="container pt-6 pb-2">
-        <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col h-full min-h-0">
+        <div className="flex justify-between items-center pt-4 pb-3 px-0">
           <div>
-            <h1 className="text-3xl font-bold">Pianificazione Produzione</h1>
-            <p className="text-muted-foreground mt-2">
+            <h1 className="text-2xl font-bold">Pianificazione Produzione</h1>
+            <p className="text-muted-foreground text-sm mt-1">
               Inserisci le quantità da produrre per ogni ricetta
             </p>
           </div>
         </div>
 
         {/* Tabs Pianifica / Storico */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="plan">Pianifica Produzione</TabsTrigger>
             <TabsTrigger value="history">Storico Produzioni</TabsTrigger>
           </TabsList>
           
           {/* TAB: Pianifica Produzione */}
-          <TabsContent value="plan" className="space-y-6">
+          <TabsContent value="plan" className="flex flex-col flex-1 min-h-0 gap-4 mt-0">
             {/* Header con Data e Conferma */}
             <Card>
               <CardContent className="pt-6">
@@ -169,8 +169,8 @@ export default function ProductionNew() {
             </Card>
 
             {/* Lista Ricette Scorrevole */}
-            <Card>
-          <CardHeader>
+            <Card className="flex flex-col flex-1 min-h-0">
+          <CardHeader className="pb-3">
             <CardTitle>
               Ricette Disponibili
               {filteredRecipes.length > 0 && (
@@ -180,7 +180,7 @@ export default function ProductionNew() {
               )}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1 min-h-0 overflow-y-auto">
             {isLoading ? (
               <p className="text-muted-foreground">Caricamento ricette...</p>
             ) : filteredRecipes.length === 0 ? (
@@ -188,7 +188,7 @@ export default function ProductionNew() {
                 {searchQuery ? "Nessuna ricetta trovata con questi criteri" : "Nessuna ricetta disponibile"}
               </p>
             ) : (
-              <div className="space-y-3 max-h-[calc(100vh-420px)] overflow-y-auto pr-2">
+              <div className="space-y-3 pr-2">
                 {filteredRecipes.map((recipe: any) => {
                   const quantity = quantities[recipe.id] || "";
                   const hasQuantity = quantity && parseFloat(quantity) > 0;
@@ -259,7 +259,7 @@ export default function ProductionNew() {
           </TabsContent>
           
           {/* TAB: Storico Produzioni */}
-          <TabsContent value="history">
+          <TabsContent value="history" className="flex-1 min-h-0 overflow-y-auto mt-0">
             <Card>
               <CardHeader>
                 <CardTitle>Produzioni Pianificate</CardTitle>

@@ -323,7 +323,7 @@ function DashboardLayoutContent({
             </div>
           </div>
         )}
-        <main className="flex-1 p-4">{children}</main>
+        <main className="flex-1 p-4 flex flex-col min-h-0">{children}</main>
       </SidebarInset>
     </>
   );
