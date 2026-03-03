@@ -99,8 +99,8 @@ export default function ProductionNew() {
 
   return (
     <DashboardLayout>
-      <div className="container py-8">
-        <div className="flex justify-between items-center mb-8">
+      <div className="container pt-6 pb-2">
+        <div className="flex justify-between items-center mb-4">
           <div>
             <h1 className="text-3xl font-bold">Pianificazione Produzione</h1>
             <p className="text-muted-foreground mt-2">
@@ -188,7 +188,7 @@ export default function ProductionNew() {
                 {searchQuery ? "Nessuna ricetta trovata con questi criteri" : "Nessuna ricetta disponibile"}
               </p>
             ) : (
-              <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+              <div className="space-y-3 max-h-[calc(100vh-420px)] overflow-y-auto pr-2">
                 {filteredRecipes.map((recipe: any) => {
                   const quantity = quantities[recipe.id] || "";
                   const hasQuantity = quantity && parseFloat(quantity) > 0;

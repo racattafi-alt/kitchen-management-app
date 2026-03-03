@@ -290,25 +290,30 @@ export default function FinalRecipes() {
   const handleEdit = async (recipe: any) => {
     const idx = recipes?.findIndex((r: any) => r.id === recipe.id) ?? -1;
     if (idx !== -1) setEditingIndex(idx);
+
+    // Carica dati freschi dal server per avere components aggiornati
+    const fresh = await utils.finalRecipes.getById.fetch({ id: recipe.id });
+    const source = fresh ?? recipe;
+
     setEditFormData({
-      id: recipe.id,
-      name: recipe.name,
-      category: recipe.category,
-      yieldPercentage: parseFloat(recipe.yieldPercentage || "100"),
-      serviceWastePercentage: parseFloat(recipe.serviceWastePercentage || "0"),
-      unitWeight: parseFloat(recipe.unitWeight || "0"),
-      producedQuantity: parseFloat(recipe.producedQuantity || "0"),
-      measurementType: recipe.measurementType || 'weight_only',
-      pieceWeight: parseFloat(recipe.pieceWeight || "0"),
-      isSemiFinished: recipe.isSemiFinished || false,
-      isSellable: recipe.isSellable !== false,
+      id: source.id,
+      name: source.name,
+      category: source.category,
+      yieldPercentage: parseFloat(source.yieldPercentage || "100"),
+      serviceWastePercentage: parseFloat(source.serviceWastePercentage || "0"),
+      unitWeight: parseFloat(source.unitWeight || "0"),
+      producedQuantity: parseFloat(source.producedQuantity || "0"),
+      measurementType: source.measurementType || 'weight_only',
+      pieceWeight: parseFloat(source.pieceWeight || "0"),
+      isSemiFinished: !!source.isSemiFinished,
+      isSellable: source.isSellable !== false,
     });
-    
+
     // Carica componenti esistenti con dettagli completi
-    const components = typeof recipe.components === 'string' 
-      ? JSON.parse(recipe.components) 
-      : recipe.components;
-    
+    const components = typeof source.components === 'string'
+      ? JSON.parse(source.components)
+      : (source.components ?? []);
+
     // Espandi componenti con dettagli (nome, prezzo)
     const expandedComponents = await Promise.all(
       (components || []).map(async (comp: any) => {
@@ -341,7 +346,7 @@ export default function FinalRecipes() {
         return comp;
       })
     );
-    
+
     setEditComponents(expandedComponents);
     setIsEditOpen(true);
     setSelectedRecipeId(null);
@@ -419,8 +424,8 @@ export default function FinalRecipes() {
       producedQuantity: editFormData.producedQuantity,
       measurementType: editFormData.measurementType,
       pieceWeight: editFormData.pieceWeight,
-      isSemiFinished: editFormData.isSemiFinished,
-      isSellable: editFormData.isSellable,
+      isSemiFinished: !!editFormData.isSemiFinished,
+      isSellable: !!editFormData.isSellable,
       components: editComponents.map(comp => ({
         type: comp.type,
         componentId: comp.componentId || '',
