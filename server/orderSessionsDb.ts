@@ -141,7 +141,7 @@ export async function getUserOrderHistory(userId: number, storeId: string): Prom
 // Ottiene tutti gli ordini (solo admin)
 export async function getAllOrderHistory(storeId: string): Promise<OrderHistoryItem[]> {
   const rows = await executeQuery(
-    `SELECT * FROM order_history WHERE storeId = ? ORDER BY createdAt DESC LIMIT 100`,
+    `SELECT * FROM order_history WHERE (storeId = ? OR storeId = 'default-store-001') ORDER BY createdAt DESC LIMIT 500`,
     [storeId]
   );
   return (rows as any[]).map((row) => ({

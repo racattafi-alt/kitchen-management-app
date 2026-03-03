@@ -35,6 +35,9 @@ interface PriceEdit {
 export default function SuperAdminDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("negozi");
 
+  // ---- Current user ----
+  const { data: me } = trpc.auth.me.useQuery();
+
   // ---- Store state ----
   const { data: stores = [], isLoading, refetch } = trpc.stores.list.useQuery();
   const createStoreMutation = trpc.stores.create.useMutation();
@@ -43,6 +46,21 @@ export default function SuperAdminDashboard() {
   const [newStoreAddress, setNewStoreAddress] = useState("");
   const [newStorePhone, setNewStorePhone] = useState("");
   const [newStoreEmail, setNewStoreEmail] = useState("");
+
+  // ---- Edit store state ----
+  const [editingStore, setEditingStore] = useState<any | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editAddress, setEditAddress] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+
+  function openEditStore(store: any) {
+    setEditingStore(store);
+    setEditName(store.storeName || "");
+    setEditAddress(store.storeAddress || "");
+    setEditPhone(store.storePhone || "");
+    setEditEmail(store.storeEmail || "");
+  }
 
   // ---- User state ----
   const { data: users, isLoading: usersLoading } = trpc.users.list.useQuery();
@@ -60,7 +78,11 @@ export default function SuperAdminDashboard() {
   const [categoryFilter, setCategoryFilter] = useState("all");
 
   const updateStoreMutation = trpc.stores.update.useMutation({
-    onSuccess: () => { toast.success("Store aggiornato!"); utils.stores.list.invalidate(); },
+    onSuccess: () => {
+      toast.success("Store aggiornato!");
+      utils.stores.list.invalidate();
+      setEditingStore(null);
+    },
     onError: (error) => { toast.error(error.message || "Errore aggiornamento store"); },
   });
 
@@ -427,7 +449,7 @@ export default function SuperAdminDashboard() {
                         <span className="font-medium text-xs">{store.storeEmail}</span>
                       </div>
                     )}
-                    <div className="pt-2">
+                    <div className="pt-2 flex flex-col gap-2">
                       <Button
                         variant={(store as any).storeIsGlobal ? "default" : "outline"}
                         size="sm"
@@ -438,6 +460,17 @@ export default function SuperAdminDashboard() {
                         <Globe className="h-4 w-4 mr-2" />
                         {(store as any).storeIsGlobal ? "Store Globale (attivo)" : "Imposta come Store Globale"}
                       </Button>
+                      {(me?.role === "admin" || me?.role === "superadmin") && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => openEditStore(store)}
+                        >
+                          <Edit3 className="h-4 w-4 mr-2" />
+                          Modifica Store
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -457,6 +490,49 @@ export default function SuperAdminDashboard() {
               </CardContent>
             </Card>
           )}
+
+          {/* Dialog modifica store */}
+          <Dialog open={!!editingStore} onOpenChange={(o) => !o && setEditingStore(null)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Modifica Store — {editingStore?.storeName}</DialogTitle>
+                <DialogDescription>Aggiorna i dati del punto vendita.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>Nome *</Label>
+                  <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Nome negozio" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Indirizzo</Label>
+                  <Input value={editAddress} onChange={(e) => setEditAddress(e.target.value)} placeholder="Via Roma 1, Milano" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Telefono</Label>
+                  <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="+39 02 1234567" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} placeholder="negozio@example.com" />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEditingStore(null)}>Annulla</Button>
+                <Button
+                  disabled={updateStoreMutation.isPending || !editName.trim()}
+                  onClick={() => updateStoreMutation.mutate({
+                    storeId: editingStore!.storeId,
+                    name: editName.trim(),
+                    address: editAddress || undefined,
+                    phone: editPhone || undefined,
+                    email: editEmail || undefined,
+                  })}
+                >
+                  {updateStoreMutation.isPending ? "Salvataggio..." : "Salva"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       )}
 
