@@ -135,13 +135,13 @@ function RecipeForm({
         }));
       
       const semiFromRecipes = (allRecipes || [])
-        .filter(r => r.isSemiFinished && r.name.toLowerCase().includes(term))
+        .filter(r => !!r.isSemiFinished && r.name.toLowerCase().includes(term))
         .map(r => ({
           type: 'semi_finished' as const,
           id: r.id,
           name: r.name,
           unit: 'kg',
-          pricePerUnit: r.unitWeight ? parseFloat(r.totalCost || '0') / parseFloat(r.unitWeight) : 0,
+          pricePerUnit: parseFloat(r.totalCost || '0'),
         }));
       
       let combined = [...semiFromTable, ...semiFromRecipes];

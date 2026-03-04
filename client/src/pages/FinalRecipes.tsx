@@ -246,18 +246,18 @@ export default function FinalRecipes() {
         }));
       
       const semiFromRecipes = (allRecipes || [])
-        .filter(r => r.isSemiFinished && r.name.toLowerCase().includes(term))
+        .filter(r => !!r.isSemiFinished && r.name.toLowerCase().includes(term))
         .map(r => ({
           type: 'semi_finished' as const,
           id: r.id,
           name: r.name,
           unit: 'kg',
-          pricePerUnit: r.unitWeight ? parseFloat(r.totalCost || '0') / parseFloat(r.unitWeight) : 0,
+          pricePerUnit: parseFloat(r.totalCost || '0'),
         }));
-      
+
       return [...semiFromTable, ...semiFromRecipes].slice(0, 5);
     }
-    
+
     if (searchType === 'operation' && operations) {
       return operations
         .filter(o => o.name.toLowerCase().includes(term))
@@ -271,9 +271,9 @@ export default function FinalRecipes() {
           costType: o.costType,
         }));
     }
-    
+
     return [];
-  }, [searchTerm, searchType, ingredients, semiFinished, operations]);
+  }, [searchTerm, searchType, ingredients, semiFinished, operations, allRecipes]);
 
   const navigateRecipe = useCallback(async (direction: "prev" | "next") => {
     if (!recipes || recipes.length === 0) return;
@@ -327,11 +327,16 @@ export default function FinalRecipes() {
           };
         } else if (comp.type === 'semi_finished') {
           const semi = semiFinished?.find(s => s.id === comp.componentId);
+          const semiFromRecipe = !semi ? allRecipes?.find((r: any) => r.id === comp.componentId) : undefined;
           return {
             ...comp,
-            name: semi?.name || comp.componentName || 'Sconosciuto',
+            name: semi?.name || semiFromRecipe?.name || comp.componentName || 'Sconosciuto',
             unit: comp.unit || 'kg',
-            pricePerUnit: semi ? parseFloat(semi.finalPricePerKg || '0') : 0,
+            pricePerUnit: semi
+              ? parseFloat(semi.finalPricePerKg || '0')
+              : semiFromRecipe
+                ? parseFloat(semiFromRecipe.totalCost || '0')
+                : 0,
           };
         } else if (comp.type === 'operation') {
           const operation = operations?.find(o => o.name === comp.componentName);
