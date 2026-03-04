@@ -93,9 +93,51 @@ function RecipeForm({
 
   // Filtra componenti in base alla ricerca
   const filteredComponents = useMemo(() => {
-    if (!searchTerm) return [];
-    const term = searchTerm.toLowerCase();
-    
+    const term = searchTerm.toLowerCase().trim();
+
+    // Per semilavorati: mostra subito tutti (anche senza testo di ricerca)
+    if (searchType === 'semi_finished') {
+      const semiFromTable = (semiFinished || [])
+        .filter(s => !term || s.name.toLowerCase().includes(term))
+        .map(s => ({
+          type: 'semi_finished' as const,
+          id: s.id,
+          name: s.name,
+          unit: 'kg',
+          pricePerUnit: parseFloat(s.finalPricePerKg || '0'),
+        }));
+
+      const semiFromRecipes = (allRecipes || [])
+        .filter(r => !!r.isSemiFinished && (!term || r.name.toLowerCase().includes(term)))
+        .map(r => ({
+          type: 'semi_finished' as const,
+          id: r.id,
+          name: r.name,
+          unit: 'kg',
+          pricePerUnit: parseFloat(r.totalCost || '0'),
+        }));
+
+      // Deduplicazione per nome (preferisce semiFromRecipes in caso di duplicati)
+      const seen = new Set<string>();
+      const combined = [...semiFromRecipes, ...semiFromTable].filter(c => {
+        const key = c.name.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      if (sortBy === 'price') {
+        combined.sort((a, b) => a.pricePerUnit - b.pricePerUnit);
+      } else {
+        combined.sort((a, b) => a.name.localeCompare(b.name));
+      }
+
+      return combined.slice(0, 15);
+    }
+
+    // Per ingredienti e operazioni: richiede almeno un carattere
+    if (!term) return [];
+
     if (searchType === 'ingredient' && ingredients) {
       let filtered = ingredients
         .filter(i => i.name.toLowerCase().includes(term))
@@ -107,55 +149,22 @@ function RecipeForm({
           pricePerUnit: parseFloat(i.pricePerKgOrUnit || '0'),
           category: i.category || 'Altro',
         }));
-      
+
       // Applica filtro categoria
       if (categoryFilter !== 'all') {
         filtered = filtered.filter(i => i.category === categoryFilter);
       }
-      
+
       // Applica ordinamento
       if (sortBy === 'price') {
         filtered.sort((a, b) => a.pricePerUnit - b.pricePerUnit);
       } else {
         filtered.sort((a, b) => a.name.localeCompare(b.name));
       }
-      
-      return filtered.slice(0, 10); // Aumentato limite a 10
+
+      return filtered.slice(0, 10);
     }
-    
-    if (searchType === 'semi_finished') {
-      const semiFromTable = (semiFinished || [])
-        .filter(s => s.name.toLowerCase().includes(term))
-        .map(s => ({
-          type: 'semi_finished' as const,
-          id: s.id,
-          name: s.name,
-          unit: 'kg',
-          pricePerUnit: parseFloat(s.finalPricePerKg || '0'),
-        }));
-      
-      const semiFromRecipes = (allRecipes || [])
-        .filter(r => !!r.isSemiFinished && r.name.toLowerCase().includes(term))
-        .map(r => ({
-          type: 'semi_finished' as const,
-          id: r.id,
-          name: r.name,
-          unit: 'kg',
-          pricePerUnit: parseFloat(r.totalCost || '0'),
-        }));
-      
-      let combined = [...semiFromTable, ...semiFromRecipes];
-      
-      // Applica ordinamento
-      if (sortBy === 'price') {
-        combined.sort((a, b) => a.pricePerUnit - b.pricePerUnit);
-      } else {
-        combined.sort((a, b) => a.name.localeCompare(b.name));
-      }
-      
-      return combined.slice(0, 10);
-    }
-    
+
     if (searchType === 'operation' && operations) {
       let filtered = operations
         .filter(o => o.name.toLowerCase().includes(term))
@@ -167,17 +176,17 @@ function RecipeForm({
           pricePerUnit: parseFloat(o.hourlyRate || '0'),
           costType: o.costType,
         }));
-      
+
       // Applica ordinamento
       if (sortBy === 'price') {
         filtered.sort((a, b) => a.pricePerUnit - b.pricePerUnit);
       } else {
         filtered.sort((a, b) => a.name.localeCompare(b.name));
       }
-      
+
       return filtered.slice(0, 10);
     }
-    
+
     return [];
   }, [searchTerm, searchType, ingredients, semiFinished, operations, allRecipes, sortBy, categoryFilter]);
 
@@ -461,7 +470,7 @@ function RecipeForm({
         <div className="space-y-3 p-5 bg-white border-2 border-dashed border-slate-300 rounded-lg">
           <div className="flex items-center justify-between">
             <Label className="text-base font-semibold">Aggiungi Componente</Label>
-            {searchTerm && filteredComponents.length > 0 && (
+            {filteredComponents.length > 0 && (
               <span className="text-sm text-slate-600">
                 {filteredComponents.length} risultat{filteredComponents.length === 1 ? 'o' : 'i'}
               </span>
@@ -521,7 +530,7 @@ function RecipeForm({
           </div>
 
           {/* Risultati ricerca */}
-          {searchTerm && filteredComponents.length > 0 && (
+          {filteredComponents.length > 0 && (
             <div className="border rounded-lg bg-white divide-y max-h-48 overflow-y-auto">
               {filteredComponents.map((comp: any) => (
                 <div
