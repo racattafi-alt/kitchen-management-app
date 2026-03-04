@@ -291,8 +291,8 @@ export default function FinalRecipes() {
     const idx = recipes?.findIndex((r: any) => r.id === recipe.id) ?? -1;
     if (idx !== -1) setEditingIndex(idx);
 
-    // Carica dati freschi dal server per avere components aggiornati
-    const fresh = await utils.finalRecipes.getById.fetch({ id: recipe.id });
+    // Carica dati freschi dal server per avere components aggiornati (con enrichment server-side)
+    const fresh = await utils.finalRecipes.getDetails.fetch({ id: recipe.id });
     const source = fresh ?? recipe;
 
     setEditFormData({
@@ -310,42 +310,49 @@ export default function FinalRecipes() {
     });
 
     // Carica componenti esistenti con dettagli completi
-    const components = typeof source.components === 'string'
-      ? JSON.parse(source.components)
-      : (source.components ?? []);
+    // getDetails li arricchisce server-side; qui aggiorniamo con dati locali se disponibili
+    const components = Array.isArray(source.components)
+      ? source.components
+      : typeof source.components === 'string'
+        ? JSON.parse(source.components)
+        : [];
 
-    // Espandi componenti con dettagli (nome, prezzo)
+    // Espandi componenti con dettagli (nome, prezzo) usando cache locale se disponibile
     const expandedComponents = await Promise.all(
       (components || []).map(async (comp: any) => {
         if (comp.type === 'ingredient') {
           const ingredient = ingredients?.find(i => i.id === comp.componentId);
           return {
             ...comp,
-            name: ingredient?.name || comp.componentName || 'Sconosciuto',
+            name: ingredient?.name || comp.name || comp.componentName || 'Sconosciuto',
             unit: comp.unit || (ingredient?.unitType === 'u' ? 'unità' : 'kg'),
-            pricePerUnit: ingredient ? parseFloat(ingredient.pricePerKgOrUnit || '0') : 0,
+            pricePerUnit: ingredient
+              ? parseFloat(ingredient.pricePerKgOrUnit || '0')
+              : parseFloat(String(comp.pricePerUnit ?? '0')),
           };
         } else if (comp.type === 'semi_finished') {
           const semi = semiFinished?.find(s => s.id === comp.componentId);
           const semiFromRecipe = !semi ? allRecipes?.find((r: any) => r.id === comp.componentId) : undefined;
           return {
             ...comp,
-            name: semi?.name || semiFromRecipe?.name || comp.componentName || 'Sconosciuto',
+            name: semi?.name || semiFromRecipe?.name || comp.name || comp.componentName || 'Sconosciuto',
             unit: comp.unit || 'kg',
             pricePerUnit: semi
               ? parseFloat(semi.finalPricePerKg || '0')
               : semiFromRecipe
                 ? parseFloat(semiFromRecipe.totalCost || '0')
-                : 0,
+                : parseFloat(String(comp.pricePerUnit ?? '0')),
           };
         } else if (comp.type === 'operation') {
           const operation = operations?.find(o => o.name === comp.componentName);
           return {
             ...comp,
-            name: operation?.name || comp.componentName || 'Operazione',
+            name: operation?.name || comp.name || comp.componentName || 'Operazione',
             unit: comp.unit || 'ore',
-            pricePerUnit: operation ? parseFloat(operation.hourlyRate || '0') : 0,
-            costType: operation?.costType || 'LAVORO',
+            pricePerUnit: operation
+              ? parseFloat(operation.hourlyRate || '0')
+              : parseFloat(String(comp.pricePerUnit ?? '0')),
+            costType: operation?.costType || comp.costType || 'LAVORO',
           };
         }
         return comp;
