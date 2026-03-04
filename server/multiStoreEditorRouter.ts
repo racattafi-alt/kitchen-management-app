@@ -11,6 +11,8 @@ import {
   listIngredientsGrouped,
   listRecipesGrouped,
   listSuppliersGrouped,
+  getAllEntitiesFromStore,
+  compareStoreEntities,
 } from "./multiStoreEditorDb.js";
 import { logAction, AuditActions } from "./auditLogHelper.js";
 
@@ -80,7 +82,7 @@ export const multiStoreEditorRouter = router({
       }
 
       let updates: Array<{ storeId: string; action: "created" | "updated"; id: string }> = [];
-      
+
       switch (input.entityType) {
         case "ingredient":
           updates = await updateIngredientAcrossStores(
@@ -109,7 +111,7 @@ export const multiStoreEditorRouter = router({
       for (const update of updates) {
         await logAction({
           storeId: update.storeId,
-          userId: String(ctx.user.id),
+          userId: ctx.user.openId,
           action: `multistore.${input.entityType}.${update.action}`,
           entityType: input.entityType,
           entityId: update.id,
@@ -126,5 +128,94 @@ export const multiStoreEditorRouter = router({
         updates,
         message: `${input.entityType} "${input.name}" aggiornato in ${updates.length} store`,
       };
+    }),
+
+  // Migrazione bulk: copia tutti i dati da uno store sorgente a store destinazione
+  bulkMigrateFromStore: protectedProcedure
+    .input(z.object({
+      sourceStoreId: z.string(),
+      destinationStoreIds: z.array(z.string()),
+      entityTypes: z.array(z.enum(["ingredient", "recipe", "supplier"])),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Solo gli amministratori possono migrare dati tra store",
+        });
+      }
+
+      if (input.destinationStoreIds.includes(input.sourceStoreId)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Lo store sorgente non può essere anche destinazione",
+        });
+      }
+
+      let totalMigrated = 0;
+      const results: { entityType: string; name: string; storeId: string; action: string }[] = [];
+      const errors: { entityType: string; name: string; error: string }[] = [];
+
+      for (const entityType of input.entityTypes) {
+        const entities = await getAllEntitiesFromStore(entityType, input.sourceStoreId);
+
+        for (const entity of entities) {
+          try {
+            const { id, storeId, createdAt, updatedAt, ...data } = entity as any;
+
+            let updates: Array<{ storeId: string; action: string; id: string }> = [];
+            if (entityType === "ingredient") {
+              updates = await updateIngredientAcrossStores(entity.name, data, input.destinationStoreIds);
+            } else if (entityType === "recipe") {
+              updates = await updateRecipeAcrossStores(entity.name, data, input.destinationStoreIds);
+            } else {
+              updates = await updateSupplierAcrossStores(entity.name, data, input.destinationStoreIds);
+            }
+
+            updates.forEach(u => results.push({ entityType, name: entity.name, ...u }));
+            totalMigrated++;
+          } catch (err) {
+            errors.push({
+              entityType,
+              name: (entity as any).name ?? "unknown",
+              error: err instanceof Error ? err.message : String(err),
+            });
+          }
+        }
+      }
+
+      await logAction({
+        storeId: input.sourceStoreId,
+        userId: ctx.user.openId,
+        action: "multistore.bulk_migrate",
+        entityType: "store",
+        entityId: input.sourceStoreId,
+        details: {
+          destinationStoreIds: input.destinationStoreIds,
+          entityTypes: input.entityTypes,
+          totalMigrated,
+          errors: errors.length,
+        },
+      });
+
+      return { success: errors.length === 0, totalMigrated, results, errors };
+    }),
+
+  // Confronto tra due store: mostra cosa c'è solo in A, solo in B, o in entrambi
+  compareStores: protectedProcedure
+    .input(z.object({
+      entityType: z.enum(["ingredient", "recipe", "supplier"]),
+      storeIdA: z.string(),
+      storeIdB: z.string(),
+    }))
+    .query(async ({ input, ctx }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Solo gli amministratori possono confrontare store",
+        });
+      }
+
+      return compareStoreEntities(input.entityType, input.storeIdA, input.storeIdB);
     }),
 });

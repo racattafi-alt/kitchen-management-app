@@ -10,10 +10,11 @@ import { Combobox } from "@/components/ui/combobox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { trpc } from "@/lib/trpc";
-import { Plus, Package, Pencil, Trash2, Download, Upload, ArrowLeft } from "lucide-react";
+import { Plus, Package, Pencil, Trash2, Download, Upload, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumb";
-import { useState, useEffect as React_useEffect } from "react";
+import { useState, useEffect as React_useEffect, useCallback } from "react";
 import * as React from "react";
+import { useArrowNav } from "@/hooks/useArrowNav";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { STANDARD_ALLERGENS } from "../../../shared/allergens";
@@ -26,6 +27,7 @@ export default function Ingredients() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isImportingSala, setIsImportingSala] = useState(false);
   const [editingIngredient, setEditingIngredient] = useState<any>(null);
+  const [editingIndex, setEditingIndex] = useState<number>(-1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedFoodType, setSelectedFoodType] = useState<string>("all"); // all, food, non-food
@@ -48,6 +50,7 @@ export default function Ingredients() {
     packagePrice: 0,
     brand: "",
     notes: "",
+    isSoldByPackage: false,
     allergens: [] as string[],
   });
   const [editFormData, setEditFormData] = useState({
@@ -63,6 +66,7 @@ export default function Ingredients() {
     brand: "",
     notes: "",
     isFood: true,
+    isSoldByPackage: false,
     allergens: [] as string[],
   });
 
@@ -119,8 +123,6 @@ export default function Ingredients() {
   const updateMutation = trpc.ingredients.update.useMutation({
     onSuccess: () => {
       utils.ingredients.list.invalidate();
-      setIsEditOpen(false);
-      setEditingIngredient(null);
       toast.success("Ingrediente aggiornato con successo");
     },
     onError: (error) => {
@@ -260,9 +262,9 @@ export default function Ingredients() {
 
 
 
-  const canEdit = user?.role === "admin" || user?.role === "manager";
-  const canDelete = user?.role === "admin";
-  const canViewPrices = user?.role === "admin" || user?.role === "manager";
+  const canEdit = user?.role === "admin" || user?.role === "manager" || user?.role === "superadmin";
+  const canDelete = user?.role === "admin" || user?.role === "superadmin";
+  const canViewPrices = user?.role === "admin" || user?.role === "manager" || user?.role === "superadmin";
 
   const resetForm = () => {
     setFormData({
@@ -276,6 +278,7 @@ export default function Ingredients() {
       packagePrice: 0,
       brand: "",
       notes: "",
+      isSoldByPackage: false,
       allergens: [] as string[],
     });
   };
@@ -316,11 +319,12 @@ export default function Ingredients() {
       pricePerKgOrUnit: pricePerUnit,
       brand: formData.brand || undefined,
       notes: formData.notes || undefined,
+      isSoldByPackage: formData.isSoldByPackage,
       allergens: formData.allergens,
     });
   };
 
-  const handleEdit = (ingredient: any) => {
+  const loadIngredientToEdit = (ingredient: any) => {
     setEditingIngredient(ingredient);
     setEditFormData({
       name: ingredient.name,
@@ -335,10 +339,28 @@ export default function Ingredients() {
       brand: ingredient.brand || "",
       notes: ingredient.notes || "",
       isFood: ingredient.isFood !== false,
+      isSoldByPackage: ingredient.isSoldByPackage === true,
       allergens: ingredient.allergens || [],
     });
+  };
+
+  const handleEdit = (ingredient: any) => {
+    const idx = ingredients?.findIndex((i: any) => i.id === ingredient.id) ?? -1;
+    setEditingIndex(idx);
+    loadIngredientToEdit(ingredient);
     setIsEditOpen(true);
   };
+
+  const navigateIngredient = useCallback((direction: "prev" | "next") => {
+    if (!ingredients || ingredients.length === 0) return;
+    const newIndex = direction === "prev"
+      ? (editingIndex - 1 + ingredients.length) % ingredients.length
+      : (editingIndex + 1) % ingredients.length;
+    setEditingIndex(newIndex);
+    loadIngredientToEdit(ingredients[newIndex]);
+  }, [editingIndex, ingredients]);
+
+  useArrowNav(isEditOpen, navigateIngredient);
 
   const handleUpdateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -381,6 +403,7 @@ export default function Ingredients() {
       brand: editFormData.brand || undefined,
       notes: editFormData.notes || undefined,
       isFood: editFormData.isFood,
+      isSoldByPackage: editFormData.isSoldByPackage,
       allergens: editFormData.allergens,
     });
   };
@@ -617,6 +640,21 @@ export default function Ingredients() {
                       />
                     </div>
                     <div className="col-span-2">
+                      <Label className="mb-2 block">Modalità vendita</Label>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, isSoldByPackage: !formData.isSoldByPackage })}
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-all ${
+                          formData.isSoldByPackage
+                            ? "bg-blue-100 border-blue-400 text-blue-700"
+                            : "bg-gray-100 border-gray-300 text-gray-500"
+                        }`}
+                      >
+                        <Package className="h-4 w-4" />
+                        Venduto per confezione
+                      </button>
+                    </div>
+                    <div className="col-span-2">
                       <Label>Allergeni</Label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 p-4 border rounded-lg max-h-48 overflow-y-auto">
                         {STANDARD_ALLERGENS.map((allergen) => (
@@ -656,10 +694,39 @@ export default function Ingredients() {
         </div>
 
         {/* Dialog Modifica Ingrediente */}
-        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <Dialog open={isEditOpen} onOpenChange={(open) => { setIsEditOpen(open); if (!open) setEditingIngredient(null); }}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Modifica Ingrediente</DialogTitle>
+              <div className="flex items-center justify-between gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0"
+                  onClick={() => navigateIngredient("prev")}
+                  title="Ingrediente precedente (←)"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex-1 text-center">
+                  <DialogTitle className="truncate">{editingIngredient?.name || "Modifica Ingrediente"}</DialogTitle>
+                  {ingredients && ingredients.length > 0 && (
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {editingIndex + 1} / {ingredients.length} · usa ← → per navigare
+                    </p>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0"
+                  onClick={() => navigateIngredient("next")}
+                  title="Ingrediente successivo (→)"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </DialogHeader>
             <form onSubmit={handleUpdateSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -820,6 +887,21 @@ export default function Ingredients() {
                   />
                 </div>
                 <div className="col-span-2">
+                  <Label className="mb-2 block">Modalità vendita</Label>
+                  <button
+                    type="button"
+                    onClick={() => setEditFormData({ ...editFormData, isSoldByPackage: !editFormData.isSoldByPackage })}
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-all ${
+                      editFormData.isSoldByPackage
+                        ? "bg-blue-100 border-blue-400 text-blue-700"
+                        : "bg-gray-100 border-gray-300 text-gray-500"
+                    }`}
+                  >
+                    <Package className="h-4 w-4" />
+                    Venduto per confezione
+                  </button>
+                </div>
+                <div className="col-span-2">
                   <div className="flex items-center space-x-2">
                     <input
                       type="checkbox"
@@ -858,13 +940,23 @@ export default function Ingredients() {
                   </div>
                 </div>
               </div>
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>
-                  Annulla
+              <div className="flex justify-between gap-2">
+                <Button type="button" variant="ghost" onClick={() => { setIsEditOpen(false); setEditingIngredient(null); }}>
+                  Chiudi
                 </Button>
-                <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">
-                  Salva Modifiche
-                </Button>
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={() => navigateIngredient("prev")}>
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Precedente
+                  </Button>
+                  <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">
+                    Salva Modifiche
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => navigateIngredient("next")}>
+                    Successivo
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
               </div>
             </form>
           </DialogContent>
@@ -978,13 +1070,21 @@ export default function Ingredients() {
                         </TableCell>
                       )}
                       <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          ingredient.isFood === false 
-                            ? 'bg-orange-100 text-orange-700' 
-                            : 'bg-green-100 text-green-700'
-                        }`}>
-                          {ingredient.isFood === false ? 'Non-Food' : 'Food'}
-                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            ingredient.isFood === false
+                              ? 'bg-orange-100 text-orange-700'
+                              : 'bg-green-100 text-green-700'
+                          }`}>
+                            {ingredient.isFood === false ? 'Non-Food' : 'Food'}
+                          </span>
+                          {ingredient.isSoldByPackage && (
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 flex items-center gap-1">
+                              <Package className="h-3 w-3" />
+                              Confezione
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       {canEdit && (
                         <TableCell>

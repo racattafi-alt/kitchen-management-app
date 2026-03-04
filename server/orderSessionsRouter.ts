@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "./_core/trpc";
+import { storeAwareProcedure } from "./storeMiddleware";
 import {
   getUserOrderSession,
   upsertOrderSessionItem,
@@ -41,19 +42,13 @@ export const orderSessionsRouter = router({
   }),
 
   // Invia ordine (genera PDF, salva storico, svuota carrello)
-  submitOrder: protectedProcedure
+  submitOrder: storeAwareProcedure
     .input(
       z.object({
         notes: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      if (!ctx.currentStoreId) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Nessuno store selezionato",
-        });
-      }
       
       // Ottieni items carrello
       const cartItems = await getUserOrderSession(ctx.user.id);
@@ -112,7 +107,7 @@ export const orderSessionsRouter = router({
     }),
 
   // Salva ordine dalla lista acquisti (senza svuotare carrello)
-  saveShoppingListOrder: protectedProcedure
+  saveShoppingListOrder: storeAwareProcedure
     .input(
       z.object({
         items: z.array(
@@ -129,19 +124,14 @@ export const orderSessionsRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      if (!ctx.currentStoreId) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Nessuno store selezionato",
-        });
-      }
-      
       if (input.items.length === 0) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Nessun articolo da ordinare",
         });
       }
+
+      const storeId = ctx.currentStoreId;
 
       // Prepara dati ordine
       const orderData = {
@@ -156,7 +146,7 @@ export const orderSessionsRouter = router({
         orderData,
         null,
         input.notes || null,
-        ctx.currentStoreId
+        storeId
       );
 
       return {
@@ -167,32 +157,13 @@ export const orderSessionsRouter = router({
     }),
 
   // Ottiene storico ordini dell'utente
-  getMyHistory: protectedProcedure.query(async ({ ctx }) => {
-    if (!ctx.currentStoreId) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Nessuno store selezionato",
-      });
-    }
+  getMyHistory: storeAwareProcedure.query(async ({ ctx }) => {
     const history = await getUserOrderHistory(ctx.user.id, ctx.currentStoreId);
     return history;
   }),
 
-  // Ottiene tutti gli ordini (solo admin)
-  getAllHistory: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "Solo gli amministratori possono vedere tutti gli ordini",
-      });
-    }
-
-    if (!ctx.currentStoreId) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Nessuno store selezionato",
-      });
-    }
+  // Ottiene tutti gli ordini dello store (visibile a tutti gli utenti)
+  getAllHistory: storeAwareProcedure.query(async ({ ctx }) => {
     const history = await getAllOrderHistory(ctx.currentStoreId);
     return history;
   }),

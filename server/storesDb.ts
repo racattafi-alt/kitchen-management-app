@@ -37,6 +37,7 @@ export async function getUserStores(userId: number) {
       storePhone: stores.phone,
       storeEmail: stores.email,
       storeIsActive: stores.isActive,
+      storeIsGlobal: stores.isGlobal,
       storeCreatedAt: stores.createdAt,
     })
     .from(storeUsers)
@@ -99,6 +100,15 @@ export async function createStore(data: {
 /**
  * Aggiornare uno store
  */
+/**
+ * Verificare se uno store è globale
+ */
+export async function isStoreGlobal(storeId: string | null): Promise<boolean> {
+  if (!storeId) return false;
+  const store = await getStoreById(storeId);
+  return store?.isGlobal === true;
+}
+
 export async function updateStore(
   storeId: string,
   data: {
@@ -108,6 +118,7 @@ export async function updateStore(
     email?: string;
     settings?: any;
     isActive?: boolean;
+    isGlobal?: boolean;
   }
 ) {
   const db = await getDb();

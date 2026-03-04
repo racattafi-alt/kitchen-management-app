@@ -31,6 +31,7 @@ import DocumentArchive from "./pages/DocumentArchive";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import MultiStoreEditor from "./pages/MultiStoreEditor";
 import LocalLogin from "./pages/LocalLogin";
+import PriceUpdate from "./pages/PriceUpdate";
 
 function Router() {
   return (
@@ -41,6 +42,7 @@ function Router() {
       <Route path={"/dashboard"} component={Dashboard} />
       <Route path={"/super-admin"} component={SuperAdminDashboard} />
       <Route path={"/multi-store-editor"} component={MultiStoreEditor} />
+      <Route path={"/price-update"} component={PriceUpdate} />
       <Route path={"/404"} component={NotFound} />
       <Route path={"/ingredients"} component={Ingredients} />
 

@@ -28,15 +28,23 @@ export interface OrderHistoryItem {
   createdAt: Date;
 }
 
+// Shared pool — avoids opening a new TCP connection on every query
+let _pool: mysql.Pool | null = null;
+function getPool(): mysql.Pool {
+  if (!_pool) {
+    _pool = mysql.createPool({
+      uri: process.env.DATABASE_URL!,
+      connectionLimit: 5,
+      waitForConnections: true,
+    });
+  }
+  return _pool;
+}
+
 // Helper per eseguire query
 async function executeQuery(query: string, params: any[] = []) {
-  const connection = await mysql.createConnection(process.env.DATABASE_URL!);
-  try {
-    const [rows] = await connection.execute(query, params);
-    return rows;
-  } finally {
-    await connection.end();
-  }
+  const [rows] = await getPool().execute(query, params);
+  return rows;
 }
 
 // Ottiene la sessione ordine corrente dell'utente
@@ -133,7 +141,7 @@ export async function getUserOrderHistory(userId: number, storeId: string): Prom
 // Ottiene tutti gli ordini (solo admin)
 export async function getAllOrderHistory(storeId: string): Promise<OrderHistoryItem[]> {
   const rows = await executeQuery(
-    `SELECT * FROM order_history WHERE storeId = ? ORDER BY createdAt DESC LIMIT 100`,
+    `SELECT * FROM order_history WHERE storeId = ? ORDER BY createdAt DESC LIMIT 500`,
     [storeId]
   );
   return (rows as any[]).map((row) => ({
