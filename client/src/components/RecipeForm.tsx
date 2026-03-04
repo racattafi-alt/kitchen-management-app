@@ -139,6 +139,7 @@ function RecipeForm({
     if (!term) return [];
 
     if (searchType === 'ingredient' && ingredients) {
+      // Ingredienti dalla tabella ingredients
       let filtered = ingredients
         .filter(i => i.name.toLowerCase().includes(term))
         .map(i => ({
@@ -155,14 +156,47 @@ function RecipeForm({
         filtered = filtered.filter(i => i.category === categoryFilter);
       }
 
-      // Applica ordinamento
+      // Semilavorati che corrispondono al termine di ricerca
+      const matchingSemiFromTable = (semiFinished || [])
+        .filter(s => s.name.toLowerCase().includes(term))
+        .map(s => ({
+          type: 'semi_finished' as const,
+          id: s.id,
+          name: s.name,
+          unit: 'kg',
+          pricePerUnit: parseFloat(s.finalPricePerKg || '0'),
+          category: 'Semilavorato',
+        }));
+
+      const matchingSemiFromRecipes = (allRecipes || [])
+        .filter(r => !!r.isSemiFinished && r.name.toLowerCase().includes(term))
+        .map(r => ({
+          type: 'semi_finished' as const,
+          id: r.id,
+          name: r.name,
+          unit: 'kg',
+          pricePerUnit: parseFloat(r.totalCost || '0'),
+          category: 'Semilavorato',
+        }));
+
+      // Dedup semilavorati per nome (finalRecipes prioritario)
+      const seenSemi = new Set<string>();
+      const allSemi = [...matchingSemiFromRecipes, ...matchingSemiFromTable].filter(s => {
+        const key = s.name.toLowerCase();
+        if (seenSemi.has(key)) return false;
+        seenSemi.add(key);
+        return true;
+      });
+
+      // Combina ingredienti + semilavorati, ordina e limita
+      const combined = [...filtered, ...allSemi];
       if (sortBy === 'price') {
-        filtered.sort((a, b) => a.pricePerUnit - b.pricePerUnit);
+        combined.sort((a, b) => a.pricePerUnit - b.pricePerUnit);
       } else {
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
+        combined.sort((a, b) => a.name.localeCompare(b.name));
       }
 
-      return filtered.slice(0, 10);
+      return combined.slice(0, 15);
     }
 
     if (searchType === 'operation' && operations) {
@@ -539,11 +573,18 @@ function RecipeForm({
                   onClick={() => handleAddComponent(comp)}
                 >
                   <div className="flex-1">
-                    <p className="font-medium">{comp.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{comp.name}</p>
+                      {comp.type === 'semi_finished' && (
+                        <span className="px-1.5 py-0.5 text-xs bg-purple-100 text-purple-700 rounded font-medium">
+                          Semilavorato
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-slate-500">
                       {comp.unit} - € {comp.pricePerUnit.toFixed(2)}/{comp.unit}
                     </p>
-                    {comp.category && (
+                    {comp.category && comp.category !== 'Semilavorato' && (
                       <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-slate-100 text-slate-600 rounded">
                         {comp.category}
                       </span>
