@@ -759,7 +759,6 @@ const finalRecipesRouter = router({
         code: z.string(),
         category: z.enum(["Pane", "Carne", "Salse", "Verdure", "Formaggi", "Altro"]),
         yieldPercentage: z.number(),
-        serviceWastePercentage: z.number(),
         conservationMethod: z.string(),
         maxConservationTime: z.string(),
         isSellable: z.boolean().optional(),
@@ -790,7 +789,6 @@ const finalRecipesRouter = router({
           code: input.code,
           category: input.category,
           yieldPercentage: input.yieldPercentage,
-          serviceWastePercentage: input.serviceWastePercentage,
           conservationMethod: input.conservationMethod,
           maxConservationTime: input.maxConservationTime,
           isSellable: input.isSellable ?? true,
@@ -824,13 +822,16 @@ const finalRecipesRouter = router({
         return sum + (comp.quantity * price);
       }, 0);
 
+      // serviceWastePercentage non calcolabile alla creazione (unitWeight è null)
+      const serviceWastePercentage = "0";
+
       const newId = crypto.randomUUID();
       const recipeData = {
         name: input.name,
         code: input.code,
         category: input.category,
         yieldPercentage: input.yieldPercentage.toString(),
-        serviceWastePercentage: input.serviceWastePercentage.toString(),
+        serviceWastePercentage,
         conservationMethod: input.conservationMethod,
         maxConservationTime: input.maxConservationTime,
         totalCost: totalCost.toFixed(2),
@@ -859,7 +860,7 @@ const finalRecipesRouter = router({
         code: input.code,
         category: input.category,
         yieldPercentage: input.yieldPercentage.toString(),
-        serviceWastePercentage: input.serviceWastePercentage.toString(),
+        serviceWastePercentage,
         conservationMethod: input.conservationMethod,
         maxConservationTime: input.maxConservationTime,
         totalCost: totalCost.toFixed(2),
@@ -885,7 +886,6 @@ const finalRecipesRouter = router({
         name: z.string().optional(),
         category: z.enum(["Pane", "Carne", "Salse", "Verdure", "Formaggi", "Altro"]).optional(),
         yieldPercentage: z.number().optional(),
-        serviceWastePercentage: z.number().optional(),
         unitWeight: z.number().optional(),
         producedQuantity: z.number().optional(),
         measurementType: z.enum(["weight_only", "unit_only", "both"]).optional(),
@@ -931,11 +931,29 @@ const finalRecipesRouter = router({
         });
       }
 
+      // Determina i componenti effettivi (input o quelli salvati)
+      const componentsForCalc = input.components ?? (
+        currentRecipe?.components ? (
+          typeof currentRecipe.components === 'string'
+            ? JSON.parse(currentRecipe.components)
+            : currentRecipe.components
+        ) : []
+      );
+      const unitWeightForCalc = input.unitWeight ?? parseFloat(currentRecipe?.unitWeight ?? '0') ?? 0;
+
+      // Calcola serviceWastePercentage: (somma ingredienti kg - peso finale) / somma ingredienti kg * 100
+      const totalInputWeight = (componentsForCalc as any[])
+        .filter((c: any) => c.type !== 'operation' && c.unit === 'kg')
+        .reduce((sum: number, c: any) => sum + (parseFloat(String(c.quantity)) || 0), 0);
+      const calculatedServiceWaste = totalInputWeight > 0 && unitWeightForCalc > 0
+        ? Math.max(0, (totalInputWeight - unitWeightForCalc) / totalInputWeight * 100).toFixed(3)
+        : "0";
+
       const updateData: any = {
         name: input.name,
         category: input.category,
         yieldPercentage: input.yieldPercentage?.toString(),
-        serviceWastePercentage: input.serviceWastePercentage?.toString(),
+        serviceWastePercentage: calculatedServiceWaste,
         unitWeight: input.unitWeight,
         producedQuantity: input.producedQuantity,
         measurementType: input.measurementType,

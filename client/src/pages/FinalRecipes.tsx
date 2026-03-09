@@ -405,6 +405,14 @@ export default function FinalRecipes() {
     }, 0);
   };
 
+  const calculateServiceWaste = (components: ComponentWithDetails[], unitWeight: number): number => {
+    const totalInputWeight = components
+      .filter(c => c.type !== 'operation' && c.unit === 'kg')
+      .reduce((sum, c) => sum + (parseFloat(String(c.quantity)) || 0), 0);
+    if (totalInputWeight <= 0 || unitWeight <= 0) return 0;
+    return Math.max(0, (totalInputWeight - unitWeight) / totalInputWeight * 100);
+  };
+
   const calculateWeightForFood = (components: ComponentWithDetails[]) => {
     // Escludi operations e non-food (buste SV, packaging, etc.)
     const nonFoodKeywords = ['busta', 'sv', 'sottovuoto', 'packaging', 'sacchetto', 'contenitore'];
@@ -431,7 +439,6 @@ export default function FinalRecipes() {
       name: editFormData.name,
       category: editFormData.category,
       yieldPercentage: editFormData.yieldPercentage,
-      serviceWastePercentage: editFormData.serviceWastePercentage,
       unitWeight: editFormData.unitWeight,
       producedQuantity: editFormData.producedQuantity,
       measurementType: editFormData.measurementType,
@@ -920,11 +927,13 @@ export default function FinalRecipes() {
                 </div>
               ) : null}
 
-              {recipeDetails.serviceWastePercentage && parseFloat(recipeDetails.serviceWastePercentage) > 0 ? (
+              {recipeDetails.unitWeight && parseFloat(recipeDetails.unitWeight) > 0 && Array.isArray(recipeDetails.components) && recipeDetails.components.length > 0 ? (
                 <div>
-                  <h3 className="font-semibold text-lg mb-3">Scarti al Servizio</h3>
+                  <h3 className="font-semibold text-lg mb-3">Scarto di Produzione</h3>
                   <p className="text-slate-700">
-                    Percentuale scarto: <span className="font-medium">{recipeDetails.serviceWastePercentage}%</span>
+                    Percentuale scarto: <span className="font-medium">
+                      {calculateServiceWaste(recipeDetails.components as any[], parseFloat(recipeDetails.unitWeight)).toFixed(2)}%
+                    </span>
                   </p>
                   {recipeDetails.serviceWastePerIngredient && Array.isArray(recipeDetails.serviceWastePerIngredient) && recipeDetails.serviceWastePerIngredient.length > 0 ? (
                     <div className="mt-3 space-y-2">
@@ -1073,7 +1082,6 @@ export default function FinalRecipes() {
                     code: createFormData.code,
                     category: createFormData.category,
                     yieldPercentage: createFormData.yieldPercentage,
-                    serviceWastePercentage: createFormData.serviceWastePercentage,
                     conservationMethod: createFormData.conservationMethod,
                     maxConservationTime: createFormData.maxConservationTime,
                     isSellable: createFormData.isSellable ?? true,

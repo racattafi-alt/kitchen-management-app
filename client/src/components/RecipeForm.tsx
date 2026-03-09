@@ -352,17 +352,22 @@ function RecipeForm({
         </div>
       )}
 
-      {/* Scarto al Servizio */}
+      {/* Scarto di Produzione - calcolato automaticamente */}
       {showAllFields && (
         <div className="space-y-2">
-          <Label htmlFor="recipe-waste">Scarto al Servizio (%)</Label>
-          <Input
-            id="recipe-waste"
-            type="number"
-            step="0.01"
-            value={formData.serviceWastePercentage || 0}
-            onChange={(e) => onFormDataChange({ ...formData, serviceWastePercentage: parseFloat(e.target.value) || 0 })}
-          />
+          <Label>Scarto di Produzione (%)</Label>
+          <div className="flex items-center h-10 px-3 rounded-md border bg-slate-50 text-slate-700">
+            {(() => {
+              const totalInputWeight = components
+                .filter(c => c.type !== 'operation' && c.unit === 'kg')
+                .reduce((sum, c) => sum + (parseFloat(String(c.quantity)) || 0), 0);
+              const finalWeight = formData.unitWeight || 0;
+              if (totalInputWeight <= 0 || finalWeight <= 0) return <span className="text-slate-400">Inserire peso finale e ingredienti in kg</span>;
+              const scarto = Math.max(0, (totalInputWeight - finalWeight) / totalInputWeight * 100);
+              return <span className="font-medium">{scarto.toFixed(2)}%</span>;
+            })()}
+          </div>
+          <p className="text-xs text-slate-500">(Somma ingredienti in kg − Peso finale) / Somma ingredienti × 100</p>
         </div>
       )}
 
