@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useLocation } from "wouter";
 import {
   Dialog,
   DialogContent,
@@ -17,17 +16,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Users as UsersIcon, Shield, UserCog, ChefHat, ArrowLeft, Crown } from "lucide-react";
+import { Users as UsersIcon, Shield, UserCog, ChefHat, ArrowLeft, Crown, Building2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Users() {
-  const [, setLocation] = useLocation();
   const { data: users, isLoading } = trpc.users.list.useQuery();
+  const { data: stores } = trpc.stores.list.useQuery();
   const utils = trpc.useUtils();
-  
+
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<{ id: number; name: string; role: string } | null>(null);
+  const [selectedUser, setSelectedUser] = useState<{ id: number; name: string; role: string; preferredStoreId?: string | null } | null>(null);
   const [newRole, setNewRole] = useState<string>("");
+  const [newStoreId, setNewStoreId] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<"role" | "store">("role");
 
   const updateRoleMutation = trpc.users.updateRole.useMutation({
     onSuccess: () => {
@@ -41,49 +42,64 @@ export default function Users() {
     },
   });
 
+  const updateStoreMutation = trpc.users.updateStore.useMutation({
+    onSuccess: () => {
+      toast.success("Locale utente aggiornato!");
+      setIsEditDialogOpen(false);
+      setSelectedUser(null);
+      utils.users.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Errore durante l'aggiornamento del locale");
+    },
+  });
+
+  const deduplicateMutation = trpc.users.deduplicateIngredients.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Deduplicazione completata: ${result.removed} duplicati rimossi`);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Errore durante la deduplicazione");
+    },
+  });
+
+  const { data: currentUser } = trpc.auth.me.useQuery();
+  const isSuperAdmin = currentUser?.role === "superadmin";
+
   const getRoleIcon = (role: string) => {
     switch (role) {
-      case "superadmin":
-        return <Crown className="h-5 w-5 text-amber-600" />;
-      case "admin":
-        return <Shield className="h-5 w-5 text-red-600" />;
-      case "manager":
-        return <UserCog className="h-5 w-5 text-blue-600" />;
-      case "cook":
-        return <ChefHat className="h-5 w-5 text-green-600" />;
-      default:
-        return <UsersIcon className="h-5 w-5 text-slate-600" />;
+      case "superadmin": return <Crown className="h-5 w-5 text-amber-600" />;
+      case "admin": return <Shield className="h-5 w-5 text-red-600" />;
+      case "manager": return <UserCog className="h-5 w-5 text-blue-600" />;
+      case "cook": return <ChefHat className="h-5 w-5 text-green-600" />;
+      default: return <UsersIcon className="h-5 w-5 text-slate-600" />;
     }
   };
 
   const getRoleLabel = (role: string) => {
     switch (role) {
-      case "superadmin":
-        return "Super Utente";
-      case "admin":
-        return "Amministratore";
-      case "manager":
-        return "Manager";
-      case "cook":
-        return "Cuoco";
-      default:
-        return "Utente";
+      case "superadmin": return "Super Utente";
+      case "admin": return "Amministratore";
+      case "manager": return "Manager";
+      case "cook": return "Cuoco";
+      default: return "Utente";
     }
   };
 
   const getRoleBadgeClass = (role: string) => {
     switch (role) {
-      case "superadmin":
-        return "bg-amber-100 text-amber-800 border-amber-200";
-      case "admin":
-        return "bg-red-100 text-red-800 border-red-200";
-      case "manager":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "cook":
-        return "bg-green-100 text-green-800 border-green-200";
-      default:
-        return "bg-slate-100 text-slate-800 border-slate-200";
+      case "superadmin": return "bg-amber-100 text-amber-800 border-amber-200";
+      case "admin": return "bg-red-100 text-red-800 border-red-200";
+      case "manager": return "bg-blue-100 text-blue-800 border-blue-200";
+      case "cook": return "bg-green-100 text-green-800 border-green-200";
+      default: return "bg-slate-100 text-slate-800 border-slate-200";
     }
+  };
+
+  const getStoreName = (storeId?: string | null) => {
+    if (!storeId) return "Nessun locale";
+    const store = stores?.find((s: any) => s.storeId === storeId);
+    return store?.storeName || storeId;
   };
 
   if (isLoading) {
@@ -110,164 +126,251 @@ export default function Users() {
             <UsersIcon className="h-6 w-6 text-emerald-600" />
             Gestione Utenti
           </h1>
-          <div className="w-32" /> {/* Spacer per centrare il titolo */}
+          <div className="w-32" />
         </div>
       </header>
 
       <div className="container py-8">
-        <div className="mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <p className="text-slate-600">
-            Gestisci i ruoli e i permessi degli utenti del sistema
+            Gestisci i ruoli, i permessi e i locali degli utenti del sistema
           </p>
+          {isSuperAdmin && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                if (confirm("Rimuovere tutti gli ingredienti duplicati? Questa operazione non è reversibile.")) {
+                  deduplicateMutation.mutate();
+                }
+              }}
+              disabled={deduplicateMutation.isPending}
+              className="gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              {deduplicateMutation.isPending ? "Deduplicazione in corso..." : "Deduplica Ingredienti"}
+            </Button>
+          )}
         </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Utenti Registrati ({users?.length || 0})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {users?.map((user) => (
-              <div
-                key={user.id}
-                className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
-              >
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="flex-shrink-0">
-                    {getRoleIcon(user.role)}
+        <Card>
+          <CardHeader>
+            <CardTitle>Utenti Registrati ({users?.length || 0})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {users?.map((user: any) => (
+                <div
+                  key={user.id}
+                  className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="flex-shrink-0">
+                      {getRoleIcon(user.role)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-slate-900 truncate">
+                        {user.name || "Utente senza nome"}
+                      </div>
+                      <div className="text-sm text-slate-500 truncate">
+                        {user.email || "Nessuna email"}
+                      </div>
+                      <div className="text-xs text-slate-400 mt-1 flex items-center gap-2">
+                        <span>Login: {user.loginMethod || "N/A"}</span>
+                        <span>•</span>
+                        <span>Ultimo accesso: {user.lastSignedIn ? new Date(user.lastSignedIn).toLocaleDateString("it-IT") : "Mai"}</span>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <Building2 className="h-3 w-3" />
+                          {getStoreName(user.preferredStoreId)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getRoleBadgeClass(user.role)}`}>
+                        {getRoleLabel(user.role)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-slate-900 truncate">
-                      {user.name || "Utente senza nome"}
-                    </div>
-                    <div className="text-sm text-slate-500 truncate">
-                      {user.email || "Nessuna email"}
-                    </div>
-                    <div className="text-xs text-slate-400 mt-1">
-                      Login: {user.loginMethod || "N/A"} • Ultimo accesso:{" "}
-                      {user.lastSignedIn
-                        ? new Date(user.lastSignedIn).toLocaleDateString("it-IT")
-                        : "Mai"}
-                    </div>
-                  </div>
-                  <div className="flex-shrink-0">
-                    <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getRoleBadgeClass(
-                        user.role
-                      )}`}
+                  <div className="flex-shrink-0 ml-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedUser({
+                          id: user.id,
+                          name: user.name || "Utente",
+                          role: user.role,
+                          preferredStoreId: user.preferredStoreId,
+                        });
+                        setNewRole(user.role);
+                        setNewStoreId(user.preferredStoreId || "");
+                        setActiveTab("role");
+                        setIsEditDialogOpen(true);
+                      }}
                     >
-                      {getRoleLabel(user.role)}
-                    </span>
+                      Modifica
+                    </Button>
                   </div>
                 </div>
-                <div className="flex-shrink-0 ml-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedUser({
-                        id: user.id,
-                        name: user.name || "Utente",
-                        role: user.role,
-                      });
-                      setNewRole(user.role);
-                      setIsEditDialogOpen(true);
-                    }}
-                  >
-                    Modifica Ruolo
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Dialog Modifica Ruolo */}
+      {/* Dialog Modifica Utente */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Modifica Ruolo Utente</DialogTitle>
+            <DialogTitle>Modifica Utente</DialogTitle>
             <DialogDescription>
-              Modifica il ruolo di <strong>{selectedUser?.name}</strong>
+              Modifica ruolo e locale di <strong>{selectedUser?.name}</strong>
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <div>
-              <label className="text-sm font-medium text-slate-700 mb-2 block">
-                Nuovo Ruolo
-              </label>
-              <Select value={newRole} onValueChange={setNewRole}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleziona ruolo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="superadmin">
-                    <div className="flex items-center gap-2">
-                      <Crown className="h-4 w-4 text-amber-600" />
-                      <span>Super Utente (modifica su tutti gli store)</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="admin">
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-red-600" />
-                      <span>Amministratore (tutti i permessi)</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="manager">
-                    <div className="flex items-center gap-2">
-                      <UserCog className="h-4 w-4 text-blue-600" />
-                      <span>Manager (non può modificare ricette)</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="cook">
-                    <div className="flex items-center gap-2">
-                      <ChefHat className="h-4 w-4 text-green-600" />
-                      <span>Cuoco (permessi da definire)</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="user">
-                    <div className="flex items-center gap-2">
-                      <UsersIcon className="h-4 w-4 text-slate-600" />
-                      <span>Utente (permessi limitati)</span>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-              <p className="text-sm text-amber-800">
-                <strong>Nota:</strong> I permessi verranno applicati immediatamente.
-                L'utente potrebbe dover effettuare nuovamente il login per vedere le modifiche.
-              </p>
-            </div>
+          {/* Tab selector */}
+          <div className="flex gap-2 border-b pb-2">
+            <Button
+              variant={activeTab === "role" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setActiveTab("role")}
+            >
+              Ruolo
+            </Button>
+            {isSuperAdmin && (
+              <Button
+                variant={activeTab === "store" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setActiveTab("store")}
+              >
+                Locale
+              </Button>
+            )}
+          </div>
 
-            <div className="flex justify-end gap-3 mt-6">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsEditDialogOpen(false);
-                  setSelectedUser(null);
-                }}
-              >
-                Annulla
-              </Button>
-              <Button
-                onClick={() => {
-                  if (selectedUser && newRole) {
-                    updateRoleMutation.mutate({
-                      userId: selectedUser.id,
-                      role: newRole as "user" | "admin" | "manager" | "cook",
-                    });
-                  }
-                }}
-                disabled={updateRoleMutation.isPending || !newRole}
-              >
-                {updateRoleMutation.isPending ? "Salvataggio..." : "Salva"}
-              </Button>
-            </div>
+          <div className="space-y-4 mt-2">
+            {activeTab === "role" && (
+              <>
+                <div>
+                  <label className="text-sm font-medium text-slate-700 mb-2 block">
+                    Nuovo Ruolo
+                  </label>
+                  <Select value={newRole} onValueChange={setNewRole}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleziona ruolo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="superadmin">
+                        <div className="flex items-center gap-2">
+                          <Crown className="h-4 w-4 text-amber-600" />
+                          <span>Super Utente (modifica su tutti gli store)</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="admin">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-red-600" />
+                          <span>Amministratore (tutti i permessi)</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="manager">
+                        <div className="flex items-center gap-2">
+                          <UserCog className="h-4 w-4 text-blue-600" />
+                          <span>Manager (non può modificare ricette)</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="cook">
+                        <div className="flex items-center gap-2">
+                          <ChefHat className="h-4 w-4 text-green-600" />
+                          <span>Cuoco (permessi da definire)</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="user">
+                        <div className="flex items-center gap-2">
+                          <UsersIcon className="h-4 w-4 text-slate-600" />
+                          <span>Utente (permessi limitati)</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <p className="text-sm text-amber-800">
+                    <strong>Nota:</strong> I permessi verranno applicati immediatamente.
+                    L'utente potrebbe dover effettuare nuovamente il login per vedere le modifiche.
+                  </p>
+                </div>
+
+                <div className="flex justify-end gap-3 mt-6">
+                  <Button variant="outline" onClick={() => { setIsEditDialogOpen(false); setSelectedUser(null); }}>
+                    Annulla
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      if (selectedUser && newRole) {
+                        updateRoleMutation.mutate({ userId: selectedUser.id, role: newRole as any });
+                      }
+                    }}
+                    disabled={updateRoleMutation.isPending || !newRole}
+                  >
+                    {updateRoleMutation.isPending ? "Salvataggio..." : "Salva Ruolo"}
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {activeTab === "store" && isSuperAdmin && (
+              <>
+                <div>
+                  <label className="text-sm font-medium text-slate-700 mb-2 block">
+                    Locale / Store
+                  </label>
+                  <Select value={newStoreId} onValueChange={setNewStoreId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleziona locale" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {stores?.map((store: any) => (
+                        <SelectItem key={store.storeId} value={store.storeId}>
+                          <div className="flex items-center gap-2">
+                            <Building2 className="h-4 w-4 text-slate-500" />
+                            <span>{store.storeName}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedUser?.preferredStoreId && (
+                    <p className="text-xs text-slate-500 mt-1">
+                      Locale attuale: {getStoreName(selectedUser.preferredStoreId)}
+                    </p>
+                  )}
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800">
+                    <strong>Attenzione:</strong> Cambiando il locale, l'utente verrà rimosso da tutti gli store precedenti e aggiunto a quello selezionato.
+                  </p>
+                </div>
+
+                <div className="flex justify-end gap-3 mt-6">
+                  <Button variant="outline" onClick={() => { setIsEditDialogOpen(false); setSelectedUser(null); }}>
+                    Annulla
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      if (selectedUser && newStoreId) {
+                        updateStoreMutation.mutate({ userId: selectedUser.id, storeId: newStoreId });
+                      }
+                    }}
+                    disabled={updateStoreMutation.isPending || !newStoreId}
+                  >
+                    {updateStoreMutation.isPending ? "Salvataggio..." : "Salva Locale"}
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </DialogContent>
       </Dialog>

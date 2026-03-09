@@ -1,4 +1,4 @@
-import { eq, and, desc, like, gte } from "drizzle-orm";
+import { eq, and, desc, like, gte, ne, sql, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,
@@ -142,6 +142,7 @@ export async function getAllUsers() {
       loginMethod: users.loginMethod,
       lastSignedIn: users.lastSignedIn,
       createdAt: users.createdAt,
+      preferredStoreId: users.preferredStoreId,
     })
     .from(users)
     .orderBy(users.createdAt);
@@ -464,24 +465,29 @@ export async function getWeeklyProductions(weekStartDate?: Date, storeId?: strin
     .from(weeklyProductions)
     .leftJoin(finalRecipes, eq(weeklyProductions.recipeFinalId, finalRecipes.id));
   
+  const conditions: any[] = [];
+
   if (storeId) {
-    query = query.where(eq(weeklyProductions.storeId, storeId));
+    conditions.push(eq(weeklyProductions.storeId, storeId));
   }
-  
+
   if (weekStartDate) {
-    query = query.where(eq(weeklyProductions.weekStartDate, weekStartDate));
+    conditions.push(eq(weeklyProductions.weekStartDate, weekStartDate));
   } else {
-    // Se non specificata una settimana, filtra solo produzioni future (da prossima domenica)
+    // Senza filtro settimana: mostra produzioni dalla settimana corrente in poi
     const now = new Date();
-    const nextSunday = new Date(now);
-    const dayOfWeek = now.getDay(); // 0 = domenica, 1 = lunedì, ..., 6 = sabato
-    const daysUntilNextSunday = dayOfWeek === 0 ? 7 : (7 - dayOfWeek);
-    nextSunday.setDate(now.getDate() + daysUntilNextSunday);
-    nextSunday.setHours(0, 0, 0, 0);
-    
-    query = query.where(gte(weeklyProductions.weekStartDate, nextSunday));
+    const dayOfWeek = now.getDay(); // 0=domenica, 1=lunedì...
+    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const thisMonday = new Date(now);
+    thisMonday.setDate(now.getDate() + diff);
+    thisMonday.setHours(0, 0, 0, 0);
+    conditions.push(gte(weeklyProductions.weekStartDate, thisMonday));
   }
-  
+
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions));
+  }
+
   return query;
 }
 
@@ -741,4 +747,46 @@ export async function countUsers(): Promise<number> {
   if (!db) return 0;
   const result = await db.select().from(users);
   return result.length;
+}
+
+export async function deduplicateIngredients(): Promise<{ removed: number; details: string[] }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Trova tutti gli ingredienti raggruppati per (storeId, nome normalizzato)
+  const allIngredients = await db
+    .select({ id: ingredients.id, storeId: ingredients.storeId, name: ingredients.name, createdAt: ingredients.createdAt })
+    .from(ingredients)
+    .orderBy(ingredients.storeId, ingredients.name, ingredients.createdAt);
+
+  // Raggruppa per storeId + nome (case-insensitive)
+  const groups = new Map<string, typeof allIngredients>();
+  for (const ing of allIngredients) {
+    const key = `${ing.storeId}::${ing.name.toLowerCase().trim()}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(ing);
+  }
+
+  const toDelete: string[] = [];
+  const details: string[] = [];
+
+  for (const [key, group] of groups) {
+    if (group.length <= 1) continue;
+    // Mantieni il più vecchio (primo creato), elimina gli altri
+    const [keep, ...duplicates] = group;
+    for (const dup of duplicates) {
+      toDelete.push(dup.id);
+    }
+    const storePart = key.split('::')[0];
+    details.push(`[${storePart}] "${group[0].name}": mantenuto ${keep.id}, rimossi ${duplicates.map(d => d.id).join(', ')}`);
+  }
+
+  if (toDelete.length > 0) {
+    // Prima aggiorna le ricette che usano gli id duplicati con l'id del mantenuto
+    // (le ricette memorizzano i componenti come JSON, non come FK, quindi i riferimenti rimangono validi)
+    // Elimina i duplicati
+    await db.delete(ingredients).where(inArray(ingredients.id, toDelete));
+  }
+
+  return { removed: toDelete.length, details };
 }

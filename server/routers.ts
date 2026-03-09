@@ -1395,6 +1395,35 @@ const usersRouter = router({  list: protectedProcedure.query(async ({ ctx }) => 
       }
       return db.updateUserRole(input.userId, input.role);
     }),
+
+  updateStore: protectedProcedure
+    .input(z.object({
+      userId: z.number(),
+      storeId: z.string(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized: Only superadmin can change user store");
+      }
+      const { addUserToStore, removeUserFromStore, setUserPreferredStore, getUserStores } = await import("./storesDb.js");
+      // Rimuovi utente da tutti gli store esistenti
+      const currentStores = await getUserStores(input.userId);
+      for (const s of currentStores) {
+        await removeUserFromStore(input.userId, s.storeId);
+      }
+      // Aggiungi al nuovo store
+      await addUserToStore(input.userId, input.storeId, "user");
+      await setUserPreferredStore(input.userId, input.storeId);
+      return { success: true };
+    }),
+
+  deduplicateIngredients: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      if (ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized: Only superadmin can deduplicate ingredients");
+      }
+      return db.deduplicateIngredients();
+    }),
 });
 
 import { auditLogRouter } from "./auditLogRouter";
