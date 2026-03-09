@@ -1,6 +1,7 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "../../shared/const";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
+import * as storesDb from "../storesDb";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
 
@@ -13,6 +14,11 @@ function getRedirectUri(req: Request): string {
 export function registerGoogleAuthRoutes(app: Express) {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+  // Endpoint pubblico: il client controlla se Google auth è abilitato
+  app.get("/api/auth/google/status", (_req: Request, res: Response) => {
+    res.json({ enabled: !!(clientId && clientSecret) });
+  });
 
   if (!clientId || !clientSecret) {
     console.log("[Google Auth] GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not set — Google login disabled");
@@ -114,6 +120,16 @@ export function registerGoogleAuthRoutes(app: Express) {
         role,
         lastSignedIn: new Date(),
       });
+
+      // Assegna lo store al nuovo utente Google se non ne ha già uno
+      const user = await db.getUserByOpenId(openId);
+      if (user && !user.preferredStoreId) {
+        const allStores = await storesDb.getAllStores();
+        if (allStores.length > 0) {
+          await storesDb.addUserToStore(user.id, allStores[0].id, "user");
+          await storesDb.setUserPreferredStore(user.id, allStores[0].id);
+        }
+      }
 
       const sessionToken = await sdk.createSessionToken(openId, {
         name: name || email,
