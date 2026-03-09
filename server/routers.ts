@@ -324,8 +324,9 @@ const ingredientsRouter = router({
 
 // ============ PROCEDURE SEMILAVORATI ============
 const semiFinishedRouter = router({
-  list: protectedProcedure.query(async ({ ctx }) => {
-    return db.getSemiFinishedRecipes(ctx.currentStoreId);
+  list: protectedProcedure.query(async () => {
+    // I semilavorati sono un catalogo condiviso tra tutti gli store
+    return db.getSemiFinishedRecipes();
   }),
   getById: protectedProcedure
     .input(z.object({ id: z.string() }))
@@ -810,8 +811,8 @@ const finalRecipesRouter = router({
         throw new Error(validation.error || 'Dati ricetta non validi');
       }
 
-      // Verifica unicità codice
-      const existing = await db.getFinalRecipeByCode(input.code);
+      // Verifica unicità codice nello stesso store
+      const existing = await db.getFinalRecipeByCode(input.code, ctx.currentStoreId);
       if (existing) {
         throw new Error("Codice ricetta già esistente");
       }
@@ -949,19 +950,18 @@ const finalRecipesRouter = router({
         ? Math.max(0, (totalInputWeight - unitWeightForCalc) / totalInputWeight * 100).toFixed(3)
         : "0";
 
-      const updateData: any = {
-        name: input.name,
-        category: input.category,
-        yieldPercentage: input.yieldPercentage?.toString(),
-        serviceWastePercentage: calculatedServiceWaste,
-        unitWeight: input.unitWeight,
-        producedQuantity: input.producedQuantity,
-        measurementType: input.measurementType,
-        pieceWeight: input.pieceWeight,
-        isSemiFinished: input.isSemiFinished,
-        isSellable: input.isSellable,
-        sellingPrice: input.sellingPrice?.toString(),
-      };
+      // Costruisce updateData escludendo i campi undefined per non sovrascrivere dati validi nel DB
+      const updateData: any = { serviceWastePercentage: calculatedServiceWaste };
+      if (input.name !== undefined) updateData.name = input.name;
+      if (input.category !== undefined) updateData.category = input.category;
+      if (input.yieldPercentage !== undefined) updateData.yieldPercentage = input.yieldPercentage.toString();
+      if (input.unitWeight !== undefined) updateData.unitWeight = input.unitWeight;
+      if (input.producedQuantity !== undefined) updateData.producedQuantity = input.producedQuantity;
+      if (input.measurementType !== undefined) updateData.measurementType = input.measurementType;
+      if (input.pieceWeight !== undefined) updateData.pieceWeight = input.pieceWeight;
+      if (input.isSemiFinished !== undefined) updateData.isSemiFinished = input.isSemiFinished;
+      if (input.isSellable !== undefined) updateData.isSellable = input.isSellable;
+      if (input.sellingPrice !== undefined) updateData.sellingPrice = input.sellingPrice.toString();
 
       // Se ci sono componenti, ricalcola totalCost
       if (input.components) {

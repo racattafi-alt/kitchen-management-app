@@ -335,13 +335,17 @@ export async function getFinalRecipeById(id: string) {
   return result.length > 0 ? result[0] : null;
 }
 
-export async function getFinalRecipeByCode(code: string) {
+export async function getFinalRecipeByCode(code: string, storeId?: string | null) {
   const db = await getDb();
   if (!db) return null;
   const result = await db
     .select()
     .from(finalRecipes)
-    .where(eq(finalRecipes.code, code))
+    .where(
+      storeId
+        ? and(eq(finalRecipes.code, code), eq(finalRecipes.storeId, storeId))
+        : eq(finalRecipes.code, code)
+    )
     .limit(1);
   return result.length > 0 ? result[0] : null;
 }
