@@ -16,7 +16,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Users as UsersIcon, Shield, UserCog, ChefHat, ArrowLeft, Crown, Building2, Trash2 } from "lucide-react";
+import {
+  Users as UsersIcon,
+  Shield,
+  UserCog,
+  ChefHat,
+  ArrowLeft,
+  Crown,
+  Building2,
+  Trash2,
+  Star,
+  X,
+  Plus,
+} from "lucide-react";
 import { toast } from "sonner";
 
 export default function Users() {
@@ -25,10 +37,21 @@ export default function Users() {
   const utils = trpc.useUtils();
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<{ id: number; name: string; role: string; preferredStoreId?: string | null } | null>(null);
+  const [selectedUser, setSelectedUser] = useState<{
+    id: number;
+    name: string;
+    role: string;
+    preferredStoreId?: string | null;
+  } | null>(null);
   const [newRole, setNewRole] = useState<string>("");
-  const [newStoreId, setNewStoreId] = useState<string>("");
   const [activeTab, setActiveTab] = useState<"role" | "store">("role");
+  const [addStoreId, setAddStoreId] = useState<string>("");
+  const [addStoreRole, setAddStoreRole] = useState<"admin" | "manager" | "user">("user");
+
+  const { data: userStores, refetch: refetchUserStores } = trpc.users.getUserStores.useQuery(
+    { userId: selectedUser?.id ?? 0 },
+    { enabled: !!selectedUser && isEditDialogOpen && activeTab === "store" }
+  );
 
   const updateRoleMutation = trpc.users.updateRole.useMutation({
     onSuccess: () => {
@@ -42,15 +65,47 @@ export default function Users() {
     },
   });
 
-  const updateStoreMutation = trpc.users.updateStore.useMutation({
+  const addUserToStoreMutation = trpc.users.addUserToStore.useMutation({
     onSuccess: () => {
-      toast.success("Locale utente aggiornato!");
-      setIsEditDialogOpen(false);
-      setSelectedUser(null);
+      toast.success("Utente aggiunto al locale!");
+      setAddStoreId("");
+      setAddStoreRole("user");
+      refetchUserStores();
       utils.users.list.invalidate();
     },
     onError: (error) => {
-      toast.error(error.message || "Errore durante l'aggiornamento del locale");
+      toast.error(error.message || "Errore durante l'aggiunta");
+    },
+  });
+
+  const removeUserFromStoreMutation = trpc.users.removeUserFromStore.useMutation({
+    onSuccess: () => {
+      toast.success("Utente rimosso dal locale");
+      refetchUserStores();
+      utils.users.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Errore durante la rimozione");
+    },
+  });
+
+  const updateUserStoreRoleMutation = trpc.users.updateUserStoreRole.useMutation({
+    onSuccess: () => {
+      toast.success("Ruolo nel locale aggiornato!");
+      refetchUserStores();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Errore durante l'aggiornamento del ruolo");
+    },
+  });
+
+  const setPreferredStoreMutation = trpc.users.setPreferredStore.useMutation({
+    onSuccess: () => {
+      toast.success("Locale preferito impostato!");
+      utils.users.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Errore durante l'aggiornamento");
     },
   });
 
@@ -66,33 +121,38 @@ export default function Users() {
   const { data: currentUser } = trpc.auth.me.useQuery();
   const isSuperAdmin = currentUser?.role === "superadmin";
 
+  // Store già assegnati all'utente (per escluderli dal select "aggiungi")
+  const availableStores = (stores || []).filter(
+    (s: any) => !userStores?.some((us) => us.storeId === s.storeId)
+  );
+
   const getRoleIcon = (role: string) => {
     switch (role) {
       case "superadmin": return <Crown className="h-5 w-5 text-amber-600" />;
-      case "admin": return <Shield className="h-5 w-5 text-red-600" />;
-      case "manager": return <UserCog className="h-5 w-5 text-blue-600" />;
-      case "cook": return <ChefHat className="h-5 w-5 text-green-600" />;
-      default: return <UsersIcon className="h-5 w-5 text-slate-600" />;
+      case "admin":      return <Shield className="h-5 w-5 text-red-600" />;
+      case "manager":    return <UserCog className="h-5 w-5 text-blue-600" />;
+      case "cook":       return <ChefHat className="h-5 w-5 text-green-600" />;
+      default:           return <UsersIcon className="h-5 w-5 text-slate-600" />;
     }
   };
 
   const getRoleLabel = (role: string) => {
     switch (role) {
       case "superadmin": return "Super Utente";
-      case "admin": return "Amministratore";
-      case "manager": return "Manager";
-      case "cook": return "Cuoco";
-      default: return "Utente";
+      case "admin":      return "Amministratore";
+      case "manager":    return "Manager";
+      case "cook":       return "Cuoco";
+      default:           return "Utente";
     }
   };
 
   const getRoleBadgeClass = (role: string) => {
     switch (role) {
       case "superadmin": return "bg-amber-100 text-amber-800 border-amber-200";
-      case "admin": return "bg-red-100 text-red-800 border-red-200";
-      case "manager": return "bg-blue-100 text-blue-800 border-blue-200";
-      case "cook": return "bg-green-100 text-green-800 border-green-200";
-      default: return "bg-slate-100 text-slate-800 border-slate-200";
+      case "admin":      return "bg-red-100 text-red-800 border-red-200";
+      case "manager":    return "bg-blue-100 text-blue-800 border-blue-200";
+      case "cook":       return "bg-green-100 text-green-800 border-green-200";
+      default:           return "bg-slate-100 text-slate-800 border-slate-200";
     }
   };
 
@@ -100,6 +160,25 @@ export default function Users() {
     if (!storeId) return "Nessun locale";
     const store = stores?.find((s: any) => s.storeId === storeId);
     return store?.storeName || storeId;
+  };
+
+  const openEditDialog = (user: any) => {
+    setSelectedUser({
+      id: user.id,
+      name: user.name || "Utente",
+      role: user.role,
+      preferredStoreId: user.preferredStoreId,
+    });
+    setNewRole(user.role);
+    setAddStoreId("");
+    setAddStoreRole("user");
+    setActiveTab("role");
+    setIsEditDialogOpen(true);
+  };
+
+  const closeDialog = () => {
+    setIsEditDialogOpen(false);
+    setSelectedUser(null);
   };
 
   if (isLoading) {
@@ -114,11 +193,7 @@ export default function Users() {
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="container flex items-center justify-between h-16">
-          <Button
-            variant="ghost"
-            onClick={() => window.history.back()}
-            className="gap-2"
-          >
+          <Button variant="ghost" onClick={() => window.history.back()} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             Torna Indietro
           </Button>
@@ -165,9 +240,7 @@ export default function Users() {
                   className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                 >
                   <div className="flex items-center gap-4 flex-1">
-                    <div className="flex-shrink-0">
-                      {getRoleIcon(user.role)}
-                    </div>
+                    <div className="flex-shrink-0">{getRoleIcon(user.role)}</div>
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-slate-900 truncate">
                         {user.name || "Utente senza nome"}
@@ -178,7 +251,12 @@ export default function Users() {
                       <div className="text-xs text-slate-400 mt-1 flex items-center gap-2">
                         <span>Login: {user.loginMethod || "N/A"}</span>
                         <span>•</span>
-                        <span>Ultimo accesso: {user.lastSignedIn ? new Date(user.lastSignedIn).toLocaleDateString("it-IT") : "Mai"}</span>
+                        <span>
+                          Ultimo accesso:{" "}
+                          {user.lastSignedIn
+                            ? new Date(user.lastSignedIn).toLocaleDateString("it-IT")
+                            : "Mai"}
+                        </span>
                         <span>•</span>
                         <span className="flex items-center gap-1">
                           <Building2 className="h-3 w-3" />
@@ -187,28 +265,15 @@ export default function Users() {
                       </div>
                     </div>
                     <div className="flex-shrink-0">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getRoleBadgeClass(user.role)}`}>
+                      <span
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getRoleBadgeClass(user.role)}`}
+                      >
                         {getRoleLabel(user.role)}
                       </span>
                     </div>
                   </div>
                   <div className="flex-shrink-0 ml-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedUser({
-                          id: user.id,
-                          name: user.name || "Utente",
-                          role: user.role,
-                          preferredStoreId: user.preferredStoreId,
-                        });
-                        setNewRole(user.role);
-                        setNewStoreId(user.preferredStoreId || "");
-                        setActiveTab("role");
-                        setIsEditDialogOpen(true);
-                      }}
-                    >
+                    <Button variant="outline" size="sm" onClick={() => openEditDialog(user)}>
                       Modifica
                     </Button>
                   </div>
@@ -221,11 +286,11 @@ export default function Users() {
 
       {/* Dialog Modifica Utente */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle>Modifica Utente</DialogTitle>
             <DialogDescription>
-              Modifica ruolo e locale di <strong>{selectedUser?.name}</strong>
+              Modifica ruolo e locali di <strong>{selectedUser?.name}</strong>
             </DialogDescription>
           </DialogHeader>
 
@@ -244,12 +309,13 @@ export default function Users() {
                 size="sm"
                 onClick={() => setActiveTab("store")}
               >
-                Locale
+                Locali
               </Button>
             )}
           </div>
 
           <div className="space-y-4 mt-2">
+            {/* ─── TAB RUOLO ─── */}
             {activeTab === "role" && (
               <>
                 <div>
@@ -303,7 +369,7 @@ export default function Users() {
                 </div>
 
                 <div className="flex justify-end gap-3 mt-6">
-                  <Button variant="outline" onClick={() => { setIsEditDialogOpen(false); setSelectedUser(null); }}>
+                  <Button variant="outline" onClick={closeDialog}>
                     Annulla
                   </Button>
                   <Button
@@ -320,56 +386,179 @@ export default function Users() {
               </>
             )}
 
+            {/* ─── TAB LOCALI ─── */}
             {activeTab === "store" && isSuperAdmin && (
-              <>
+              <div className="space-y-4">
+                {/* Lista store assegnati */}
                 <div>
                   <label className="text-sm font-medium text-slate-700 mb-2 block">
-                    Locale / Store
+                    Locali assegnati
                   </label>
-                  <Select value={newStoreId} onValueChange={setNewStoreId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleziona locale" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {stores?.map((store: any) => (
-                        <SelectItem key={store.storeId} value={store.storeId}>
-                          <div className="flex items-center gap-2">
-                            <Building2 className="h-4 w-4 text-slate-500" />
-                            <span>{store.storeName}</span>
+
+                  {!userStores || userStores.length === 0 ? (
+                    <p className="text-sm text-slate-500 italic py-2">Nessun locale assegnato</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {userStores.map((us) => {
+                        const isPreferred = selectedUser?.preferredStoreId === us.storeId;
+                        return (
+                          <div
+                            key={us.storeId}
+                            className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                              isPreferred
+                                ? "border-emerald-300 bg-emerald-50"
+                                : "border-slate-200 bg-white"
+                            }`}
+                          >
+                            {/* Stella preferito + nome store */}
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              {isPreferred ? (
+                                <Star className="h-4 w-4 text-emerald-600 fill-emerald-500 flex-shrink-0" />
+                              ) : (
+                                <button
+                                  title="Imposta come locale preferito"
+                                  onClick={() => {
+                                    if (selectedUser) {
+                                      setPreferredStoreMutation.mutate({
+                                        userId: selectedUser.id,
+                                        storeId: us.storeId,
+                                      });
+                                      setSelectedUser({
+                                        ...selectedUser,
+                                        preferredStoreId: us.storeId,
+                                      });
+                                    }
+                                  }}
+                                  className="text-slate-300 hover:text-emerald-500 transition-colors flex-shrink-0"
+                                >
+                                  <Star className="h-4 w-4" />
+                                </button>
+                              )}
+                              <Building2 className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                              <span className="font-medium text-slate-800 text-sm truncate">
+                                {us.storeName}
+                              </span>
+                              {isPreferred && (
+                                <span className="text-xs text-emerald-600 font-medium flex-shrink-0">
+                                  (preferito)
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Ruolo nel locale + rimuovi */}
+                            <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                              <Select
+                                value={us.role}
+                                onValueChange={(role) => {
+                                  if (selectedUser) {
+                                    updateUserStoreRoleMutation.mutate({
+                                      userId: selectedUser.id,
+                                      storeId: us.storeId,
+                                      role: role as "admin" | "manager" | "user",
+                                    });
+                                  }
+                                }}
+                              >
+                                <SelectTrigger className="h-7 text-xs w-28">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="admin">Admin</SelectItem>
+                                  <SelectItem value="manager">Manager</SelectItem>
+                                  <SelectItem value="user">Utente</SelectItem>
+                                </SelectContent>
+                              </Select>
+
+                              <button
+                                title="Rimuovi dal locale"
+                                onClick={() => {
+                                  if (
+                                    selectedUser &&
+                                    confirm(`Rimuovere ${selectedUser.name} da "${us.storeName}"?`)
+                                  ) {
+                                    removeUserFromStoreMutation.mutate({
+                                      userId: selectedUser.id,
+                                      storeId: us.storeId,
+                                    });
+                                  }
+                                }}
+                                className="text-slate-400 hover:text-red-500 transition-colors"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
                           </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {selectedUser?.preferredStoreId && (
-                    <p className="text-xs text-slate-500 mt-1">
-                      Locale attuale: {getStoreName(selectedUser.preferredStoreId)}
-                    </p>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-sm text-blue-800">
-                    <strong>Attenzione:</strong> Cambiando il locale, l'utente verrà rimosso da tutti gli store precedenti e aggiunto a quello selezionato.
-                  </p>
-                </div>
+                {/* Aggiungi a un nuovo locale */}
+                {availableStores.length > 0 && (
+                  <div className="border-t pt-4">
+                    <label className="text-sm font-medium text-slate-700 mb-2 flex items-center gap-1">
+                      <Plus className="h-4 w-4" />
+                      Aggiungi a un locale
+                    </label>
+                    <div className="flex gap-2">
+                      <Select value={addStoreId} onValueChange={setAddStoreId}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Seleziona locale..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableStores.map((store: any) => (
+                            <SelectItem key={store.storeId} value={store.storeId}>
+                              <div className="flex items-center gap-2">
+                                <Building2 className="h-4 w-4 text-slate-400" />
+                                <span>{store.storeName}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
 
-                <div className="flex justify-end gap-3 mt-6">
-                  <Button variant="outline" onClick={() => { setIsEditDialogOpen(false); setSelectedUser(null); }}>
-                    Annulla
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      if (selectedUser && newStoreId) {
-                        updateStoreMutation.mutate({ userId: selectedUser.id, storeId: newStoreId });
-                      }
-                    }}
-                    disabled={updateStoreMutation.isPending || !newStoreId}
-                  >
-                    {updateStoreMutation.isPending ? "Salvataggio..." : "Salva Locale"}
+                      <Select
+                        value={addStoreRole}
+                        onValueChange={(v) => setAddStoreRole(v as "admin" | "manager" | "user")}
+                      >
+                        <SelectTrigger className="w-28">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="manager">Manager</SelectItem>
+                          <SelectItem value="user">Utente</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          if (selectedUser && addStoreId) {
+                            addUserToStoreMutation.mutate({
+                              userId: selectedUser.id,
+                              storeId: addStoreId,
+                              role: addStoreRole,
+                            });
+                          }
+                        }}
+                        disabled={!addStoreId || addUserToStoreMutation.isPending}
+                        className="gap-1"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Aggiungi
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end pt-2 border-t">
+                  <Button variant="outline" onClick={closeDialog}>
+                    Chiudi
                   </Button>
                 </div>
-              </>
+              </div>
             )}
           </div>
         </DialogContent>

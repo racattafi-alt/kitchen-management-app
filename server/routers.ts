@@ -1442,6 +1442,70 @@ const usersRouter = router({  list: protectedProcedure.query(async ({ ctx }) => 
       }
       return db.deduplicateIngredients();
     }),
+
+  getUserStores: protectedProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      const { getUserStores } = await import("./storesDb.js");
+      return getUserStores(input.userId);
+    }),
+
+  addUserToStore: protectedProcedure
+    .input(z.object({
+      userId: z.number(),
+      storeId: z.string(),
+      role: z.enum(["admin", "manager", "user"]),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized: Only superadmin can manage user store assignments");
+      }
+      const { addUserToStore, userHasAccessToStore } = await import("./storesDb.js");
+      const alreadyIn = await userHasAccessToStore(input.userId, input.storeId);
+      if (alreadyIn) throw new Error("L'utente è già assegnato a questo locale");
+      await addUserToStore(input.userId, input.storeId, input.role);
+      return { success: true };
+    }),
+
+  removeUserFromStore: protectedProcedure
+    .input(z.object({ userId: z.number(), storeId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized: Only superadmin can manage user store assignments");
+      }
+      const { removeUserFromStore } = await import("./storesDb.js");
+      await removeUserFromStore(input.userId, input.storeId);
+      return { success: true };
+    }),
+
+  updateUserStoreRole: protectedProcedure
+    .input(z.object({
+      userId: z.number(),
+      storeId: z.string(),
+      role: z.enum(["admin", "manager", "user"]),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized: Only superadmin can manage user store assignments");
+      }
+      const { updateUserStoreRole } = await import("./storesDb.js");
+      await updateUserStoreRole(input.userId, input.storeId, input.role);
+      return { success: true };
+    }),
+
+  setPreferredStore: protectedProcedure
+    .input(z.object({ userId: z.number(), storeId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized: Only superadmin can manage user store assignments");
+      }
+      const { setUserPreferredStore } = await import("./storesDb.js");
+      await setUserPreferredStore(input.userId, input.storeId);
+      return { success: true };
+    }),
 });
 
 import { auditLogRouter } from "./auditLogRouter";
