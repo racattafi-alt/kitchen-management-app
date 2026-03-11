@@ -119,7 +119,7 @@ export default function Users() {
   });
 
   const { data: currentUser } = trpc.auth.me.useQuery();
-  const isSuperAdmin = currentUser?.role === "superadmin";
+  const isSuperAdmin = currentUser?.role === "superadmin" || currentUser?.role === "admin";
 
   // Store già assegnati all'utente (per escluderli dal select "aggiungi")
   const availableStores = (stores || []).filter(

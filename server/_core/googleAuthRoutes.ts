@@ -6,6 +6,9 @@ import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
 
 function getRedirectUri(req: Request): string {
+  if (process.env.GOOGLE_REDIRECT_URI) {
+    return process.env.GOOGLE_REDIRECT_URI;
+  }
   const protocol = (req.headers["x-forwarded-proto"] as string) || req.protocol;
   const host = (req.headers["x-forwarded-host"] as string) || req.headers.host;
   return `${protocol}://${host}/api/auth/google/callback`;

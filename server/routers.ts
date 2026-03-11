@@ -1460,8 +1460,8 @@ const usersRouter = router({  list: protectedProcedure.query(async ({ ctx }) => 
       role: z.enum(["admin", "manager", "user"]),
     }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "superadmin") {
-        throw new Error("Unauthorized: Only superadmin can manage user store assignments");
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized: Only admin can manage user store assignments");
       }
       const { addUserToStore, userHasAccessToStore } = await import("./storesDb.js");
       const alreadyIn = await userHasAccessToStore(input.userId, input.storeId);
@@ -1473,8 +1473,8 @@ const usersRouter = router({  list: protectedProcedure.query(async ({ ctx }) => 
   removeUserFromStore: protectedProcedure
     .input(z.object({ userId: z.number(), storeId: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "superadmin") {
-        throw new Error("Unauthorized: Only superadmin can manage user store assignments");
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized: Only admin can manage user store assignments");
       }
       const { removeUserFromStore } = await import("./storesDb.js");
       await removeUserFromStore(input.userId, input.storeId);
@@ -1488,8 +1488,8 @@ const usersRouter = router({  list: protectedProcedure.query(async ({ ctx }) => 
       role: z.enum(["admin", "manager", "user"]),
     }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "superadmin") {
-        throw new Error("Unauthorized: Only superadmin can manage user store assignments");
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized: Only admin can manage user store assignments");
       }
       const { updateUserStoreRole } = await import("./storesDb.js");
       await updateUserStoreRole(input.userId, input.storeId, input.role);
@@ -1499,8 +1499,8 @@ const usersRouter = router({  list: protectedProcedure.query(async ({ ctx }) => 
   setPreferredStore: protectedProcedure
     .input(z.object({ userId: z.number(), storeId: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "superadmin") {
-        throw new Error("Unauthorized: Only superadmin can manage user store assignments");
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized: Only admin can manage user store assignments");
       }
       const { setUserPreferredStore } = await import("./storesDb.js");
       await setUserPreferredStore(input.userId, input.storeId);
