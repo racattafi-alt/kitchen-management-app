@@ -129,6 +129,13 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getUserOpenIdById(id: number): Promise<string | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select({ openId: users.openId }).from(users).where(eq(users.id, id)).limit(1);
+  return result[0]?.openId;
+}
+
 export async function getAllUsers() {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

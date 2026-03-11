@@ -28,6 +28,9 @@ import {
   Star,
   X,
   Plus,
+  Activity,
+  ShoppingCart,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -44,13 +47,18 @@ export default function Users() {
     preferredStoreId?: string | null;
   } | null>(null);
   const [newRole, setNewRole] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"role" | "store">("role");
+  const [activeTab, setActiveTab] = useState<"role" | "store" | "activity">("role");
   const [addStoreId, setAddStoreId] = useState<string>("");
   const [addStoreRole, setAddStoreRole] = useState<"admin" | "manager" | "user">("user");
 
   const { data: userStores, refetch: refetchUserStores } = trpc.users.getUserStores.useQuery(
     { userId: selectedUser?.id ?? 0 },
     { enabled: !!selectedUser && isEditDialogOpen && activeTab === "store" }
+  );
+
+  const { data: userActivity, isLoading: isLoadingActivity } = trpc.users.getUserActivity.useQuery(
+    { userId: selectedUser?.id ?? 0 },
+    { enabled: !!selectedUser && isEditDialogOpen && activeTab === "activity" }
   );
 
   const updateRoleMutation = trpc.users.updateRole.useMutation({
@@ -160,6 +168,27 @@ export default function Users() {
     if (!storeId) return "Nessun locale";
     const store = stores?.find((s: any) => s.storeId === storeId);
     return store?.storeName || storeId;
+  };
+
+  const formatAuditAction = (action: string) => {
+    const map: Record<string, string> = {
+      "order.created": "Ordine creato",
+      "order.submitted": "Ordine inviato",
+      "order.updated": "Ordine modificato",
+      "order.deleted": "Ordine eliminato",
+      "recipe.created": "Ricetta creata",
+      "recipe.updated": "Ricetta modificata",
+      "recipe.deleted": "Ricetta eliminata",
+      "production.created": "Produzione avviata",
+      "production.updated": "Produzione aggiornata",
+      "production.deleted": "Produzione eliminata",
+      "ingredient.created": "Ingrediente creato",
+      "ingredient.updated": "Ingrediente modificato",
+      "ingredient.deleted": "Ingrediente eliminato",
+      "store.user_added": "Utente aggiunto al locale",
+      "store.user_removed": "Utente rimosso dal locale",
+    };
+    return map[action] ?? action;
   };
 
   const openEditDialog = (user: any) => {
@@ -286,7 +315,7 @@ export default function Users() {
 
       {/* Dialog Modifica Utente */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Modifica Utente</DialogTitle>
             <DialogDescription>
@@ -312,6 +341,15 @@ export default function Users() {
                 Locali
               </Button>
             )}
+            <Button
+              variant={activeTab === "activity" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setActiveTab("activity")}
+              className="gap-1"
+            >
+              <Activity className="h-3.5 w-3.5" />
+              Attività
+            </Button>
           </div>
 
           <div className="space-y-4 mt-2">
@@ -384,6 +422,94 @@ export default function Users() {
                   </Button>
                 </div>
               </>
+            )}
+
+            {/* ─── TAB ATTIVITÀ ─── */}
+            {activeTab === "activity" && (
+              <div className="space-y-4">
+                {isLoadingActivity ? (
+                  <p className="text-sm text-slate-500 py-4 text-center">Caricamento attività...</p>
+                ) : (
+                  <>
+                    {/* Ultimi ordini */}
+                    <div>
+                      <label className="text-sm font-medium text-slate-700 mb-2 flex items-center gap-1.5">
+                        <ShoppingCart className="h-4 w-4 text-emerald-600" />
+                        Ultimi ordini
+                      </label>
+                      {!userActivity?.orders?.length ? (
+                        <p className="text-sm text-slate-400 italic">Nessun ordine</p>
+                      ) : (
+                        <div className="space-y-1.5">
+                          {userActivity.orders.map((order: any) => (
+                            <div key={order.id} className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100 text-sm">
+                              <div className="flex items-center gap-2">
+                                <ShoppingCart className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                                <span className="text-slate-700">
+                                  {order.totalItems} articol{order.totalItems === 1 ? "o" : "i"}
+                                  {order.storeId && (
+                                    <span className="text-slate-400 ml-1">
+                                      · {getStoreName(order.storeId)}
+                                    </span>
+                                  )}
+                                </span>
+                              </div>
+                              <span className="text-xs text-slate-400 flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {order.createdAt
+                                  ? new Date(order.createdAt).toLocaleDateString("it-IT", {
+                                      day: "2-digit", month: "short", year: "numeric",
+                                    })
+                                  : "—"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Log attività */}
+                    <div className="border-t pt-3">
+                      <label className="text-sm font-medium text-slate-700 mb-2 flex items-center gap-1.5">
+                        <Activity className="h-4 w-4 text-blue-600" />
+                        Azioni recenti
+                      </label>
+                      {!userActivity?.auditLogs?.length ? (
+                        <p className="text-sm text-slate-400 italic">Nessuna azione registrata</p>
+                      ) : (
+                        <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                          {userActivity.auditLogs.map((log: any) => (
+                            <div key={log.id} className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100 text-sm">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="h-1.5 w-1.5 rounded-full bg-blue-400 flex-shrink-0" />
+                                <span className="text-slate-700 truncate">
+                                  {formatAuditAction(log.action)}
+                                  {log.details?.name && (
+                                    <span className="text-slate-400 ml-1">· {log.details.name}</span>
+                                  )}
+                                </span>
+                              </div>
+                              <span className="text-xs text-slate-400 flex-shrink-0 ml-2 flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {log.createdAt
+                                  ? new Date(log.createdAt).toLocaleDateString("it-IT", {
+                                      day: "2-digit", month: "short",
+                                    })
+                                  : "—"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+                <div className="flex justify-end pt-2 border-t">
+                  <Button variant="outline" onClick={closeDialog}>
+                    Chiudi
+                  </Button>
+                </div>
+              </div>
             )}
 
             {/* ─── TAB LOCALI ─── */}

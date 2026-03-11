@@ -1506,6 +1506,23 @@ const usersRouter = router({  list: protectedProcedure.query(async ({ ctx }) => 
       await setUserPreferredStore(input.userId, input.storeId);
       return { success: true };
     }),
+
+  getUserActivity: protectedProcedure
+    .input(z.object({ userId: z.number(), limit: z.number().optional() }))
+    .query(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      const { getAuditLogsByUser } = await import("./auditLogDb.js");
+      const { getAllUserOrderHistory } = await import("./orderSessionsDb.js");
+      const openId = await db.getUserOpenIdById(input.userId);
+      const limit = input.limit ?? 20;
+      const [logs, orders] = await Promise.all([
+        openId ? getAuditLogsByUser(openId, limit) : [],
+        getAllUserOrderHistory(input.userId, 10),
+      ]);
+      return { auditLogs: logs, orders };
+    }),
 });
 
 import { auditLogRouter } from "./auditLogRouter";

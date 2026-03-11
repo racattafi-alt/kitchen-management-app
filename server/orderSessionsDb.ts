@@ -138,6 +138,18 @@ export async function getUserOrderHistory(userId: number, storeId: string): Prom
   }));
 }
 
+// Ottiene tutti gli ordini di un utente (tutti gli store)
+export async function getAllUserOrderHistory(userId: number, limit: number = 15): Promise<OrderHistoryItem[]> {
+  const rows = await executeQuery(
+    `SELECT * FROM order_history WHERE userId = ? ORDER BY createdAt DESC LIMIT ?`,
+    [userId, limit]
+  );
+  return (rows as any[]).map((row) => ({
+    ...row,
+    orderData: typeof row.orderData === 'string' ? JSON.parse(row.orderData) : row.orderData,
+  }));
+}
+
 // Ottiene tutti gli ordini (solo admin)
 export async function getAllOrderHistory(storeId: string): Promise<OrderHistoryItem[]> {
   const rows = await executeQuery(
