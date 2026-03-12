@@ -36,7 +36,7 @@ import { toast } from "sonner";
 
 export default function Users() {
   const { data: users, isLoading } = trpc.users.list.useQuery();
-  const { data: stores } = trpc.stores.list.useQuery();
+  const { data: stores } = trpc.stores.listAll.useQuery();
   const utils = trpc.useUtils();
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);

@@ -27,6 +27,30 @@ export const storesRouter = router({
   }),
 
   /**
+   * Recuperare tutti gli store attivi (per gestione utenti).
+   * Solo admin e superadmin possono usare questo endpoint.
+   */
+  listAll: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user.role !== "admin" && ctx.user.role !== "superadmin") {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Solo gli admin possono vedere tutti i locali",
+      });
+    }
+    const all = await storesDb.getAllStores();
+    return all.map((s) => ({
+      storeId: s.id,
+      storeName: s.name,
+      storeAddress: s.address,
+      storePhone: s.phone,
+      storeEmail: s.email,
+      storeIsActive: s.isActive,
+      storeIsGlobal: s.isGlobal,
+      storeCreatedAt: s.createdAt,
+    }));
+  }),
+
+  /**
    * Recuperare dettagli di uno store specifico
    */
   getById: protectedProcedure
