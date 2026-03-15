@@ -68,12 +68,12 @@ async function computeCostPerServing(
       }
     } else if (c.type === "SEMI_FINISHED") {
       const result = await database
-        .select({ totalCost: semiFinishedRecipes.totalCost })
+        .select({ finalPricePerKg: semiFinishedRecipes.finalPricePerKg })
         .from(semiFinishedRecipes)
         .where(eq(semiFinishedRecipes.id, c.sourceId))
         .limit(1);
       if (result.length > 0) {
-        total += parseFloat(result[0].totalCost) * c.quantity;
+        total += parseFloat(result[0].finalPricePerKg) * c.quantity;
       }
     } else if (c.type === "FINAL_RECIPE") {
       const result = await database

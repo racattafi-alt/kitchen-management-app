@@ -528,7 +528,7 @@ export default function MultiStoreEditor() {
                       {compareData.inBoth.map(item => (
                         <div key={item.name} className="flex items-center gap-2 text-sm bg-white rounded px-2 py-1">
                           {item.hasDiff ? (
-                            <AlertTriangle className="h-3 w-3 text-orange-500 shrink-0" title="Valori diversi tra i due store" />
+                            <AlertTriangle className="h-3 w-3 text-orange-500 shrink-0" aria-label="Valori diversi tra i due store" />
                           ) : (
                             <Check className="h-3 w-3 text-green-500 shrink-0" />
                           )}

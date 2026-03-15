@@ -108,8 +108,8 @@ function RecipeForm({
         }));
 
       const semiFromRecipes = (allRecipes || [])
-        .filter(r => !!r.isSemiFinished && (!term || r.name.toLowerCase().includes(term)))
-        .map(r => ({
+        .filter((r: any) => !!r.isSemiFinished && (!term || r.name.toLowerCase().includes(term)))
+        .map((r: any) => ({
           type: 'semi_finished' as const,
           id: r.id,
           name: r.name,
@@ -169,8 +169,8 @@ function RecipeForm({
         }));
 
       const matchingSemiFromRecipes = (allRecipes || [])
-        .filter(r => !!r.isSemiFinished && r.name.toLowerCase().includes(term))
-        .map(r => ({
+        .filter((r: any) => !!r.isSemiFinished && r.name.toLowerCase().includes(term))
+        .map((r: any) => ({
           type: 'semi_finished' as const,
           id: r.id,
           name: r.name,

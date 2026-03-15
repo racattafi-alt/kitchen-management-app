@@ -781,7 +781,7 @@ export async function deduplicateIngredients(): Promise<{ removed: number; detai
   const toDelete: string[] = [];
   const details: string[] = [];
 
-  for (const [key, group] of groups) {
+  for (const [key, group] of Array.from(groups.entries())) {
     if (group.length <= 1) continue;
     // Mantieni il più vecchio (primo creato), elimina gli altri
     const [keep, ...duplicates] = group;
@@ -789,7 +789,7 @@ export async function deduplicateIngredients(): Promise<{ removed: number; detai
       toDelete.push(dup.id);
     }
     const storePart = key.split('::')[0];
-    details.push(`[${storePart}] "${group[0].name}": mantenuto ${keep.id}, rimossi ${duplicates.map(d => d.id).join(', ')}`);
+    details.push(`[${storePart}] "${group[0].name}": mantenuto ${keep.id}, rimossi ${duplicates.map((d: { id: string }) => d.id).join(', ')}`);
   }
 
   if (toDelete.length > 0) {

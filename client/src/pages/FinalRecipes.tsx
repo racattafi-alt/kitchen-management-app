@@ -104,11 +104,11 @@ export default function FinalRecipes() {
   
   const { data: allRecipes, isLoading } = trpc.finalRecipes.list.useQuery();
   // Filtra solo ricette finali (escludendo semilavorati che potrebbero essere nella tabella)
-  const allFinalRecipes = allRecipes?.filter(r => r.category && ['Pane', 'Carne', 'Salse', 'Verdure', 'Formaggi', 'Altro'].includes(r.category)) || [];
+  const allFinalRecipes = allRecipes?.filter((r: any) => r.category && ['Pane', 'Carne', 'Salse', 'Verdure', 'Formaggi', 'Altro'].includes(r.category)) || [];
   
   // Applica filtro stato (attive/nascoste) e ricerca
   const recipes = useMemo(() => {
-    return allFinalRecipes.filter(r => {
+    return allFinalRecipes.filter((r: any) => {
       // Filtro stato
       if (filterStatus === 'active' && r.isActive === false) return false;
       if (filterStatus === 'hidden' && r.isActive !== false) return false;
@@ -246,8 +246,8 @@ export default function FinalRecipes() {
         }));
       
       const semiFromRecipes = (allRecipes || [])
-        .filter(r => !!r.isSemiFinished && r.name.toLowerCase().includes(term))
-        .map(r => ({
+        .filter((r: any) => !!r.isSemiFinished && r.name.toLowerCase().includes(term))
+        .map((r: any) => ({
           type: 'semi_finished' as const,
           id: r.id,
           name: r.name,
@@ -555,7 +555,7 @@ export default function FinalRecipes() {
 
     // Crea CSV (compatibile Excel)
     const headers = ['Codice', 'Nome', 'Categoria', 'Costo Totale (€)', 'Peso Finale (kg)', 'Prezzo al kg (€)', 'Quantità Prodotta', 'Prezzo Unitario (€)', 'Resa (%)'];
-    const rows = recipes.map(r => [
+    const rows = recipes.map((r: any) => [
       r.code,
       r.name,
       r.category,
@@ -569,7 +569,7 @@ export default function FinalRecipes() {
 
     const csvContent = [
       headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ...rows.map((row: any[]) => row.map((cell: any) => `"${cell}"`).join(','))
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -630,8 +630,8 @@ export default function FinalRecipes() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tutte ({allFinalRecipes.length})</SelectItem>
-                  <SelectItem value="active">Solo Attive ({allFinalRecipes.filter(r => r.isActive !== false).length})</SelectItem>
-                  <SelectItem value="hidden">Solo Nascoste ({allFinalRecipes.filter(r => r.isActive === false).length})</SelectItem>
+                  <SelectItem value="active">Solo Attive ({allFinalRecipes.filter((r: any) => r.isActive !== false).length})</SelectItem>
+                  <SelectItem value="hidden">Solo Nascoste ({allFinalRecipes.filter((r: any) => r.isActive === false).length})</SelectItem>
                 </SelectContent>
               </Select>
               </div>

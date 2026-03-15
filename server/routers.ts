@@ -266,6 +266,7 @@ const ingredientsRouter = router({
                 isOrderable: true,
                 isSellable: true,
                 isSalaItem: false,
+                isSoldByPackage: false,
                 subcategory: null,
                 allergens: row.allergens || []
               });

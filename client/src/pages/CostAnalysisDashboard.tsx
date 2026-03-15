@@ -41,10 +41,10 @@ export default function CostAnalysisDashboard() {
     const yields = filteredRecipes.map((r: any) => parseFloat(r.yieldPercentage) || 0);
     
     return {
-      avgCost: costs.reduce((a, b) => a + b, 0) / costs.length,
+      avgCost: costs.reduce((a: number, b: number) => a + b, 0) / costs.length,
       maxCost: Math.max(...costs),
       minCost: Math.min(...costs),
-      avgYield: yields.reduce((a, b) => a + b, 0) / yields.length,
+      avgYield: yields.reduce((a: number, b: number) => a + b, 0) / yields.length,
     };
   }, [filteredRecipes]);
 
@@ -73,7 +73,7 @@ export default function CostAnalysisDashboard() {
     // Convert to CSV
     const csvContent = [
       headers.join(","),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+      ...rows.map((row: any[]) => row.map((cell: any) => `"${cell}"`).join(","))
     ].join("\n");
     
     // Download
