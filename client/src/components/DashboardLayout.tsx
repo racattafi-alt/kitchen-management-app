@@ -23,7 +23,8 @@ import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import GlobalSearch from "@/components/GlobalSearch";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Package, Utensils, ChefHat, BarChart3, Calendar, DollarSign, AlertTriangle, Shield, FolderOpen, Bot, ShoppingCart, Building2, History, TrendingUp, Crown } from "lucide-react";
+import { useStore } from "@/contexts/StoreContext";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Package, Utensils, ChefHat, BarChart3, Calendar, DollarSign, AlertTriangle, Shield, FolderOpen, Bot, ShoppingCart, Building2, History, TrendingUp, Crown, Globe } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -135,6 +136,7 @@ function DashboardLayoutContent({
   setSidebarWidth,
 }: DashboardLayoutContentProps) {
   const { user, logout } = useAuth();
+  const { isCurrentStoreGlobal } = useStore();
   const [location, setLocation] = useLocation();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
@@ -230,7 +232,7 @@ function DashboardLayoutContent({
               })}
             </SidebarMenu>
 
-            {user?.role === "admin" && (
+            {(user?.role === "admin" || user?.role === "superadmin") && (
               <>
                 <div className="px-4 py-2">
                   <div className="h-px bg-border" />
@@ -301,6 +303,12 @@ function DashboardLayoutContent({
       </div>
 
       <SidebarInset>
+        {isCurrentStoreGlobal && (
+          <div className="sticky top-0 z-50 flex items-center justify-center gap-2 bg-amber-500 text-white text-sm font-semibold px-4 py-2 shadow-md">
+            <Globe className="h-4 w-4 shrink-0" />
+            <span>STORE GLOBALE — le modifiche si applicano a tutti gli store</span>
+          </div>
+        )}
         {isMobile && (
           <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
             <div className="flex items-center gap-2">
@@ -315,7 +323,7 @@ function DashboardLayoutContent({
             </div>
           </div>
         )}
-        <main className="flex-1 p-4">{children}</main>
+        <main className="flex-1 p-4 flex flex-col min-h-0">{children}</main>
       </SidebarInset>
     </>
   );

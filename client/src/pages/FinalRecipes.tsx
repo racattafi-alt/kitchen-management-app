@@ -9,11 +9,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
-import { ChefHat, Plus, Eye, Pencil, Trash2, Search, FileSpreadsheet, History, EyeOff, ArrowLeft } from "lucide-react";
+import { ChefHat, Plus, Eye, Pencil, Trash2, Search, FileSpreadsheet, History, EyeOff, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import RecipeForm, { ComponentWithDetails } from "@/components/RecipeForm";
 import Breadcrumb from "@/components/Breadcrumb";
 import { toast } from "sonner";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
+import { useArrowNav } from "@/hooks/useArrowNav";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -79,6 +80,7 @@ export default function FinalRecipes() {
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<any>(null);
+  const [editingIndex, setEditingIndex] = useState<number>(-1);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [selectedRecipeForHistory, setSelectedRecipeForHistory] = useState<string | null>(null);
   
@@ -102,11 +104,11 @@ export default function FinalRecipes() {
   
   const { data: allRecipes, isLoading } = trpc.finalRecipes.list.useQuery();
   // Filtra solo ricette finali (escludendo semilavorati che potrebbero essere nella tabella)
-  const allFinalRecipes = allRecipes?.filter(r => r.category && ['Pane', 'Carne', 'Salse', 'Verdure', 'Formaggi', 'Altro'].includes(r.category)) || [];
+  const allFinalRecipes = allRecipes?.filter((r: any) => r.category && ['Pane', 'Carne', 'Salse', 'Verdure', 'Formaggi', 'Altro'].includes(r.category)) || [];
   
   // Applica filtro stato (attive/nascoste) e ricerca
   const recipes = useMemo(() => {
-    return allFinalRecipes.filter(r => {
+    return allFinalRecipes.filter((r: any) => {
       // Filtro stato
       if (filterStatus === 'active' && r.isActive === false) return false;
       if (filterStatus === 'hidden' && r.isActive !== false) return false;
@@ -170,9 +172,6 @@ export default function FinalRecipes() {
   const updateMutation = trpc.finalRecipes.update.useMutation({
     onSuccess: () => {
       toast.success("Ricetta aggiornata con successo!");
-      setIsEditOpen(false);
-      setEditFormData(null);
-      setEditComponents([]);
       utils.finalRecipes.list.invalidate();
     },
     onError: (error) => {
@@ -247,18 +246,18 @@ export default function FinalRecipes() {
         }));
       
       const semiFromRecipes = (allRecipes || [])
-        .filter(r => r.isSemiFinished && r.name.toLowerCase().includes(term))
-        .map(r => ({
+        .filter((r: any) => !!r.isSemiFinished && r.name.toLowerCase().includes(term))
+        .map((r: any) => ({
           type: 'semi_finished' as const,
           id: r.id,
           name: r.name,
           unit: 'kg',
-          pricePerUnit: r.unitWeight ? parseFloat(r.totalCost || '0') / parseFloat(r.unitWeight) : 0,
+          pricePerUnit: parseFloat(r.totalCost || '0'),
         }));
-      
+
       return [...semiFromTable, ...semiFromRecipes].slice(0, 5);
     }
-    
+
     if (searchType === 'operation' && operations) {
       return operations
         .filter(o => o.name.toLowerCase().includes(term))
@@ -272,63 +271,94 @@ export default function FinalRecipes() {
           costType: o.costType,
         }));
     }
-    
+
     return [];
-  }, [searchTerm, searchType, ingredients, semiFinished, operations]);
+  }, [searchTerm, searchType, ingredients, semiFinished, operations, allRecipes]);
+
+  const navigateRecipe = useCallback(async (direction: "prev" | "next") => {
+    if (!recipes || recipes.length === 0) return;
+    const newIndex = direction === "prev"
+      ? (editingIndex - 1 + recipes.length) % recipes.length
+      : (editingIndex + 1) % recipes.length;
+    setEditingIndex(newIndex);
+    await handleEdit(recipes[newIndex]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingIndex, recipes]);
+
+  useArrowNav(isEditOpen, (dir) => { navigateRecipe(dir); });
 
   const handleEdit = async (recipe: any) => {
+    const idx = recipes?.findIndex((r: any) => r.id === recipe.id) ?? -1;
+    if (idx !== -1) setEditingIndex(idx);
+
+    // Carica dati freschi dal server per avere components aggiornati (con enrichment server-side)
+    const fresh = await utils.finalRecipes.getDetails.fetch({ id: recipe.id });
+    const source = fresh ?? recipe;
+
     setEditFormData({
-      id: recipe.id,
-      name: recipe.name,
-      category: recipe.category,
-      yieldPercentage: parseFloat(recipe.yieldPercentage || "100"),
-      serviceWastePercentage: parseFloat(recipe.serviceWastePercentage || "0"),
-      unitWeight: parseFloat(recipe.unitWeight || "0"),
-      producedQuantity: parseFloat(recipe.producedQuantity || "0"),
-      measurementType: recipe.measurementType || 'weight_only',
-      pieceWeight: parseFloat(recipe.pieceWeight || "0"),
-      isSemiFinished: recipe.isSemiFinished || false,
-      isSellable: recipe.isSellable !== false,
+      id: source.id,
+      name: source.name,
+      category: source.category,
+      yieldPercentage: parseFloat(source.yieldPercentage || "100"),
+      serviceWastePercentage: parseFloat(source.serviceWastePercentage || "0"),
+      unitWeight: parseFloat(source.unitWeight || "0"),
+      producedQuantity: parseFloat(source.producedQuantity || "0"),
+      measurementType: source.measurementType || 'weight_only',
+      pieceWeight: parseFloat(source.pieceWeight || "0"),
+      isSemiFinished: !!source.isSemiFinished,
+      isSellable: source.isSellable !== false,
     });
-    
+
     // Carica componenti esistenti con dettagli completi
-    const components = typeof recipe.components === 'string' 
-      ? JSON.parse(recipe.components) 
-      : recipe.components;
-    
-    // Espandi componenti con dettagli (nome, prezzo)
+    // getDetails li arricchisce server-side; qui aggiorniamo con dati locali se disponibili
+    const components = Array.isArray(source.components)
+      ? source.components
+      : typeof source.components === 'string'
+        ? JSON.parse(source.components)
+        : [];
+
+    // Espandi componenti con dettagli (nome, prezzo) usando cache locale se disponibile
     const expandedComponents = await Promise.all(
       (components || []).map(async (comp: any) => {
         if (comp.type === 'ingredient') {
           const ingredient = ingredients?.find(i => i.id === comp.componentId);
           return {
             ...comp,
-            name: ingredient?.name || comp.componentName || 'Sconosciuto',
+            name: ingredient?.name || comp.name || comp.componentName || 'Sconosciuto',
             unit: comp.unit || (ingredient?.unitType === 'u' ? 'unità' : 'kg'),
-            pricePerUnit: ingredient ? parseFloat(ingredient.pricePerKgOrUnit || '0') : 0,
+            pricePerUnit: ingredient
+              ? parseFloat(ingredient.pricePerKgOrUnit || '0')
+              : parseFloat(String(comp.pricePerUnit ?? '0')),
           };
         } else if (comp.type === 'semi_finished') {
           const semi = semiFinished?.find(s => s.id === comp.componentId);
+          const semiFromRecipe = !semi ? allRecipes?.find((r: any) => r.id === comp.componentId) : undefined;
           return {
             ...comp,
-            name: semi?.name || comp.componentName || 'Sconosciuto',
+            name: semi?.name || semiFromRecipe?.name || comp.name || comp.componentName || 'Sconosciuto',
             unit: comp.unit || 'kg',
-            pricePerUnit: semi ? parseFloat(semi.finalPricePerKg || '0') : 0,
+            pricePerUnit: semi
+              ? parseFloat(semi.finalPricePerKg || '0')
+              : semiFromRecipe
+                ? parseFloat(semiFromRecipe.totalCost || '0')
+                : parseFloat(String(comp.pricePerUnit ?? '0')),
           };
         } else if (comp.type === 'operation') {
           const operation = operations?.find(o => o.name === comp.componentName);
           return {
             ...comp,
-            name: operation?.name || comp.componentName || 'Operazione',
+            name: operation?.name || comp.name || comp.componentName || 'Operazione',
             unit: comp.unit || 'ore',
-            pricePerUnit: operation ? parseFloat(operation.hourlyRate || '0') : 0,
-            costType: operation?.costType || 'LAVORO',
+            pricePerUnit: operation
+              ? parseFloat(operation.hourlyRate || '0')
+              : parseFloat(String(comp.pricePerUnit ?? '0')),
+            costType: operation?.costType || comp.costType || 'LAVORO',
           };
         }
         return comp;
       })
     );
-    
+
     setEditComponents(expandedComponents);
     setIsEditOpen(true);
     setSelectedRecipeId(null);
@@ -375,6 +405,14 @@ export default function FinalRecipes() {
     }, 0);
   };
 
+  const calculateServiceWaste = (components: ComponentWithDetails[], unitWeight: number): number => {
+    const totalInputWeight = components
+      .filter(c => c.type !== 'operation' && c.unit === 'kg')
+      .reduce((sum, c) => sum + (parseFloat(String(c.quantity)) || 0), 0);
+    if (totalInputWeight <= 0 || unitWeight <= 0) return 0;
+    return Math.max(0, (totalInputWeight - unitWeight) / totalInputWeight * 100);
+  };
+
   const calculateWeightForFood = (components: ComponentWithDetails[]) => {
     // Escludi operations e non-food (buste SV, packaging, etc.)
     const nonFoodKeywords = ['busta', 'sv', 'sottovuoto', 'packaging', 'sacchetto', 'contenitore'];
@@ -401,13 +439,12 @@ export default function FinalRecipes() {
       name: editFormData.name,
       category: editFormData.category,
       yieldPercentage: editFormData.yieldPercentage,
-      serviceWastePercentage: editFormData.serviceWastePercentage,
       unitWeight: editFormData.unitWeight,
       producedQuantity: editFormData.producedQuantity,
       measurementType: editFormData.measurementType,
       pieceWeight: editFormData.pieceWeight,
-      isSemiFinished: editFormData.isSemiFinished,
-      isSellable: editFormData.isSellable,
+      isSemiFinished: !!editFormData.isSemiFinished,
+      isSellable: !!editFormData.isSellable,
       components: editComponents.map(comp => ({
         type: comp.type,
         componentId: comp.componentId || '',
@@ -518,7 +555,7 @@ export default function FinalRecipes() {
 
     // Crea CSV (compatibile Excel)
     const headers = ['Codice', 'Nome', 'Categoria', 'Costo Totale (€)', 'Peso Finale (kg)', 'Prezzo al kg (€)', 'Quantità Prodotta', 'Prezzo Unitario (€)', 'Resa (%)'];
-    const rows = recipes.map(r => [
+    const rows = recipes.map((r: any) => [
       r.code,
       r.name,
       r.category,
@@ -532,7 +569,7 @@ export default function FinalRecipes() {
 
     const csvContent = [
       headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ...rows.map((row: any[]) => row.map((cell: any) => `"${cell}"`).join(','))
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -593,8 +630,8 @@ export default function FinalRecipes() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tutte ({allFinalRecipes.length})</SelectItem>
-                  <SelectItem value="active">Solo Attive ({allFinalRecipes.filter(r => r.isActive !== false).length})</SelectItem>
-                  <SelectItem value="hidden">Solo Nascoste ({allFinalRecipes.filter(r => r.isActive === false).length})</SelectItem>
+                  <SelectItem value="active">Solo Attive ({allFinalRecipes.filter((r: any) => r.isActive !== false).length})</SelectItem>
+                  <SelectItem value="hidden">Solo Nascoste ({allFinalRecipes.filter((r: any) => r.isActive === false).length})</SelectItem>
                 </SelectContent>
               </Select>
               </div>
@@ -890,11 +927,13 @@ export default function FinalRecipes() {
                 </div>
               ) : null}
 
-              {recipeDetails.serviceWastePercentage && parseFloat(recipeDetails.serviceWastePercentage) > 0 ? (
+              {recipeDetails.unitWeight && parseFloat(recipeDetails.unitWeight) > 0 && Array.isArray(recipeDetails.components) && recipeDetails.components.length > 0 ? (
                 <div>
-                  <h3 className="font-semibold text-lg mb-3">Scarti al Servizio</h3>
+                  <h3 className="font-semibold text-lg mb-3">Scarto di Produzione</h3>
                   <p className="text-slate-700">
-                    Percentuale scarto: <span className="font-medium">{recipeDetails.serviceWastePercentage}%</span>
+                    Percentuale scarto: <span className="font-medium">
+                      {calculateServiceWaste(recipeDetails.components as any[], parseFloat(recipeDetails.unitWeight)).toFixed(2)}%
+                    </span>
                   </p>
                   {recipeDetails.serviceWastePerIngredient && Array.isArray(recipeDetails.serviceWastePerIngredient) && recipeDetails.serviceWastePerIngredient.length > 0 ? (
                     <div className="mt-3 space-y-2">
@@ -919,13 +958,25 @@ export default function FinalRecipes() {
       </Dialog>
 
       {/* Dialog Modifica Ricetta */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+      <Dialog open={isEditOpen} onOpenChange={(open) => { setIsEditOpen(open); if (!open) { setEditFormData(null); setEditComponents([]); } }}>
         <DialogContent className="max-w-[95vw] w-[1400px] max-h-[95vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Modifica Ricetta</DialogTitle>
-            <DialogDescription>
-              Modifica categoria, resa produzione, scarto al servizio e componenti
-            </DialogDescription>
+            <div className="flex items-center justify-between gap-2">
+              <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => navigateRecipe("prev")} title="Ricetta precedente (←)">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="flex-1 text-center">
+                <DialogTitle className="text-2xl truncate">{editFormData?.name || "Modifica Ricetta"}</DialogTitle>
+                <DialogDescription>
+                  {recipes && recipes.length > 0
+                    ? `${editingIndex + 1} / ${recipes.length} · Modifica categoria, resa, componenti · usa ← → per navigare`
+                    : "Modifica categoria, resa produzione, scarto al servizio e componenti"}
+                </DialogDescription>
+              </div>
+              <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => navigateRecipe("next")} title="Ricetta successiva (→)">
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </DialogHeader>
           {editFormData && (
             <div className="flex-1 overflow-y-auto space-y-6 pr-2">
@@ -938,25 +989,33 @@ export default function FinalRecipes() {
               />
 
               {/* Pulsanti */}
-              <div className="flex justify-end gap-3 pt-4">
-                <Button variant="outline" onClick={() => setIsEditOpen(false)}>
-                  Annulla
+              <div className="flex justify-between gap-3 pt-4">
+                <Button variant="ghost" onClick={() => { setIsEditOpen(false); setEditFormData(null); setEditComponents([]); }}>
+                  Chiudi
                 </Button>
-                <Button
-                  onClick={handleExportPDF}
-                  variant="outline"
-                  className="border-blue-600 text-blue-600 hover:bg-blue-50"
-                >
-                  <FileSpreadsheet className="mr-2 h-4 w-4" />
-                  Scarica PDF
-                </Button>
-                <Button
-                  onClick={handleUpdateSubmit}
-                  disabled={updateMutation.isPending}
-                  className="bg-orange-600 hover:bg-orange-700"
-                >
-                  {updateMutation.isPending ? "Salvataggio..." : "Salva Modifiche"}
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => navigateRecipe("prev")}>
+                    <ChevronLeft className="h-4 w-4 mr-1" />Precedente
+                  </Button>
+                  <Button
+                    onClick={handleExportPDF}
+                    variant="outline"
+                    className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                  >
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    Scarica PDF
+                  </Button>
+                  <Button
+                    onClick={handleUpdateSubmit}
+                    disabled={updateMutation.isPending}
+                    className="bg-orange-600 hover:bg-orange-700"
+                  >
+                    {updateMutation.isPending ? "Salvataggio..." : "Salva Modifiche"}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => navigateRecipe("next")}>
+                    Successivo<ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
               </div>
             </div>
           )}
@@ -1023,7 +1082,6 @@ export default function FinalRecipes() {
                     code: createFormData.code,
                     category: createFormData.category,
                     yieldPercentage: createFormData.yieldPercentage,
-                    serviceWastePercentage: createFormData.serviceWastePercentage,
                     conservationMethod: createFormData.conservationMethod,
                     maxConservationTime: createFormData.maxConservationTime,
                     isSellable: createFormData.isSellable ?? true,

@@ -3,25 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Button } from "../components/ui/button";
 import { ArrowLeft, FileText, Calendar, User } from "lucide-react";
 import { useLocation } from "wouter";
-import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function OrderHistory() {
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
-
-  // Admin vede tutti gli ordini, utenti normali solo i propri
-  const { data: allOrders = [], isLoading: isLoadingAll } = trpc.orderSessions.getAllHistory.useQuery(
-    undefined,
-    { enabled: isAdmin }
-  );
-  const { data: myOrders = [], isLoading: isLoadingMy } = trpc.orderSessions.getMyHistory.useQuery(
-    undefined,
-    { enabled: !isAdmin }
-  );
-  
-  const orders = isAdmin ? allOrders : myOrders;
-  const isLoading = isAdmin ? isLoadingAll : isLoadingMy;
+  // Tutti gli utenti vedono tutti gli ordini dello store
+  const { data: orders = [], isLoading } = trpc.orderSessions.getAllHistory.useQuery();
 
   if (isLoading) {
     return (

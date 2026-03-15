@@ -31,8 +31,8 @@ export default function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) 
           .filter((s) => s.name.toLowerCase().includes(query.toLowerCase()))
           .map((s) => ({ type: "Fornitore", name: s.name, url: "/suppliers" })),
         ...recipes
-          .filter((r) => r.name.toLowerCase().includes(query.toLowerCase()))
-          .map((r) => ({ type: "Ricetta", name: r.name, url: "/final-recipes" })),
+          .filter((r: any) => r.name.toLowerCase().includes(query.toLowerCase()))
+          .map((r: any) => ({ type: "Ricetta", name: r.name, url: "/final-recipes" })),
       ].slice(0, 10)
     : [];
 

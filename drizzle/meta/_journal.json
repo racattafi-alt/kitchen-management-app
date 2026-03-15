@@ -218,6 +218,97 @@
       "when": 1772100002000,
       "tag": "0030_add_password_hash",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "5",
+      "when": 1772100003000,
+      "tag": "0031_seed_initial_data",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "5",
+      "when": 1772200000000,
+      "tag": "0032_perf_indexes_and_order_history_storeId",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "5",
+      "when": 1772300000000,
+      "tag": "0033_seed_semi_finished_recipes",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "5",
+      "when": 1772400000000,
+      "tag": "0034_add_packageSize_to_ingredients",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "5",
+      "when": 1772500000000,
+      "tag": "0035_add_shopping_list_sessions",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "5",
+      "when": 1772600000000,
+      "tag": "0036_assign_users_to_stores",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "5",
+      "when": 1772700000000,
+      "tag": "0037_fix_suppliers_name_unique",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "5",
+      "when": 1772800000000,
+      "tag": "0038_fix_recipe_code_unique",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "5",
+      "when": 1772900000000,
+      "tag": "0039_add_isSoldByPackage_to_ingredients",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "5",
+      "when": 1773000000000,
+      "tag": "0040_add_superadmin_role",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "5",
+      "when": 1773100000000,
+      "tag": "0041_add_isGlobal_to_stores",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "5",
+      "when": 1773200000000,
+      "tag": "0042_add_food_matrix_v2",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "5",
+      "when": 1773300000000,
+      "tag": "0043_fix_order_history_store",
+      "breakpoints": true
     }
   ]
 }

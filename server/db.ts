@@ -1,4 +1,4 @@
-import { eq, and, desc, like, gte } from "drizzle-orm";
+import { eq, and, desc, like, gte, ne, sql, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,
@@ -129,6 +129,13 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getUserOpenIdById(id: number): Promise<string | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select({ openId: users.openId }).from(users).where(eq(users.id, id)).limit(1);
+  return result[0]?.openId;
+}
+
 export async function getAllUsers() {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -142,12 +149,13 @@ export async function getAllUsers() {
       loginMethod: users.loginMethod,
       lastSignedIn: users.lastSignedIn,
       createdAt: users.createdAt,
+      preferredStoreId: users.preferredStoreId,
     })
     .from(users)
     .orderBy(users.createdAt);
 }
 
-export async function updateUserRole(userId: number, role: "user" | "admin" | "manager" | "cook") {
+export async function updateUserRole(userId: number, role: "user" | "admin" | "manager" | "cook" | "superadmin") {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -189,6 +197,11 @@ export async function getIngredients(storeId?: string | null) {
       isActive: ingredients.isActive,
       isOrderable: ingredients.isOrderable,
       isSellable: ingredients.isSellable,
+      isSoldByPackage: ingredients.isSoldByPackage,
+      packageSize: ingredients.packageSize,
+      brand: ingredients.brand,
+      notes: ingredients.notes,
+      isFood: ingredients.isFood,
       allergens: ingredients.allergens,
       createdAt: ingredients.createdAt,
       updatedAt: ingredients.updatedAt,
@@ -209,7 +222,37 @@ export async function getIngredients(storeId?: string | null) {
 export async function getIngredientById(id: string) {
   const db = await getDb();
   if (!db) return null;
-  const result = await db.select().from(ingredients).where(eq(ingredients.id, id)).limit(1);
+  const result = await db
+    .select({
+      id: ingredients.id,
+      storeId: ingredients.storeId,
+      name: ingredients.name,
+      supplier: ingredients.supplier,
+      supplierId: ingredients.supplierId,
+      category: ingredients.category,
+      unitType: ingredients.unitType,
+      packageType: ingredients.packageType,
+      department: ingredients.department,
+      packageQuantity: ingredients.packageQuantity,
+      packagePrice: ingredients.packagePrice,
+      pricePerKgOrUnit: ingredients.pricePerKgOrUnit,
+      minOrderQuantity: ingredients.minOrderQuantity,
+      brand: ingredients.brand,
+      notes: ingredients.notes,
+      isActive: ingredients.isActive,
+      isFood: ingredients.isFood,
+      isOrderable: ingredients.isOrderable,
+      isSellable: ingredients.isSellable,
+      isSoldByPackage: ingredients.isSoldByPackage,
+      isSalaItem: ingredients.isSalaItem,
+      subcategory: ingredients.subcategory,
+      allergens: ingredients.allergens,
+      createdAt: ingredients.createdAt,
+      updatedAt: ingredients.updatedAt,
+    })
+    .from(ingredients)
+    .where(eq(ingredients.id, id))
+    .limit(1);
   return result.length > 0 ? result[0] : null;
 }
 
@@ -237,7 +280,9 @@ export async function createSemiFinished(data: Omit<SemiFinishedRecipe, "created
 export async function getSemiFinishedRecipes(storeId?: string | null) {
   const db = await getDb();
   if (!db) return [];
-  if (!storeId) return [];
+  if (!storeId) {
+    return db.select().from(semiFinishedRecipes);
+  }
   return db.select().from(semiFinishedRecipes).where(eq(semiFinishedRecipes.storeId, storeId));
 }
 
@@ -297,13 +342,17 @@ export async function getFinalRecipeById(id: string) {
   return result.length > 0 ? result[0] : null;
 }
 
-export async function getFinalRecipeByCode(code: string) {
+export async function getFinalRecipeByCode(code: string, storeId?: string | null) {
   const db = await getDb();
   if (!db) return null;
   const result = await db
     .select()
     .from(finalRecipes)
-    .where(eq(finalRecipes.code, code))
+    .where(
+      storeId
+        ? and(eq(finalRecipes.code, code), eq(finalRecipes.storeId, storeId))
+        : eq(finalRecipes.code, code)
+    )
     .limit(1);
   return result.length > 0 ? result[0] : null;
 }
@@ -427,24 +476,29 @@ export async function getWeeklyProductions(weekStartDate?: Date, storeId?: strin
     .from(weeklyProductions)
     .leftJoin(finalRecipes, eq(weeklyProductions.recipeFinalId, finalRecipes.id));
   
+  const conditions: any[] = [];
+
   if (storeId) {
-    query = query.where(eq(weeklyProductions.storeId, storeId));
+    conditions.push(eq(weeklyProductions.storeId, storeId));
   }
-  
+
   if (weekStartDate) {
-    query = query.where(eq(weeklyProductions.weekStartDate, weekStartDate));
+    conditions.push(eq(weeklyProductions.weekStartDate, weekStartDate));
   } else {
-    // Se non specificata una settimana, filtra solo produzioni future (da prossima domenica)
+    // Senza filtro settimana: mostra produzioni dalla settimana corrente in poi
     const now = new Date();
-    const nextSunday = new Date(now);
-    const dayOfWeek = now.getDay(); // 0 = domenica, 1 = lunedì, ..., 6 = sabato
-    const daysUntilNextSunday = dayOfWeek === 0 ? 7 : (7 - dayOfWeek);
-    nextSunday.setDate(now.getDate() + daysUntilNextSunday);
-    nextSunday.setHours(0, 0, 0, 0);
-    
-    query = query.where(gte(weeklyProductions.weekStartDate, nextSunday));
+    const dayOfWeek = now.getDay(); // 0=domenica, 1=lunedì...
+    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const thisMonday = new Date(now);
+    thisMonday.setDate(now.getDate() + diff);
+    thisMonday.setHours(0, 0, 0, 0);
+    conditions.push(gte(weeklyProductions.weekStartDate, thisMonday));
   }
-  
+
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions));
+  }
+
   return query;
 }
 
@@ -704,4 +758,46 @@ export async function countUsers(): Promise<number> {
   if (!db) return 0;
   const result = await db.select().from(users);
   return result.length;
+}
+
+export async function deduplicateIngredients(): Promise<{ removed: number; details: string[] }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Trova tutti gli ingredienti raggruppati per (storeId, nome normalizzato)
+  const allIngredients = await db
+    .select({ id: ingredients.id, storeId: ingredients.storeId, name: ingredients.name, createdAt: ingredients.createdAt })
+    .from(ingredients)
+    .orderBy(ingredients.storeId, ingredients.name, ingredients.createdAt);
+
+  // Raggruppa per storeId + nome (case-insensitive)
+  const groups = new Map<string, typeof allIngredients>();
+  for (const ing of allIngredients) {
+    const key = `${ing.storeId}::${ing.name.toLowerCase().trim()}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(ing);
+  }
+
+  const toDelete: string[] = [];
+  const details: string[] = [];
+
+  for (const [key, group] of Array.from(groups.entries())) {
+    if (group.length <= 1) continue;
+    // Mantieni il più vecchio (primo creato), elimina gli altri
+    const [keep, ...duplicates] = group;
+    for (const dup of duplicates) {
+      toDelete.push(dup.id);
+    }
+    const storePart = key.split('::')[0];
+    details.push(`[${storePart}] "${group[0].name}": mantenuto ${keep.id}, rimossi ${duplicates.map((d: { id: string }) => d.id).join(', ')}`);
+  }
+
+  if (toDelete.length > 0) {
+    // Prima aggiorna le ricette che usano gli id duplicati con l'id del mantenuto
+    // (le ricette memorizzano i componenti come JSON, non come FK, quindi i riferimenti rimangono validi)
+    // Elimina i duplicati
+    await db.delete(ingredients).where(inArray(ingredients.id, toDelete));
+  }
+
+  return { removed: toDelete.length, details };
 }

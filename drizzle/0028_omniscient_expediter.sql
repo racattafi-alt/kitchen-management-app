@@ -1,5 +1,1 @@
-ALTER TABLE `final_recipes` ADD `storeId` varchar(36) NOT NULL;--> statement-breakpoint
-ALTER TABLE `ingredients` ADD `storeId` varchar(36) NOT NULL;--> statement-breakpoint
-ALTER TABLE `orders` ADD `storeId` varchar(36) NOT NULL;--> statement-breakpoint
-ALTER TABLE `suppliers` ADD `storeId` varchar(36) NOT NULL;--> statement-breakpoint
-ALTER TABLE `weekly_productions` ADD `storeId` varchar(36) NOT NULL;
+-- no-op: all changes in this migration were already applied in 0027_loose_speedball

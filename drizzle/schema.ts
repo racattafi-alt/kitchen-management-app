@@ -9,6 +9,7 @@ import {
   boolean,
   json,
   datetime,
+  unique,
 } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
 
@@ -21,7 +22,7 @@ export const users = mysqlTable("users", {
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin", "manager", "cook"]).default("user").notNull(),
+  role: mysqlEnum("role", ["user", "admin", "manager", "cook", "superadmin"]).default("user").notNull(),
   preferredStoreId: varchar("preferredStoreId", { length: 36 }),
   passwordHash: varchar("passwordHash", { length: 255 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -43,6 +44,7 @@ export const stores = mysqlTable("stores", {
   email: varchar("email", { length: 320 }),
   settings: json("settings"),
   isActive: boolean("isActive").default(true).notNull(),
+  isGlobal: boolean("isGlobal").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -70,7 +72,7 @@ export type InsertStoreUser = typeof storeUsers.$inferInsert;
 export const suppliers = mysqlTable("suppliers", {
   id: varchar("id", { length: 36 }).primaryKey(),
   storeId: varchar("storeId", { length: 36 }).notNull(),
-  name: varchar("name", { length: 255 }).notNull().unique(),
+  name: varchar("name", { length: 255 }).notNull(),
   contact: varchar("contact", { length: 255 }),
   email: varchar("email", { length: 320 }),
   phone: varchar("phone", { length: 50 }),
@@ -78,7 +80,9 @@ export const suppliers = mysqlTable("suppliers", {
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  nameStoreUnique: unique("suppliers_name_storeId_unique").on(table.name, table.storeId),
+}));
 
 export type Supplier = typeof suppliers.$inferSelect;
 export type InsertSupplier = typeof suppliers.$inferInsert;
@@ -97,6 +101,7 @@ export const ingredients = mysqlTable("ingredients", {
     "Alcolici",
     "Bevande",
     "Birra",
+    "Caffè",
     "Carni",
     "Farine",
     "Latticini",
@@ -121,6 +126,7 @@ export const ingredients = mysqlTable("ingredients", {
   isOrderable: boolean("isOrderable").default(true).notNull(),
   isSellable: boolean("isSellable").default(true).notNull(),
   isSalaItem: boolean("isSalaItem").default(false).notNull(),
+  isSoldByPackage: boolean("isSoldByPackage").default(false).notNull(),
   subcategory: varchar("subcategory", { length: 100 }),
   allergens: json("allergens").$type<string[]>().default([]),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -136,7 +142,7 @@ export type InsertIngredient = typeof ingredients.$inferInsert;
 export const semiFinishedRecipes = mysqlTable("semi_finished_recipes", {
   id: varchar("id", { length: 36 }).primaryKey(),
   storeId: varchar("storeId", { length: 36 }).notNull(),
-  code: varchar("code", { length: 50 }).notNull().unique(),
+  code: varchar("code", { length: 50 }).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   category: mysqlEnum("category", ["SPEZIE", "SALSE", "VERDURA", "CARNE", "ALTRO"]).notNull(),
   finalPricePerKg: decimal("finalPricePerKg", { precision: 10, scale: 2 }).notNull(),
@@ -148,7 +154,9 @@ export const semiFinishedRecipes = mysqlTable("semi_finished_recipes", {
   productionSteps: json("productionSteps"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  codeStoreUnique: unique("semi_finished_recipes_code_storeId_unique").on(table.code, table.storeId),
+}));
 
 export type SemiFinishedRecipe = typeof semiFinishedRecipes.$inferSelect;
 export type InsertSemiFinishedRecipe = typeof semiFinishedRecipes.$inferInsert;
@@ -159,7 +167,7 @@ export type InsertSemiFinishedRecipe = typeof semiFinishedRecipes.$inferInsert;
 export const finalRecipes = mysqlTable("final_recipes", {
   id: varchar("id", { length: 36 }).primaryKey(),
   storeId: varchar("storeId", { length: 36 }).notNull(),
-  code: varchar("code", { length: 50 }).notNull().unique(),
+  code: varchar("code", { length: 50 }).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   category: mysqlEnum("category", ["Pane", "Carne", "Salse", "Verdure", "Formaggi", "Altro"]).notNull(),
   components: json("components"),
@@ -181,7 +189,9 @@ export const finalRecipes = mysqlTable("final_recipes", {
   sellingPrice: decimal("sellingPrice", { precision: 10, scale: 2 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  codeStoreUnique: unique("final_recipes_code_storeId_unique").on(table.code, table.storeId),
+}));
 
 export type FinalRecipe = typeof finalRecipes.$inferSelect;
 export type InsertFinalRecipe = typeof finalRecipes.$inferInsert;
@@ -215,6 +225,52 @@ export const foodMatrix = mysqlTable("food_matrix", {
 
 export type FoodMatrixItem = typeof foodMatrix.$inferSelect;
 export type InsertFoodMatrixItem = typeof foodMatrix.$inferInsert;
+
+/**
+ * Food Matrix V2: Componente di una ricetta semplificata
+ */
+export type FoodMatrixComponent =
+  | { type: "INGREDIENT"; sourceId: string; name: string; quantity: number; unit: string }
+  | { type: "SEMI_FINISHED"; sourceId: string; name: string; quantity: number; unit: string }
+  | { type: "FINAL_RECIPE"; sourceId: string; name: string; quantity: number; unit: string }
+  | { type: "MANUAL"; name: string; quantity: number; unit: string; pricePerUnit: number };
+
+/**
+ * Food Matrix V2: Voci vendibili (ricette semplificate con varianti di porzione)
+ */
+export const foodMatrixEntries = mysqlTable("food_matrix_entries", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  storeId: varchar("storeId", { length: 36 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  category: varchar("category", { length: 100 }).notNull().default("Altro"),
+  servingSize: decimal("servingSize", { precision: 10, scale: 3 }).notNull().default("1.000"),
+  servingUnit: varchar("servingUnit", { length: 50 }).notNull().default("porzione"),
+  sellingPrice: decimal("sellingPrice", { precision: 10, scale: 2 }),
+  components: json("components").notNull().$type<FoodMatrixComponent[]>(),
+  costPerServing: decimal("costPerServing", { precision: 10, scale: 4 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type FoodMatrixEntry = typeof foodMatrixEntries.$inferSelect;
+export type InsertFoodMatrixEntry = typeof foodMatrixEntries.$inferInsert;
+
+/**
+ * Food Matrix V2: Snapshot storici (fotografie datate dei costi)
+ */
+export const foodMatrixSnapshots = mysqlTable("food_matrix_snapshots", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  storeId: varchar("storeId", { length: 36 }).notNull(),
+  snapshotType: mysqlEnum("snapshotType", ["PRICE_UPDATE", "PRICE_EDIT"]).notNull().default("PRICE_EDIT"),
+  description: text("description"),
+  data: json("data").notNull(),
+  createdBy: varchar("createdBy", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type FoodMatrixSnapshot = typeof foodMatrixSnapshots.$inferSelect;
+export type InsertFoodMatrixSnapshot = typeof foodMatrixSnapshots.$inferInsert;
 
 /**
  * Operazioni: Costi di lavoro e energia
@@ -470,6 +526,7 @@ export const orderHistory = mysqlTable("order_history", {
   pdfUrl: text("pdfUrl"),
   totalItems: int("totalItems").notNull().default(0),
   notes: text("notes"),
+  storeId: varchar("storeId", { length: 36 }).notNull().default("default-store-001"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

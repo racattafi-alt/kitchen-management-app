@@ -8,9 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { trpc } from "@/lib/trpc";
-import { Plus, Building2, Pencil, Trash2, ArrowLeft } from "lucide-react";
+import { Plus, Building2, Pencil, Trash2, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumb";
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useArrowNav } from "@/hooks/useArrowNav";
 import { toast } from "sonner";
 
 export default function Suppliers() {
@@ -18,6 +19,7 @@ export default function Suppliers() {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<any>(null);
+  const [editingIndex, setEditingIndex] = useState<number>(-1);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
@@ -72,8 +74,6 @@ export default function Suppliers() {
   const updateMutation = trpc.suppliers.update.useMutation({
     onSuccess: () => {
       utils.suppliers.list.invalidate();
-      setIsEditOpen(false);
-      setEditingSupplier(null);
       toast.success("Fornitore aggiornato con successo");
     },
     onError: (error) => {
@@ -91,8 +91,8 @@ export default function Suppliers() {
     },
   });
 
-  const canEdit = user?.role === "admin" || user?.role === "manager";
-  const canDelete = user?.role === "admin";
+  const canEdit = user?.role === "admin" || user?.role === "manager" || user?.role === "superadmin";
+  const canDelete = user?.role === "admin" || user?.role === "superadmin";
 
   const resetForm = () => {
     setFormData({
@@ -113,7 +113,7 @@ export default function Suppliers() {
     });
   };
 
-  const handleEdit = (supplier: any) => {
+  const loadSupplierToEdit = (supplier: any) => {
     setEditingSupplier(supplier);
     setEditFormData({
       name: supplier.name,
@@ -123,8 +123,25 @@ export default function Suppliers() {
       address: supplier.address || "",
       notes: supplier.notes || "",
     });
+  };
+
+  const handleEdit = (supplier: any) => {
+    const idx = suppliers?.findIndex((s: any) => s.id === supplier.id) ?? -1;
+    setEditingIndex(idx);
+    loadSupplierToEdit(supplier);
     setIsEditOpen(true);
   };
+
+  const navigateSupplier = useCallback((direction: "prev" | "next") => {
+    if (!suppliers || suppliers.length === 0) return;
+    const newIndex = direction === "prev"
+      ? (editingIndex - 1 + suppliers.length) % suppliers.length
+      : (editingIndex + 1) % suppliers.length;
+    setEditingIndex(newIndex);
+    loadSupplierToEdit(suppliers[newIndex]);
+  }, [editingIndex, suppliers]);
+
+  useArrowNav(isEditOpen, navigateSupplier);
 
   const handleUpdateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -236,10 +253,23 @@ export default function Suppliers() {
         </div>
 
         {/* Dialog Modifica Fornitore */}
-        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <Dialog open={isEditOpen} onOpenChange={(open) => { setIsEditOpen(open); if (!open) setEditingSupplier(null); }}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Modifica Fornitore</DialogTitle>
+              <div className="flex items-center justify-between gap-2">
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => navigateSupplier("prev")} title="Fornitore precedente (←)">
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex-1 text-center">
+                  <DialogTitle className="truncate">{editingSupplier?.name || "Modifica Fornitore"}</DialogTitle>
+                  {suppliers && suppliers.length > 0 && (
+                    <p className="text-xs text-slate-500 mt-0.5">{editingIndex + 1} / {suppliers.length} · usa ← → per navigare</p>
+                  )}
+                </div>
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => navigateSupplier("next")} title="Fornitore successivo (→)">
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </DialogHeader>
             <form onSubmit={handleUpdateSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -297,11 +327,19 @@ export default function Suppliers() {
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>
-                  Annulla
+              <div className="flex justify-between gap-2">
+                <Button type="button" variant="ghost" onClick={() => { setIsEditOpen(false); setEditingSupplier(null); }}>
+                  Chiudi
                 </Button>
-                <Button type="submit">Salva Modifiche</Button>
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={() => navigateSupplier("prev")}>
+                    <ChevronLeft className="h-4 w-4 mr-1" />Precedente
+                  </Button>
+                  <Button type="submit">Salva Modifiche</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => navigateSupplier("next")}>
+                    Successivo<ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
               </div>
             </form>
           </DialogContent>

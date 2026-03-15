@@ -1,63 +1,56 @@
 import "dotenv/config";
+import path from "path";
 import express from "express";
 import { createServer } from "http";
-import net from "net";
-import path from "path";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
+import { drizzle } from "drizzle-orm/mysql2";
+import { migrate } from "drizzle-orm/mysql2/migrator";
 import { registerOAuthRoutes } from "./oauth";
 import { registerLocalAuthRoutes } from "./localAuthRoutes";
+import { registerGoogleAuthRoutes } from "./googleAuthRoutes";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { ENV } from "./env";
-import { getDb } from "../db";
 
 async function runMigrations() {
-  console.log("[Migrations] Starting...");
-  if (!process.env.DATABASE_URL) {
-    console.log("[Migrations] DATABASE_URL not set — skipping.");
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) {
+    console.error("[Migrate] DATABASE_URL not set — skipping migrations");
     return;
   }
   const migrationsFolder = path.resolve(process.cwd(), "drizzle");
-  console.log(`[Migrations] Folder: ${migrationsFolder}`);
+  console.log(`[Migrate] Running migrations from: ${migrationsFolder}`);
+  console.log(`[Migrate] Database: ${dbUrl.replace(/:\/\/.*@/, "://<credentials>@")}`);
+  const db = drizzle(dbUrl);
   try {
-    const { migrate } = await import("drizzle-orm/mysql2/migrator");
-    const db = await getDb();
-    if (!db) {
-      throw new Error("Database connection unavailable");
-    }
     await migrate(db, { migrationsFolder });
-    console.log("[Migrations] ✓ Done.");
+    console.log("[Migrate] ✓ All migrations applied successfully.");
   } catch (err) {
-    console.error("[Migrations] ✗ Failed:", err);
-    process.exit(1); // fail hard so Railway marks deploy as failed
+    console.error("[Migrate] ✗ Migration failed:", err);
+    console.error("[Migrate] The server will continue running — fix the migration and redeploy.");
   }
-}
-
-function isPortAvailable(port: number): Promise<boolean> {
-  return new Promise(resolve => {
-    const server = net.createServer();
-    server.listen(port, () => {
-      server.close(() => resolve(true));
-    });
-    server.on("error", () => resolve(false));
-  });
-}
-
-async function findAvailablePort(startPort: number = 3000): Promise<number> {
-  for (let port = startPort; port < startPort + 20; port++) {
-    if (await isPortAvailable(port)) {
-      return port;
-    }
-  }
-  throw new Error(`No available port found starting from ${startPort}`);
 }
 
 async function startServer() {
-  await runMigrations();
-
   const app = express();
   const server = createServer(app);
+  // Health check — must be first so Railway healthcheck passes even if migrations fail
+  app.get("/healthz", (_req, res) => res.json({ status: "ok" }));
+
+  const port = parseInt(process.env.PORT || "3000");
+
+  // Start listening IMMEDIATELY so the healthcheck can pass
+  await new Promise<void>((resolve) => {
+    server.listen(port, "0.0.0.0", () => {
+      console.log(`Server listening on port ${port}`);
+      resolve();
+    });
+  });
+
+  // Run migrations AFTER the server is listening (non-fatal)
+  await runMigrations();
+
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -67,6 +60,8 @@ async function startServer() {
   } else {
     registerOAuthRoutes(app);
   }
+  // Google OAuth — always registered if GOOGLE_CLIENT_ID/SECRET are set
+  registerGoogleAuthRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",
@@ -82,16 +77,7 @@ async function startServer() {
     serveStatic(app);
   }
 
-  const preferredPort = parseInt(process.env.PORT || "3000");
-  const port = await findAvailablePort(preferredPort);
-
-  if (port !== preferredPort) {
-    console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
-  }
-
-  server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
-  });
+  console.log(`Server fully initialized on port ${port}`);
 }
 
 startServer().catch(console.error);
