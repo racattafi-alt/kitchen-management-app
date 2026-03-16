@@ -23,6 +23,28 @@ export function registerGoogleAuthRoutes(app: Express) {
     res.json({ enabled: !!(clientId && clientSecret) });
   });
 
+  // Endpoint pubblico: il client controlla se Apple auth è abilitato
+  // Apple Sign In richiede APPLE_CLIENT_ID, APPLE_TEAM_ID, APPLE_KEY_ID e APPLE_PRIVATE_KEY
+  app.get("/api/auth/apple/status", (_req: Request, res: Response) => {
+    const appleEnabled = !!(
+      process.env.APPLE_CLIENT_ID &&
+      process.env.APPLE_TEAM_ID &&
+      process.env.APPLE_KEY_ID &&
+      process.env.APPLE_PRIVATE_KEY
+    );
+    res.json({ enabled: appleEnabled });
+  });
+
+  // Placeholder Apple OAuth — da implementare completamente con libreria apple-signin-auth
+  app.get("/api/auth/apple", (_req: Request, res: Response) => {
+    if (!(process.env.APPLE_CLIENT_ID && process.env.APPLE_TEAM_ID)) {
+      return res.redirect("/login?error=apple_auth_failed");
+    }
+    // TODO: implementare il redirect a appleid.apple.com/auth/authorize
+    // Richiede: client_id, redirect_uri, response_type=code, scope=name email, response_mode=form_post
+    res.redirect("/login?error=apple_auth_failed");
+  });
+
   if (!clientId || !clientSecret) {
     console.log("[Google Auth] GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not set — Google login disabled");
     return;

@@ -200,34 +200,102 @@ const ingredientsRouter = router({
       throw new Error(`Errore creazione Excel: ${error.message}`);
     }
   }),
-  importFromExcel: protectedProcedure
+  // ---- ANTEPRIMA IMPORT con fuzzy matching fornitori/ingredienti ----
+  previewImport: protectedProcedure
     .input(z.object({
       fileData: z.string(), // base64
-      filename: z.string()
+      filename: z.string(),
     }))
     .mutation(async ({ input, ctx }) => {
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
-      
+
       const { importIngredientsFromExcel } = await import('./exportExcel.js');
-      
+      const { analyzeSupplierMatches, analyzeIngredientMatches } = await import('./fuzzyMatch.js');
+
+      const buffer = Buffer.from(input.fileData, 'base64');
+      const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+      const parsedData = await importIngredientsFromExcel(arrayBuffer);
+
+      // Carica dati esistenti per matching
+      const existingIngredients = (await db.getIngredients(ctx.currentStoreId))
+        .map((i: any) => ({ id: i.id, name: i.name }));
+      const existingSuppliers = (await db.getSuppliers(ctx.currentStoreId))
+        .map((s: any) => ({ id: s.id, name: s.name }));
+
+      // Analisi matching ingredienti
+      const ingredientMatches = analyzeIngredientMatches(parsedData, existingIngredients);
+
+      // Analisi matching fornitori (solo righe con fornitore compilato)
+      const supplierMatches = analyzeSupplierMatches(parsedData, existingSuppliers);
+
+      return {
+        totalRows: parsedData.length,
+        rows: parsedData.map((row: any, idx: number) => ({
+          ...row,
+          _ingredientMatch: ingredientMatches[idx],
+        })),
+        supplierMismatches: supplierMatches,
+        summary: {
+          exactMatches: ingredientMatches.filter(m => m.level === 'exact').length,
+          newIngredients: ingredientMatches.filter(m => m.level === 'none').length,
+          supplierWarnings: supplierMatches.filter(m => m.level === 'none' || m.level === 'medium').length,
+        },
+      };
+    }),
+
+  importFromExcel: protectedProcedure
+    .input(z.object({
+      fileData: z.string(), // base64
+      filename: z.string(),
+      // Override manuali per fornitori non matchati (key=nomeFornitoreImportato, value=supplierId nel DB)
+      supplierOverrides: z.record(z.string()).optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+
+      const { importIngredientsFromExcel } = await import('./exportExcel.js');
+      const { findBestMatch } = await import('./fuzzyMatch.js');
+
       try {
         // Decodifica file Excel
         const buffer = Buffer.from(input.fileData, 'base64');
         const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
         const parsedData = await importIngredientsFromExcel(arrayBuffer);
-        
+
+        // Carica fornitori esistenti per fuzzy matching
+        const existingSuppliers = (await db.getSuppliers(ctx.currentStoreId))
+          .map((s: any) => ({ id: s.id, name: s.name }));
+
         // Valida e importa dati
         let imported = 0;
+        let updated = 0;
         let errors: string[] = [];
-        
+
         for (const row of parsedData) {
           try {
-            // Cerca ingrediente esistente per nome
-            const existing = await db.getIngredients();
+            // Risolvi supplierId: prima controlla override manuale, poi fuzzy match automatico
+            let resolvedSupplierId: string | null = null;
+            if (row.supplier) {
+              const overrideId = input.supplierOverrides?.[row.supplier];
+              if (overrideId) {
+                resolvedSupplierId = overrideId;
+              } else {
+                const match = findBestMatch(row.supplier, existingSuppliers);
+                if (match.level === 'exact' || match.level === 'high') {
+                  resolvedSupplierId = match.matchedId;
+                }
+                // level 'medium' e 'none': supplierId rimane null (nome testuale salvato in supplier)
+              }
+            }
+
+            // Cerca ingrediente esistente per nome (case-insensitive)
+            const existing = await db.getIngredients(ctx.currentStoreId);
             const match = existing.find((i: any) => i.name.toLowerCase() === row.name.toLowerCase());
-            
+
             if (match) {
               // Aggiorna esistente
               const updateData: any = {
@@ -235,52 +303,60 @@ const ingredientsRouter = router({
                 packagePrice: row.packagePrice.toString(),
                 pricePerKgOrUnit: row.pricePerKgOrUnit.toString(),
                 category: row.category,
-                isFood: row.isFood
+                department: row.department || 'Cucina',
+                isFood: row.isFood,
+                isOrderable: row.isOrderable,
               };
+              if (row.supplier) updateData.supplier = row.supplier;
+              if (resolvedSupplierId) updateData.supplierId = resolvedSupplierId;
               if (row.brand) updateData.brand = row.brand;
               if (row.notes) updateData.notes = row.notes;
-              
+              if (row.packageType) updateData.packageType = row.packageType;
+              if (row.minOrderQuantity) updateData.minOrderQuantity = row.minOrderQuantity.toString();
+              if (row.allergens?.length) updateData.allergens = row.allergens;
+
               await db.updateIngredient(match.id, updateData);
-              imported++;
+              updated++;
             } else {
               // Crea nuovo
               await db.createIngredient({
-                id: crypto.randomBytes(16).toString('hex'),
+                id: crypto.randomUUID(),
                 storeId: ctx.currentStoreId || 'default-store-001',
                 name: row.name,
-                supplierId: null,
-                supplier: row.supplier || 'Non specificato',
+                supplierId: resolvedSupplierId,
+                supplier: row.supplier || '',
                 category: row.category,
                 unitType: row.unit === 'kg' ? 'k' : 'u',
-                packageType: null,
-                department: 'Cucina',
+                packageType: row.packageType || null,
+                department: row.department || 'Cucina',
                 packageQuantity: row.packageQuantity.toString(),
                 packagePrice: row.packagePrice.toString(),
                 pricePerKgOrUnit: row.pricePerKgOrUnit.toString(),
-                minOrderQuantity: null,
+                minOrderQuantity: row.minOrderQuantity?.toString() || null,
                 packageSize: null,
                 brand: row.brand || '',
                 notes: row.notes || '',
                 isFood: row.isFood,
                 isActive: true,
-                isOrderable: true,
+                isOrderable: row.isOrderable,
                 isSellable: true,
-                isSalaItem: false,
+                isSalaItem: row.department === 'Sala',
                 isSoldByPackage: false,
                 subcategory: null,
-                allergens: row.allergens || []
+                allergens: row.allergens || [],
               });
               imported++;
             }
           } catch (err: any) {
-            errors.push(`Errore riga ${row.name}: ${err.message}`);
+            errors.push(`Errore riga "${row.name}": ${err.message}`);
           }
         }
-        
+
         return {
           success: true,
           imported,
-          errors: errors.length > 0 ? errors : undefined
+          updated,
+          errors: errors.length > 0 ? errors : undefined,
         };
       } catch (error: any) {
         console.error('Errore import Excel:', error);
@@ -638,11 +714,13 @@ const productionRouter = router({
           // comp.quantity è per unitWeight kg di output, quindi normalizziamo
           const quantityPerKg = comp.quantity / unitWeight;
           const totalNeeded = quantityPerKg * quantity;
-          
-          if (comp.type === 'ingredient') {
+          // Normalizza tipo (supporta lowercase e uppercase per retrocompatibilità)
+          const compType = (comp.type || '').toLowerCase();
+
+          if (compType === 'ingredient') {
             const current = ingredientNeeds.get(comp.componentId) || 0;
             ingredientNeeds.set(comp.componentId, current + totalNeeded);
-          } else if (comp.type === 'semi_finished') {
+          } else if (compType === 'semi_finished') {
             const current = semiFinishedNeeds.get(comp.componentId) || 0;
             semiFinishedNeeds.set(comp.componentId, current + totalNeeded);
           }
@@ -1006,29 +1084,38 @@ const finalRecipesRouter = router({
       const components = Array.isArray(parsedComponents) ? parsedComponents : [];
       const componentsWithDetails = await Promise.all(
         components.map(async (comp: any) => {
-          if (comp.type === 'ingredient') {
+          // Normalizza il tipo (supporta sia lowercase che uppercase per retrocompatibilità)
+          const compType = (comp.type || '').toLowerCase();
+          const storedName = comp.componentName || comp.name || '';
+
+          if (compType === 'ingredient') {
             const ingredient = await db.getIngredientById(comp.componentId);
             return {
               ...comp,
-              name: ingredient?.name || 'Sconosciuto',
+              type: 'ingredient',
+              name: ingredient?.name || storedName || 'Sconosciuto',
               unit: comp.unit || (ingredient?.unitType === 'u' ? 'unità' : 'kg'),
-              pricePerUnit: ingredient?.pricePerKgOrUnit || 0,
+              pricePerUnit: ingredient?.pricePerKgOrUnit ?? comp.pricePerUnit ?? 0,
             };
-          } else if (comp.type === 'semi_finished') {
+          } else if (compType === 'semi_finished') {
             const semiFinished = await db.getSemiFinishedById(comp.componentId);
+            // Cerca anche tra le ricette finali con flag isSemiFinished
+            const semiFromFinalRecipe = !semiFinished ? await db.getFinalRecipeById(comp.componentId) : null;
             return {
               ...comp,
-              name: semiFinished?.name || 'Sconosciuto',
+              type: 'semi_finished',
+              name: semiFinished?.name || semiFromFinalRecipe?.name || storedName || 'Sconosciuto',
               unit: comp.unit || 'kg',
-              pricePerUnit: semiFinished?.finalPricePerKg || 0,
+              pricePerUnit: semiFinished?.finalPricePerKg ?? semiFromFinalRecipe?.totalCost ?? comp.pricePerUnit ?? 0,
             };
-          } else if (comp.type === 'operation') {
-            const operation = await db.getOperationByName(comp.componentName || '');
+          } else if (compType === 'operation') {
+            const operation = await db.getOperationByName(comp.componentName || comp.name || '');
             return {
               ...comp,
-              name: operation?.name || comp.componentName || 'Sconosciuto',
+              type: 'operation',
+              name: operation?.name || storedName || 'Operazione',
               unit: comp.unit || 'ore',
-              pricePerUnit: operation?.hourlyRate ? parseFloat(operation.hourlyRate) : 0,
+              pricePerUnit: operation?.hourlyRate ? parseFloat(operation.hourlyRate) : (comp.pricePerUnit ?? 0),
               costType: operation?.costType || comp.costType || 'LAVORO',
             };
           }

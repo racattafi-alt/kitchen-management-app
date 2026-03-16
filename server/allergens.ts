@@ -19,35 +19,41 @@ export async function calculateRecipeAllergens(recipeId: string): Promise<string
   if (!Array.isArray(components)) return [];
   
   for (const component of components) {
+    // Normalizza il tipo (supporta lowercase e uppercase per retrocompatibilità)
+    const compType = (component.type || '').toLowerCase();
+
     // Se il componente è un ingrediente
-    if (component.type === 'ingredient') {
+    if (compType === 'ingredient') {
       const ingredient = await db.getIngredientById(component.componentId);
       if (ingredient && ingredient.allergens) {
         const allergensList = typeof ingredient.allergens === 'string'
           ? JSON.parse(ingredient.allergens)
           : ingredient.allergens;
         if (Array.isArray(allergensList)) {
-          allergensList.forEach(a => allergensSet.add(a));
+          allergensList.forEach((a: string) => allergensSet.add(a));
         }
       }
     }
     // Se il componente è un semilavorato
-    else if (component.type === 'semi_finished') {
+    else if (compType === 'semi_finished') {
       const semiFinished = await db.getSemiFinishedById(component.componentId);
       if (semiFinished && semiFinished.components) {
         const semiComponents = typeof semiFinished.components === 'string'
           ? JSON.parse(semiFinished.components)
           : semiFinished.components;
-        
+
         if (Array.isArray(semiComponents)) {
           for (const semiComp of semiComponents) {
-            const ingredient = await db.getIngredientById(semiComp.componentId);
-            if (ingredient && ingredient.allergens) {
-              const allergensList = typeof ingredient.allergens === 'string'
-                ? JSON.parse(ingredient.allergens)
-                : ingredient.allergens;
-              if (Array.isArray(allergensList)) {
-                allergensList.forEach(a => allergensSet.add(a));
+            const semiCompType = (semiComp.type || '').toLowerCase();
+            if (semiCompType === 'ingredient') {
+              const ingredient = await db.getIngredientById(semiComp.componentId);
+              if (ingredient && ingredient.allergens) {
+                const allergensList = typeof ingredient.allergens === 'string'
+                  ? JSON.parse(ingredient.allergens)
+                  : ingredient.allergens;
+                if (Array.isArray(allergensList)) {
+                  allergensList.forEach((a: string) => allergensSet.add(a));
+                }
               }
             }
           }
