@@ -61,7 +61,7 @@ async function computeCostPerServing(
       const result = await database
         .select({ pricePerKgOrUnit: ingredients.pricePerKgOrUnit })
         .from(ingredients)
-        .where(and(eq(ingredients.id, c.sourceId), eq(ingredients.storeId, storeId)))
+        .where(eq(ingredients.id, c.sourceId))
         .limit(1);
       if (result.length > 0) {
         total += parseFloat(result[0].pricePerKgOrUnit) * c.quantity;

@@ -7,6 +7,8 @@ import {
   Supplier,
   InsertSupplier,
   ingredients,
+  ingredientStores,
+  IngredientStore,
   semiFinishedRecipes,
   finalRecipes,
   foodMatrix,
@@ -168,55 +170,82 @@ export async function updateUserRole(userId: number, role: "user" | "admin" | "m
 
 // ============ INGREDIENTI (Livello 0) ============
 
-export async function createIngredient(data: Omit<Ingredient, "createdAt" | "updatedAt">) {
+/**
+ * Crea un ingrediente globale e lo attiva opzionalmente in uno store.
+ * Se storeId è fornito, crea una riga in ingredient_stores con isActive=true.
+ */
+export async function createIngredient(
+  data: Omit<Ingredient, "createdAt" | "updatedAt">,
+  storeId?: string | null,
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.insert(ingredients).values(data as any);
+  if (storeId) {
+    await db.insert(ingredientStores).values({
+      ingredientId: data.id,
+      storeId,
+      isActive: true,
+    });
+  }
   return data;
 }
 
+/**
+ * Ritorna tutti gli ingredienti globalmente attivi.
+ * Se storeId è fornito, filtra solo quelli attivati per quello store (via ingredient_stores).
+ */
 export async function getIngredients(storeId?: string | null) {
   const db = await getDb();
   if (!db) return [];
-  
-  let query = db
-    .select({
-      id: ingredients.id,
-      name: ingredients.name,
-      supplier: ingredients.supplier,
-      supplierId: ingredients.supplierId,
-      supplierName: suppliers.name,
-      category: ingredients.category,
-      unitType: ingredients.unitType,
-      packageType: ingredients.packageType,
-      department: ingredients.department,
-      packageQuantity: ingredients.packageQuantity,
-      packagePrice: ingredients.packagePrice,
-      pricePerKgOrUnit: ingredients.pricePerKgOrUnit,
-      minOrderQuantity: ingredients.minOrderQuantity,
-      isActive: ingredients.isActive,
-      isOrderable: ingredients.isOrderable,
-      isSellable: ingredients.isSellable,
-      isSoldByPackage: ingredients.isSoldByPackage,
-      packageSize: ingredients.packageSize,
-      brand: ingredients.brand,
-      notes: ingredients.notes,
-      isFood: ingredients.isFood,
-      allergens: ingredients.allergens,
-      createdAt: ingredients.createdAt,
-      updatedAt: ingredients.updatedAt,
-    })
-    .from(ingredients)
-    .leftJoin(suppliers, eq(ingredients.supplierId, suppliers.id));
-  
+
+  const baseSelect = {
+    id: ingredients.id,
+    name: ingredients.name,
+    supplier: ingredients.supplier,
+    supplierId: ingredients.supplierId,
+    supplierName: suppliers.name,
+    category: ingredients.category,
+    unitType: ingredients.unitType,
+    packageType: ingredients.packageType,
+    department: ingredients.department,
+    packageQuantity: ingredients.packageQuantity,
+    packagePrice: ingredients.packagePrice,
+    pricePerKgOrUnit: ingredients.pricePerKgOrUnit,
+    minOrderQuantity: ingredients.minOrderQuantity,
+    isActive: ingredients.isActive,
+    isOrderable: ingredients.isOrderable,
+    isSellable: ingredients.isSellable,
+    isSoldByPackage: ingredients.isSoldByPackage,
+    packageSize: ingredients.packageSize,
+    brand: ingredients.brand,
+    notes: ingredients.notes,
+    isFood: ingredients.isFood,
+    allergens: ingredients.allergens,
+    createdAt: ingredients.createdAt,
+    updatedAt: ingredients.updatedAt,
+  };
+
   if (storeId) {
-    query = query.where(and(eq(ingredients.isActive, true), eq(ingredients.storeId, storeId))) as any;
-  } else {
-    query = query.where(eq(ingredients.isActive, true)) as any;
+    return db
+      .select(baseSelect)
+      .from(ingredients)
+      .innerJoin(ingredientStores, eq(ingredientStores.ingredientId, ingredients.id))
+      .leftJoin(suppliers, eq(ingredients.supplierId, suppliers.id))
+      .where(
+        and(
+          eq(ingredientStores.storeId, storeId),
+          eq(ingredientStores.isActive, true),
+          eq(ingredients.isActive, true),
+        ),
+      );
   }
-  
-  const results = await query;
-  return results;
+
+  return db
+    .select(baseSelect)
+    .from(ingredients)
+    .leftJoin(suppliers, eq(ingredients.supplierId, suppliers.id))
+    .where(eq(ingredients.isActive, true));
 }
 
 export async function getIngredientById(id: string) {
@@ -225,7 +254,6 @@ export async function getIngredientById(id: string) {
   const result = await db
     .select({
       id: ingredients.id,
-      storeId: ingredients.storeId,
       name: ingredients.name,
       supplier: ingredients.supplier,
       supplierId: ingredients.supplierId,
@@ -262,10 +290,50 @@ export async function updateIngredient(id: string, data: Partial<Ingredient>) {
   await db.update(ingredients).set(data).where(eq(ingredients.id, id));
 }
 
+/**
+ * Disattiva globalmente un ingrediente (isActive = false).
+ */
 export async function deleteIngredient(id: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(ingredients).set({ isActive: false }).where(eq(ingredients.id, id));
+}
+
+/**
+ * Attiva un ingrediente in uno store specifico (upsert in ingredient_stores).
+ */
+export async function activateIngredientInStore(ingredientId: string, storeId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .insert(ingredientStores)
+    .values({ ingredientId, storeId, isActive: true })
+    .onDuplicateKeyUpdate({ set: { isActive: true } });
+}
+
+/**
+ * Disattiva un ingrediente da uno store specifico.
+ * L'ingrediente rimane visibile in altri store e nel database globale.
+ */
+export async function deactivateIngredientInStore(ingredientId: string, storeId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .update(ingredientStores)
+    .set({ isActive: false })
+    .where(and(eq(ingredientStores.ingredientId, ingredientId), eq(ingredientStores.storeId, storeId)));
+}
+
+/**
+ * Ritorna la lista degli store in cui un ingrediente è attivo.
+ */
+export async function getIngredientStores(ingredientId: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(ingredientStores)
+    .where(eq(ingredientStores.ingredientId, ingredientId));
 }
 
 // ============ SEMILAVORATI (Livello 1-N) ============
@@ -631,15 +699,15 @@ export async function getCloudStorageFiles(storeId?: string | null, filters?: { 
   return query;
 }
 
-// ============ SUPPLIERS (FORNITORI) ============
+// ============ SUPPLIERS (FORNITORI) — database globale ============
 
-export async function getSuppliers(storeId?: string | null) {
+/**
+ * Ritorna tutti i fornitori (database globale, storeId ignorato per compatibilità).
+ */
+export async function getSuppliers(_storeId?: string | null) {
   const db = await getDb();
   if (!db) return [];
-  if (storeId) {
-    return db.select().from(suppliers).where(eq(suppliers.storeId, storeId));
-  }
-  return db.select().from(suppliers);
+  return db.select().from(suppliers).orderBy(suppliers.name);
 }
 
 export async function createSupplier(data: Omit<Supplier, "createdAt" | "updatedAt">) {
@@ -764,16 +832,16 @@ export async function deduplicateIngredients(): Promise<{ removed: number; detai
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // Trova tutti gli ingredienti raggruppati per (storeId, nome normalizzato)
+  // Trova tutti gli ingredienti raggruppati per (name + supplierId)
   const allIngredients = await db
-    .select({ id: ingredients.id, storeId: ingredients.storeId, name: ingredients.name, createdAt: ingredients.createdAt })
+    .select({ id: ingredients.id, supplierId: ingredients.supplierId, name: ingredients.name, createdAt: ingredients.createdAt })
     .from(ingredients)
-    .orderBy(ingredients.storeId, ingredients.name, ingredients.createdAt);
+    .orderBy(ingredients.name, ingredients.createdAt);
 
-  // Raggruppa per storeId + nome (case-insensitive)
+  // Raggruppa per nome + supplierId (case-insensitive)
   const groups = new Map<string, typeof allIngredients>();
   for (const ing of allIngredients) {
-    const key = `${ing.storeId}::${ing.name.toLowerCase().trim()}`;
+    const key = `${ing.name.toLowerCase().trim()}::${ing.supplierId ?? ""}`;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(ing);
   }
@@ -788,8 +856,7 @@ export async function deduplicateIngredients(): Promise<{ removed: number; detai
     for (const dup of duplicates) {
       toDelete.push(dup.id);
     }
-    const storePart = key.split('::')[0];
-    details.push(`[${storePart}] "${group[0].name}": mantenuto ${keep.id}, rimossi ${duplicates.map((d: { id: string }) => d.id).join(', ')}`);
+    details.push(`"${group[0].name}": mantenuto ${keep.id}, rimossi ${duplicates.map((d: { id: string }) => d.id).join(', ')}`);
   }
 
   if (toDelete.length > 0) {

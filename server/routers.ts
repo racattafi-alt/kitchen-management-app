@@ -74,6 +74,8 @@ const ingredientsRouter = router({
         throw new Error("Unauthorized");
       }
       const ingredientData = {
+        id: input.id,
+        name: input.name,
         supplierId: input.supplierId,
         category: input.category,
         unitType: input.unitType,
@@ -91,17 +93,16 @@ const ingredientsRouter = router({
         isSoldByPackage: input.isSoldByPackage ?? false,
         allergens: input.allergens || [],
       };
+      // Crea l'ingrediente globale e attivalo negli store appropriati
       if (await isStoreGlobal(ctx.currentStoreId)) {
         const storeIds = await getAllActiveStoreIds();
-        await updateIngredientAcrossStores(input.name, ingredientData as any, storeIds);
-        return { ...ingredientData, id: input.id, name: input.name, storeId: "all" };
+        await db.createIngredient(ingredientData as any, null);
+        for (const sid of storeIds) {
+          await db.activateIngredientInStore(input.id, sid);
+        }
+        return { ...ingredientData, storeId: "all" };
       }
-      return db.createIngredient({
-        ...ingredientData,
-        id: input.id,
-        name: input.name,
-        storeId: ctx.currentStoreId || 'default-store-001',
-      } as any);
+      return db.createIngredient(ingredientData as any, ctx.currentStoreId || 'default-store-001');
     }),
   update: protectedProcedure
     .input(
@@ -165,11 +166,7 @@ const ingredientsRouter = router({
       if (input.isFood !== undefined) updateData.isFood = input.isFood;
       if (input.isSoldByPackage !== undefined) updateData.isSoldByPackage = input.isSoldByPackage;
       if (input.allergens !== undefined) updateData.allergens = input.allergens;
-      if (await isStoreGlobal(ctx.currentStoreId)) {
-        const storeIds = await getAllActiveStoreIds();
-        await updateIngredientAcrossStores(currentIngredient.name, updateData, storeIds);
-        return;
-      }
+      // Ingredienti globali: l'aggiornamento si applica all'unico record globale
       return db.updateIngredient(input.id, updateData);
     }),
   delete: protectedProcedure
@@ -178,6 +175,11 @@ const ingredientsRouter = router({
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager" && ctx.user?.role !== "superadmin") {
         throw new Error("Unauthorized");
       }
+      // Disattiva l'ingrediente dallo store corrente (non cancellazione globale)
+      if (ctx.currentStoreId) {
+        return db.deactivateIngredientInStore(input.id, ctx.currentStoreId);
+      }
+      // Se non c'è store corrente, disattiva globalmente
       return db.deleteIngredient(input.id);
     }),
   exportToExcel: protectedProcedure.query(async ({ ctx }) => {
@@ -250,7 +252,7 @@ const ingredientsRouter = router({
       fileData: z.string(), // base64
       filename: z.string(),
       // Override manuali per fornitori non matchati (key=nomeFornitoreImportato, value=supplierId nel DB)
-      supplierOverrides: z.record(z.string()).optional(),
+      supplierOverrides: z.record(z.string(), z.string()).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
@@ -282,7 +284,7 @@ const ingredientsRouter = router({
             if (row.supplier) {
               const overrideId = input.supplierOverrides?.[row.supplier];
               if (overrideId) {
-                resolvedSupplierId = overrideId;
+                resolvedSupplierId = overrideId ?? null;
               } else {
                 const match = findBestMatch(row.supplier, existingSuppliers);
                 if (match.level === 'exact' || match.level === 'high') {
@@ -318,10 +320,9 @@ const ingredientsRouter = router({
               await db.updateIngredient(match.id, updateData);
               updated++;
             } else {
-              // Crea nuovo
+              // Crea nuovo ingrediente globale e attivalo nello store corrente
               await db.createIngredient({
                 id: crypto.randomUUID(),
-                storeId: ctx.currentStoreId || 'default-store-001',
                 name: row.name,
                 supplierId: resolvedSupplierId,
                 supplier: row.supplier || '',
@@ -344,7 +345,7 @@ const ingredientsRouter = router({
                 isSoldByPackage: false,
                 subcategory: null,
                 allergens: row.allergens || [],
-              });
+              } as any, ctx.currentStoreId || 'default-store-001');
               imported++;
             }
           } catch (err: any) {
@@ -381,21 +382,42 @@ const ingredientsRouter = router({
       if (role !== "admin" && role !== "manager" && role !== "superadmin") {
         throw new Error("Unauthorized");
       }
-      const isGlobal = await isStoreGlobal(ctx.currentStoreId);
+      // Ingredienti globali: aggiornamento diretto sull'unico record
       for (const item of input) {
-        const updateData: Record<string, string> = {
+        await db.updateIngredient(item.id, {
           packagePrice: item.packagePrice.toString(),
           packageQuantity: item.packageQuantity.toString(),
           pricePerKgOrUnit: item.pricePerKgOrUnit.toString(),
-        };
-        if (isGlobal) {
-          const storeIds = await getAllActiveStoreIds();
-          await updateIngredientAcrossStores(item.name, updateData as any, storeIds);
-        } else {
-          await db.updateIngredient(item.id, updateData as any);
-        }
+        } as any);
       }
       return { success: true, updated: input.length };
+    }),
+
+  // ---- Gestione visibilità per store (junction ingredient_stores) ----
+  activateInStore: protectedProcedure
+    .input(z.object({ id: z.string(), storeId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const role = ctx.user?.role;
+      if (role !== "admin" && role !== "manager" && role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      return db.activateIngredientInStore(input.id, input.storeId);
+    }),
+
+  deactivateInStore: protectedProcedure
+    .input(z.object({ id: z.string(), storeId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const role = ctx.user?.role;
+      if (role !== "admin" && role !== "manager" && role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      return db.deactivateIngredientInStore(input.id, input.storeId);
+    }),
+
+  listStores: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input }) => {
+      return db.getIngredientStores(input.id);
     }),
 });
 
@@ -1334,10 +1356,10 @@ const storageRouter = router({
     }),
 });
 
-// ============ PROCEDURE FORNITORI ============
+// ============ PROCEDURE FORNITORI — database globale ============
 const suppliersRouter = router({
-  list: protectedProcedure.query(async ({ ctx }) => {
-    return db.getSuppliers(ctx.currentStoreId);
+  list: protectedProcedure.query(async () => {
+    return db.getSuppliers();
   }),
   create: protectedProcedure
     .input(
@@ -1356,13 +1378,7 @@ const suppliersRouter = router({
       if (role !== "admin" && role !== "manager" && role !== "superadmin") {
         throw new Error("Unauthorized");
       }
-      const { id, name, ...supplierData } = input;
-      if (await isStoreGlobal(ctx.currentStoreId)) {
-        const storeIds = await getAllActiveStoreIds();
-        await updateSupplierAcrossStores(name, supplierData as any, storeIds);
-        return { ...supplierData, id, name, storeId: "all" };
-      }
-      return db.createSupplier({ ...input, storeId: ctx.currentStoreId || 'default-store-001' } as any);
+      return db.createSupplier(input as any);
     }),
   update: protectedProcedure
     .input(
@@ -1382,11 +1398,6 @@ const suppliersRouter = router({
         throw new Error("Unauthorized");
       }
       const { id, ...updateData } = input;
-      if (input.name && await isStoreGlobal(ctx.currentStoreId)) {
-        const storeIds = await getAllActiveStoreIds();
-        await updateSupplierAcrossStores(input.name, updateData as any, storeIds);
-        return;
-      }
       return db.updateSupplier(id, updateData);
     }),
   delete: protectedProcedure

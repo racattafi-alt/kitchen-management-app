@@ -258,7 +258,7 @@ export default function MultiStoreEditor() {
   // Aggiorna form data quando entityData cambia
   if (entityData && entityData.length > 0 && Object.keys(formData).length === 0) {
     const firstEntity = entityData[0];
-    const { id, storeId, createdAt, updatedAt, ...rest } = firstEntity;
+    const { id, createdAt, updatedAt, ...rest } = firstEntity as any;
     
     if (entityType === 'recipe') {
       // Per ricette, popola recipeFormData e components

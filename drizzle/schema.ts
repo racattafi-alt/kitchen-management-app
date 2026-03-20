@@ -10,6 +10,7 @@ import {
   json,
   datetime,
   unique,
+  primaryKey,
 } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
 
@@ -67,11 +68,10 @@ export type StoreUser = typeof storeUsers.$inferSelect;
 export type InsertStoreUser = typeof storeUsers.$inferInsert;
 
 /**
- * Tabella fornitori
+ * Tabella fornitori — database globale (non legato a un singolo store)
  */
 export const suppliers = mysqlTable("suppliers", {
   id: varchar("id", { length: 36 }).primaryKey(),
-  storeId: varchar("storeId", { length: 36 }).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   contact: varchar("contact", { length: 255 }),
   email: varchar("email", { length: 320 }),
@@ -81,18 +81,21 @@ export const suppliers = mysqlTable("suppliers", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({
-  nameStoreUnique: unique("suppliers_name_storeId_unique").on(table.name, table.storeId),
+  nameUnique: unique("suppliers_name_unique").on(table.name),
 }));
 
 export type Supplier = typeof suppliers.$inferSelect;
 export type InsertSupplier = typeof suppliers.$inferInsert;
 
 /**
- * Livello 0: Ingredienti base
+ * Livello 0: Ingredienti base — database globale.
+ * La visibilità per store è gestita dalla tabella ingredientStores.
+ * Un ingrediente con fornitore diverso è considerato un ingrediente diverso
+ * (vincolo univoco su name + supplierId).
+ * packageQuantity e packagePrice sono obbligatori (packagePrice ammette 0).
  */
 export const ingredients = mysqlTable("ingredients", {
   id: varchar("id", { length: 36 }).primaryKey(),
-  storeId: varchar("storeId", { length: 36 }).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   supplierId: varchar("supplierId", { length: 36 }),
   supplier: varchar("supplier", { length: 255 }),
@@ -131,10 +134,30 @@ export const ingredients = mysqlTable("ingredients", {
   allergens: json("allergens").$type<string[]>().default([]),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  nameSupplierUnique: unique("ingredients_name_supplierId_unique").on(table.name, table.supplierId),
+}));
 
 export type Ingredient = typeof ingredients.$inferSelect;
 export type InsertIngredient = typeof ingredients.$inferInsert;
+
+/**
+ * Tabella di giunzione ingredienti ↔ store.
+ * Controlla in quali store un ingrediente è visibile/attivo.
+ * Un ingrediente può essere attivo in uno, molti o tutti gli store.
+ */
+export const ingredientStores = mysqlTable("ingredient_stores", {
+  ingredientId: varchar("ingredientId", { length: 36 }).notNull().references(() => ingredients.id, { onDelete: "cascade" }),
+  storeId: varchar("storeId", { length: 36 }).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.ingredientId, table.storeId] }),
+}));
+
+export type IngredientStore = typeof ingredientStores.$inferSelect;
+export type InsertIngredientStore = typeof ingredientStores.$inferInsert;
 
 /**
  * Livello 1-N: Semilavorati (ricorsivi)

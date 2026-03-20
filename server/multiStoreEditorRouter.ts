@@ -99,11 +99,11 @@ export const multiStoreEditorRouter = router({
           );
           break;
         case "supplier":
-          updates = await updateSupplierAcrossStores(
+          updates = (await updateSupplierAcrossStores(
             input.name,
             input.data,
             input.storeIds
-          );
+          )).map(u => ({ ...u, storeId: input.storeIds[0] ?? "" }));
           break;
       }
 
@@ -169,7 +169,8 @@ export const multiStoreEditorRouter = router({
             } else if (entityType === "recipe") {
               updates = await updateRecipeAcrossStores(entity.name, data, input.destinationStoreIds);
             } else {
-              updates = await updateSupplierAcrossStores(entity.name, data, input.destinationStoreIds);
+              updates = (await updateSupplierAcrossStores(entity.name, data, input.destinationStoreIds))
+                .map(u => ({ ...u, storeId: input.destinationStoreIds[0] ?? "" }));
             }
 
             updates.forEach(u => results.push({ entityType, name: entity.name, ...u }));
