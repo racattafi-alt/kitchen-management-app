@@ -454,12 +454,16 @@ const semiFinishedRouter = router({
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
-      return db.createSemiFinished({
+      await db.createSemiFinished({
         ...input,
         finalPricePerKg: input.finalPricePerKg.toString(),
         yieldPercentage: input.yieldPercentage.toString(),
         totalQuantityProduced: input.totalQuantityProduced?.toString() || null,
       } as any);
+      if (Array.isArray(input.components) && input.components.length > 0) {
+        await db.setSemiFinishedComponents(input.id, input.components);
+      }
+      return { id: input.id };
     }),
   update: protectedProcedure
     .input(
@@ -486,7 +490,11 @@ const semiFinishedRouter = router({
       if (input.totalQuantityProduced !== undefined) updateData.totalQuantityProduced = input.totalQuantityProduced.toString();
       if (input.components !== undefined) updateData.components = input.components;
       if (input.productionSteps !== undefined) updateData.productionSteps = input.productionSteps;
-      return db.updateSemiFinished(input.id, updateData);
+      await db.updateSemiFinished(input.id, updateData);
+      if (Array.isArray(input.components)) {
+        await db.setSemiFinishedComponents(input.id, input.components);
+      }
+      return;
     }),
 });
 
@@ -710,41 +718,24 @@ const productionRouter = router({
 
       // Calcola quantità necessarie dalle produzioni
       for (const prod of productions) {
-        let recipe = null;
-        let quantity = parseFloat(prod.quantity);
+        if (!prod.recipeFinalId) continue;
+        const quantity = parseFloat(prod.quantity as any);
 
-        if (prod.recipeFinalId) {
-          recipe = await db.getFinalRecipeById(prod.recipeFinalId);
-        }
-
+        const recipe = await db.getFinalRecipeById(prod.recipeFinalId);
         if (!recipe) continue;
 
-        let components: any[] = [];
-        if (typeof recipe.components === 'string') {
-          try {
-            components = JSON.parse(recipe.components);
-          } catch (e) {
-            console.error('[generateShoppingList] JSON parse error:', e);
-            components = [];
-          }
-        } else if (Array.isArray(recipe.components)) {
-          components = recipe.components;
-        }
+        const unitWeight = parseFloat((recipe.unitWeight as any) || '1');
+        // Carica componenti dalla tabella relazionale (una sola JOIN)
+        const components = await db.getRecipeComponents(prod.recipeFinalId);
 
-        // Normalizza le quantità dei componenti per il peso unitario della ricetta
-        const unitWeight = parseFloat(recipe.unitWeight || '1');
-        
         for (const comp of components) {
-          // comp.quantity è per unitWeight kg di output, quindi normalizziamo
           const quantityPerKg = comp.quantity / unitWeight;
           const totalNeeded = quantityPerKg * quantity;
-          // Normalizza tipo (supporta lowercase e uppercase per retrocompatibilità)
-          const compType = (comp.type || '').toLowerCase();
 
-          if (compType === 'ingredient') {
+          if (comp.type === 'ingredient') {
             const current = ingredientNeeds.get(comp.componentId) || 0;
             ingredientNeeds.set(comp.componentId, current + totalNeeded);
-          } else if (compType === 'semi_finished') {
+          } else if (comp.type === 'semi_finished') {
             const current = semiFinishedNeeds.get(comp.componentId) || 0;
             semiFinishedNeeds.set(comp.componentId, current + totalNeeded);
           }
@@ -955,9 +946,16 @@ const finalRecipesRouter = router({
       if (await isStoreGlobal(ctx.currentStoreId)) {
         const storeIds = await getAllActiveStoreIds();
         await updateRecipeAcrossStores(input.name, recipeData as any, storeIds);
+        // Popola componenti relazionali per ogni store
+        const allRecipes = await Promise.all(
+          storeIds.map((sid) => db.getFinalRecipeByCode(input.code, sid))
+        );
+        for (const r of allRecipes) {
+          if (r) await db.setRecipeComponents(r.id, input.components);
+        }
         return { ...recipeData, id: newId, storeId: "all" };
       }
-      return db.createFinalRecipe({
+      await db.createFinalRecipe({
         id: newId,
         storeId: ctx.currentStoreId || 'default-store-001',
         name: input.name,
@@ -981,6 +979,8 @@ const finalRecipesRouter = router({
         isActive: true,
         sellingPrice: null,
       } as any);
+      await db.setRecipeComponents(newId, input.components);
+      return { id: newId };
     }),
 
   update: protectedProcedure
@@ -1079,9 +1079,21 @@ const finalRecipesRouter = router({
       if (currentRecipe && await isStoreGlobal(ctx.currentStoreId)) {
         const storeIds = await getAllActiveStoreIds();
         await updateRecipeAcrossStores(currentRecipe.name, updateData, storeIds);
+        if (input.components) {
+          const allRecipes = await Promise.all(
+            storeIds.map((sid) => db.getFinalRecipeByCode(currentRecipe.code, sid))
+          );
+          for (const r of allRecipes) {
+            if (r) await db.setRecipeComponents(r.id, input.components);
+          }
+        }
         return;
       }
-      return db.updateFinalRecipe(input.id, updateData);
+      await db.updateFinalRecipe(input.id, updateData);
+      if (input.components) {
+        await db.setRecipeComponents(input.id, input.components);
+      }
+      return;
     }),
 
   getDetails: protectedProcedure
@@ -1090,62 +1102,8 @@ const finalRecipesRouter = router({
       const recipe = await db.getFinalRecipeById(input.id);
       if (!recipe) return null;
 
-      // Parse JSON se necessario
-      let parsedComponents = recipe.components;
-      if (typeof recipe.components === 'string') {
-        try {
-          parsedComponents = JSON.parse(recipe.components);
-        } catch (e) {
-          console.error('[getDetails] JSON parse error:', e);
-          parsedComponents = [];
-        }
-      }
-
-      console.log('[getDetails] Recipe:', recipe.name);
-      console.log('[getDetails] Parsed components length:', Array.isArray(parsedComponents) ? parsedComponents.length : 'N/A');
-
-      // Espandi i componenti con dettagli ingredienti/semilavorati
-      const components = Array.isArray(parsedComponents) ? parsedComponents : [];
-      const componentsWithDetails = await Promise.all(
-        components.map(async (comp: any) => {
-          // Normalizza il tipo (supporta sia lowercase che uppercase per retrocompatibilità)
-          const compType = (comp.type || '').toLowerCase();
-          const storedName = comp.componentName || comp.name || '';
-
-          if (compType === 'ingredient') {
-            const ingredient = await db.getIngredientById(comp.componentId);
-            return {
-              ...comp,
-              type: 'ingredient',
-              name: ingredient?.name || storedName || 'Sconosciuto',
-              unit: comp.unit || (ingredient?.unitType === 'u' ? 'unità' : 'kg'),
-              pricePerUnit: ingredient?.pricePerKgOrUnit ?? comp.pricePerUnit ?? 0,
-            };
-          } else if (compType === 'semi_finished') {
-            const semiFinished = await db.getSemiFinishedById(comp.componentId);
-            // Cerca anche tra le ricette finali con flag isSemiFinished
-            const semiFromFinalRecipe = !semiFinished ? await db.getFinalRecipeById(comp.componentId) : null;
-            return {
-              ...comp,
-              type: 'semi_finished',
-              name: semiFinished?.name || semiFromFinalRecipe?.name || storedName || 'Sconosciuto',
-              unit: comp.unit || 'kg',
-              pricePerUnit: semiFinished?.finalPricePerKg ?? semiFromFinalRecipe?.totalCost ?? comp.pricePerUnit ?? 0,
-            };
-          } else if (compType === 'operation') {
-            const operation = await db.getOperationByName(comp.componentName || comp.name || '');
-            return {
-              ...comp,
-              type: 'operation',
-              name: operation?.name || storedName || 'Operazione',
-              unit: comp.unit || 'ore',
-              pricePerUnit: operation?.hourlyRate ? parseFloat(operation.hourlyRate) : (comp.pricePerUnit ?? 0),
-              costType: operation?.costType || comp.costType || 'LAVORO',
-            };
-          }
-          return comp;
-        })
-      );
+      // Usa tabelle relazionali: una sola JOIN invece di N query separate
+      const componentsWithDetails = await db.getRecipeComponents(input.id);
 
       return {
         ...recipe,

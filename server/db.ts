@@ -1,3 +1,4 @@
+import * as crypto from "crypto";
 import { eq, and, desc, like, gte, ne, sql, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
@@ -39,6 +40,10 @@ import {
   recipeVersions,
   RecipeVersion,
   InsertRecipeVersion,
+  recipeComponents,
+  semiFinishedComponents,
+  InsertRecipeComponent,
+  InsertSemiFinishedComponent,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -867,4 +872,234 @@ export async function deduplicateIngredients(): Promise<{ removed: number; detai
   }
 
   return { removed: toDelete.length, details };
+}
+
+// ============ COMPONENTI RELAZIONALI (Soluzione D) ============
+
+/**
+ * Tipo normalizzato restituito dalle query sui componenti relazionali.
+ * Unifica ingrediente / semilavorato / operazione in un'unica struttura.
+ */
+export type RelationalComponent = {
+  id: string;
+  type: "ingredient" | "semi_finished" | "operation";
+  componentId: string;
+  componentName: string;
+  quantity: number;
+  unit: string;
+  pricePerUnit: number;
+  costType?: string;
+  sortOrder: number;
+};
+
+/**
+ * Tipo di input per creare/aggiornare un componente.
+ */
+export type ComponentInput = {
+  type: "ingredient" | "semi_finished" | "operation";
+  componentId: string;
+  componentName: string;
+  quantity: number;
+  unit: string;
+  pricePerUnit?: number;
+  costType?: string;
+};
+
+/** Restituisce i componenti di una ricetta finale con una singola JOIN. */
+export async function getRecipeComponents(recipeId: string): Promise<RelationalComponent[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const rows = await db
+    .select({
+      id: recipeComponents.id,
+      ingredientId: recipeComponents.ingredientId,
+      semiFinishedId: recipeComponents.semiFinishedId,
+      operationId: recipeComponents.operationId,
+      componentName: recipeComponents.componentName,
+      quantity: recipeComponents.quantity,
+      unitSnapshot: recipeComponents.unitSnapshot,
+      priceSnapshot: recipeComponents.priceSnapshot,
+      sortOrder: recipeComponents.sortOrder,
+      // Dati live ingrediente
+      ingName: ingredients.name,
+      ingPrice: ingredients.pricePerKgOrUnit,
+      ingUnit: ingredients.unitType,
+      // Dati live semilavorato
+      semiName: semiFinishedRecipes.name,
+      semiPrice: semiFinishedRecipes.finalPricePerKg,
+      // Dati live operazione
+      opName: operations.name,
+      opRate: operations.hourlyRate,
+      opCostType: operations.costType,
+    })
+    .from(recipeComponents)
+    .leftJoin(ingredients, eq(recipeComponents.ingredientId, ingredients.id))
+    .leftJoin(semiFinishedRecipes, eq(recipeComponents.semiFinishedId, semiFinishedRecipes.id))
+    .leftJoin(operations, eq(recipeComponents.operationId, operations.id))
+    .where(eq(recipeComponents.recipeId, recipeId))
+    .orderBy(recipeComponents.sortOrder);
+
+  return rows.map((r) => {
+    if (r.ingredientId) {
+      return {
+        id: r.id,
+        type: "ingredient" as const,
+        componentId: r.ingredientId,
+        componentName: r.ingName || r.componentName,
+        quantity: parseFloat(r.quantity as any),
+        unit: r.unitSnapshot || (r.ingUnit === "u" ? "unità" : "kg"),
+        pricePerUnit: parseFloat((r.ingPrice ?? r.priceSnapshot ?? "0") as any),
+        sortOrder: r.sortOrder,
+      };
+    }
+    if (r.semiFinishedId) {
+      return {
+        id: r.id,
+        type: "semi_finished" as const,
+        componentId: r.semiFinishedId,
+        componentName: r.semiName || r.componentName,
+        quantity: parseFloat(r.quantity as any),
+        unit: r.unitSnapshot || "kg",
+        pricePerUnit: parseFloat((r.semiPrice ?? r.priceSnapshot ?? "0") as any),
+        sortOrder: r.sortOrder,
+      };
+    }
+    // operation
+    return {
+      id: r.id,
+      type: "operation" as const,
+      componentId: r.operationId!,
+      componentName: r.opName || r.componentName,
+      quantity: parseFloat(r.quantity as any),
+      unit: r.unitSnapshot || "ore",
+      pricePerUnit: parseFloat((r.opRate ?? r.priceSnapshot ?? "0") as any),
+      costType: r.opCostType || undefined,
+      sortOrder: r.sortOrder,
+    };
+  });
+}
+
+/** Sostituisce tutti i componenti di una ricetta finale (delete + bulk insert). */
+export async function setRecipeComponents(recipeId: string, comps: ComponentInput[]): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.delete(recipeComponents).where(eq(recipeComponents.recipeId, recipeId));
+
+  if (comps.length === 0) return;
+
+  const rows: InsertRecipeComponent[] = comps.map((c, i) => ({
+    id: crypto.randomUUID(),
+    recipeId,
+    ingredientId: c.type === "ingredient" ? c.componentId : null,
+    semiFinishedId: c.type === "semi_finished" ? c.componentId : null,
+    operationId: c.type === "operation" ? c.componentId : null,
+    componentName: c.componentName,
+    quantity: String(c.quantity),
+    unitSnapshot: c.unit || null,
+    priceSnapshot: c.pricePerUnit != null ? String(c.pricePerUnit) : null,
+    sortOrder: i,
+  }));
+
+  await db.insert(recipeComponents).values(rows as any);
+}
+
+/** Restituisce i componenti di un semilavorato con una singola JOIN. */
+export async function getSemiFinishedComponentsRelational(semiFinishedId: string): Promise<RelationalComponent[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Alias per la self-join su semi_finished_recipes
+  const childSemi = semiFinishedRecipes;
+
+  const rows = await db
+    .select({
+      id: semiFinishedComponents.id,
+      ingredientId: semiFinishedComponents.ingredientId,
+      childSemiFinishedId: semiFinishedComponents.childSemiFinishedId,
+      operationId: semiFinishedComponents.operationId,
+      componentName: semiFinishedComponents.componentName,
+      quantity: semiFinishedComponents.quantity,
+      unitSnapshot: semiFinishedComponents.unitSnapshot,
+      priceSnapshot: semiFinishedComponents.priceSnapshot,
+      sortOrder: semiFinishedComponents.sortOrder,
+      ingName: ingredients.name,
+      ingPrice: ingredients.pricePerKgOrUnit,
+      ingUnit: ingredients.unitType,
+      semiName: childSemi.name,
+      semiPrice: childSemi.finalPricePerKg,
+      opName: operations.name,
+      opRate: operations.hourlyRate,
+      opCostType: operations.costType,
+    })
+    .from(semiFinishedComponents)
+    .leftJoin(ingredients, eq(semiFinishedComponents.ingredientId, ingredients.id))
+    .leftJoin(childSemi, eq(semiFinishedComponents.childSemiFinishedId, childSemi.id))
+    .leftJoin(operations, eq(semiFinishedComponents.operationId, operations.id))
+    .where(eq(semiFinishedComponents.semiFinishedRecipeId, semiFinishedId))
+    .orderBy(semiFinishedComponents.sortOrder);
+
+  return rows.map((r) => {
+    if (r.ingredientId) {
+      return {
+        id: r.id,
+        type: "ingredient" as const,
+        componentId: r.ingredientId,
+        componentName: r.ingName || r.componentName,
+        quantity: parseFloat(r.quantity as any),
+        unit: r.unitSnapshot || (r.ingUnit === "u" ? "unità" : "kg"),
+        pricePerUnit: parseFloat((r.ingPrice ?? r.priceSnapshot ?? "0") as any),
+        sortOrder: r.sortOrder,
+      };
+    }
+    if (r.childSemiFinishedId) {
+      return {
+        id: r.id,
+        type: "semi_finished" as const,
+        componentId: r.childSemiFinishedId,
+        componentName: r.semiName || r.componentName,
+        quantity: parseFloat(r.quantity as any),
+        unit: r.unitSnapshot || "kg",
+        pricePerUnit: parseFloat((r.semiPrice ?? r.priceSnapshot ?? "0") as any),
+        sortOrder: r.sortOrder,
+      };
+    }
+    return {
+      id: r.id,
+      type: "operation" as const,
+      componentId: r.operationId!,
+      componentName: r.opName || r.componentName,
+      quantity: parseFloat(r.quantity as any),
+      unit: r.unitSnapshot || "ore",
+      pricePerUnit: parseFloat((r.opRate ?? r.priceSnapshot ?? "0") as any),
+      costType: r.opCostType || undefined,
+      sortOrder: r.sortOrder,
+    };
+  });
+}
+
+/** Sostituisce tutti i componenti di un semilavorato (delete + bulk insert). */
+export async function setSemiFinishedComponents(semiFinishedId: string, comps: ComponentInput[]): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.delete(semiFinishedComponents).where(eq(semiFinishedComponents.semiFinishedRecipeId, semiFinishedId));
+
+  if (comps.length === 0) return;
+
+  const rows: InsertSemiFinishedComponent[] = comps.map((c, i) => ({
+    id: crypto.randomUUID(),
+    semiFinishedRecipeId: semiFinishedId,
+    ingredientId: c.type === "ingredient" ? c.componentId : null,
+    childSemiFinishedId: c.type === "semi_finished" ? c.componentId : null,
+    operationId: c.type === "operation" ? c.componentId : null,
+    componentName: c.componentName,
+    quantity: String(c.quantity),
+    unitSnapshot: c.unit || null,
+    priceSnapshot: c.pricePerUnit != null ? String(c.pricePerUnit) : null,
+    sortOrder: i,
+  }));
+
+  await db.insert(semiFinishedComponents).values(rows as any);
 }

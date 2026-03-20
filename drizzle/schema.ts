@@ -11,6 +11,7 @@ import {
   datetime,
   unique,
   primaryKey,
+  index,
 } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
 
@@ -312,6 +313,54 @@ export const operations = mysqlTable("operations", {
 
 export type Operation = typeof operations.$inferSelect;
 export type InsertOperation = typeof operations.$inferInsert;
+
+/**
+ * Componenti relazionali delle Ricette Finali (Soluzione D)
+ * Sostituisce il JSON blob `final_recipes.components`
+ */
+export const recipeComponents = mysqlTable("recipe_components", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  recipeId: varchar("recipeId", { length: 36 }).notNull(),
+  ingredientId: varchar("ingredientId", { length: 36 }),
+  semiFinishedId: varchar("semiFinishedId", { length: 36 }),
+  operationId: varchar("operationId", { length: 36 }),
+  componentName: varchar("componentName", { length: 255 }).notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 3 }).notNull(),
+  unitSnapshot: varchar("unitSnapshot", { length: 20 }),
+  priceSnapshot: decimal("priceSnapshot", { precision: 10, scale: 4 }),
+  sortOrder: int("sortOrder").default(0).notNull(),
+}, (table) => ({
+  recipeIdx: index("rc_recipeId_idx").on(table.recipeId),
+  ingredientIdx: index("rc_ingredientId_idx").on(table.ingredientId),
+  semiFinishedIdx: index("rc_semiFinishedId_idx").on(table.semiFinishedId),
+}));
+
+export type RecipeComponent = typeof recipeComponents.$inferSelect;
+export type InsertRecipeComponent = typeof recipeComponents.$inferInsert;
+
+/**
+ * Componenti relazionali dei Semilavorati (Soluzione D)
+ * Sostituisce il JSON blob `semi_finished_recipes.components`
+ */
+export const semiFinishedComponents = mysqlTable("semi_finished_components", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  semiFinishedRecipeId: varchar("semiFinishedRecipeId", { length: 36 }).notNull(),
+  ingredientId: varchar("ingredientId", { length: 36 }),
+  childSemiFinishedId: varchar("childSemiFinishedId", { length: 36 }),
+  operationId: varchar("operationId", { length: 36 }),
+  componentName: varchar("componentName", { length: 255 }).notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 3 }).notNull(),
+  unitSnapshot: varchar("unitSnapshot", { length: 20 }),
+  priceSnapshot: decimal("priceSnapshot", { precision: 10, scale: 4 }),
+  sortOrder: int("sortOrder").default(0).notNull(),
+}, (table) => ({
+  semiFinishedIdx: index("sfc_semiFinishedRecipeId_idx").on(table.semiFinishedRecipeId),
+  ingredientIdx: index("sfc_ingredientId_idx").on(table.ingredientId),
+  childSemiFinishedIdx: index("sfc_childSemiFinishedId_idx").on(table.childSemiFinishedId),
+}));
+
+export type SemiFinishedComponent = typeof semiFinishedComponents.$inferSelect;
+export type InsertSemiFinishedComponent = typeof semiFinishedComponents.$inferInsert;
 
 /**
  * Produzioni Settimanali
