@@ -170,7 +170,7 @@ export default function Suppliers() {
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Fornitori</h1>
               <p className="text-muted-foreground">
-                Gestisci i fornitori e i loro contatti
+                Database globale fornitori — visibile in tutti i locali
               </p>
             </div>
           </div>

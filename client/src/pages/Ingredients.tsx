@@ -41,6 +41,7 @@ export default function Ingredients() {
   const itemsPerPage = 20;
   const [formData, setFormData] = useState({
     name: "",
+    supplierId: "",
     supplier: "",
     category: "Altro" as const,
     unitType: "k" as const,
@@ -269,6 +270,7 @@ export default function Ingredients() {
   const resetForm = () => {
     setFormData({
       name: "",
+      supplierId: "",
       supplier: "",
       category: "Altro" as const,
       unitType: "k" as const,
@@ -309,7 +311,8 @@ export default function Ingredients() {
     createMutation.mutate({
       id: crypto.randomUUID(),
       name: formData.name,
-      supplierId: formData.supplier || undefined,
+      supplierId: formData.supplierId || undefined,
+      supplier: formData.supplier || undefined,
       category: formData.category,
       unitType: formData.unitType,
       packageType: formData.packageType || undefined,
@@ -514,9 +517,16 @@ export default function Ingredients() {
                     <div>
                       <Label htmlFor="supplier">Fornitore</Label>
                       <Combobox
-                        value={formData.supplier}
-                        onValueChange={(value) => setFormData({ ...formData, supplier: value })}
-                        options={suppliers?.map((s: any) => ({ value: s.name, label: s.name })) || []}
+                        value={formData.supplierId || formData.supplier}
+                        onValueChange={(value) => {
+                          const found = suppliers?.find((s: any) => s.id === value);
+                          if (found) {
+                            setFormData({ ...formData, supplierId: found.id, supplier: found.name });
+                          } else {
+                            setFormData({ ...formData, supplierId: "", supplier: value });
+                          }
+                        }}
+                        options={suppliers?.map((s: any) => ({ value: s.id, label: s.name })) || []}
                         placeholder="Seleziona o scrivi fornitore..."
                         searchPlaceholder="Cerca fornitore..."
                         emptyText="Nessun fornitore trovato"
