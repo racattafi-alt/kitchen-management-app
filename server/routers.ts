@@ -190,11 +190,11 @@ const ingredientsRouter = router({
     }
     const { exportIngredientsToExcel } = await import('./exportExcel.js');
     const ingredients = await db.getIngredients();
-    
+
     try {
       const buffer = await exportIngredientsToExcel(ingredients);
       const base64 = buffer.toString('base64');
-      
+
       return {
         filename: `ingredienti_${new Date().toISOString().split('T')[0]}.xlsx`,
         data: base64,
@@ -202,6 +202,23 @@ const ingredientsRouter = router({
       };
     } catch (error: any) {
       throw new Error(`Errore creazione Excel: ${error.message}`);
+    }
+  }),
+  // ---- SCARICA TEMPLATE MASTER per importazione di tutti i dati ----
+  downloadImportTemplate: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager" && ctx.user?.role !== "superadmin") {
+      throw new Error("Unauthorized");
+    }
+    const { generateMasterImportTemplate } = await import('./exportExcel.js');
+    try {
+      const buffer = await generateMasterImportTemplate();
+      return {
+        filename: `template_importazione_${new Date().toISOString().split('T')[0]}.xlsx`,
+        data: buffer.toString('base64'),
+        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      };
+    } catch (error: any) {
+      throw new Error(`Errore generazione template: ${error.message}`);
     }
   }),
   // ---- ANTEPRIMA IMPORT con fuzzy matching fornitori/ingredienti ----

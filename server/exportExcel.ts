@@ -10,6 +10,309 @@ const VALID_PACKAGE_TYPES = [
   'Barattolo', 'Lattina', 'Sfuso', 'Fusto',
 ] as const;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function styleHeader(row: ExcelJS.Row, color: string = 'FF1565C0') {
+  row.height = 24;
+  row.eachCell((cell) => {
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: color } };
+    cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+    cell.border = {
+      bottom: { style: 'medium', color: { argb: 'FFFFFFFF' } },
+    };
+  });
+}
+
+function addDropdown(ws: ExcelJS.Worksheet, col: string, maxRow: number, values: string[], title: string) {
+  for (let r = 2; r <= maxRow; r++) {
+    ws.getCell(`${col}${r}`).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: [`"${values.join(',')}"`],
+      showErrorMessage: true,
+      errorTitle: `${title} non valido`,
+      error: `Scegli tra: ${values.join(', ')}`,
+    };
+  }
+}
+
+function addYesNo(ws: ExcelJS.Worksheet, col: string, maxRow: number) {
+  addDropdown(ws, col, maxRow, ['SI', 'NO'], 'Valore');
+}
+
+function exampleRow(ws: ExcelJS.Worksheet, values: (string | number | null)[]) {
+  const row = ws.addRow(values);
+  row.eachCell((cell) => {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF9C4' } };
+    cell.font = { italic: true, color: { argb: 'FF757575' } };
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MASTER IMPORT TEMPLATE  (tutti i fogli)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function generateMasterImportTemplate(): Promise<Buffer> {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'Kitchen Management App';
+  wb.created = new Date();
+
+  // ── 0. ISTRUZIONI ──────────────────────────────────────────────────────────
+  const instr = wb.addWorksheet('📋 ISTRUZIONI');
+  instr.getColumn('A').width = 90;
+  instr.getColumn('B').width = 50;
+
+  const instrData: [string, string?][] = [
+    ['TEMPLATE MASTER — IMPORTAZIONE DATI — Kitchen Management App', ''],
+    ['', ''],
+    ['COME USARE QUESTO FILE', ''],
+    ['1. Ogni foglio corrisponde a una tabella del database.', ''],
+    ['2. La RIGA 2 (gialla) è un esempio — puoi cancellarla prima di importare.', ''],
+    ['3. I campi marcati con * sono OBBLIGATORI.', ''],
+    ['4. Le colonne con menu a tendina accettano solo i valori elencati.', ''],
+    ['5. Per i campi booleani usa "SI" o "NO".', ''],
+    ['6. Lascia vuoti i campi facoltativi se non disponibili.', ''],
+    ['', ''],
+    ['ORDINE CONSIGLIATO DI IMPORTAZIONE', ''],
+    ['1. Fornitori', 'Il nome deve essere univoco'],
+    ['2. Operazioni', 'Costi lavoro/energia usati nelle ricette'],
+    ['3. Ingredienti', 'Richiedono il nome del fornitore (verrà abbinato)'],
+    ['4. Semilavorati', 'Ricette di livello 1 (es. salse, impasti)'],
+    ['5. Componenti_Semilavorati', 'Ingredienti/semilavorati che compongono ogni semilavorato'],
+    ['6. Ricette_Finali', 'Ricette di livello 2 (piatti pronti per il menu)'],
+    ['7. Componenti_Ricette', 'Ingredienti/semilavorati che compongono ogni ricetta finale'],
+    ['8. Frigoriferi', 'Celle frigo/freezer per il monitoraggio HACCP'],
+    ['', ''],
+    ['ALLERGENI EU-14 RICONOSCIUTI', ''],
+    ['Glutine', 'Crostacei'],
+    ['Uova', 'Pesce'],
+    ['Arachidi', 'Soia'],
+    ['Latte', 'Frutta a guscio'],
+    ['Sedano', 'Senape'],
+    ['Semi di sesamo', 'Anidride solforosa e solfiti'],
+    ['Lupini', 'Molluschi'],
+  ];
+
+  instrData.forEach(([a, b], i) => {
+    const r = instr.addRow([a, b ?? '']);
+    if (i === 0) {
+      r.getCell(1).font = { bold: true, size: 14, color: { argb: 'FF1565C0' } };
+    } else if (['COME USARE QUESTO FILE', 'ORDINE CONSIGLIATO DI IMPORTAZIONE', 'ALLERGENI EU-14 RICONOSCIUTI'].includes(a)) {
+      r.getCell(1).font = { bold: true, size: 12, color: { argb: 'FF2E7D32' } };
+    }
+  });
+
+  // ── 1. FORNITORI ───────────────────────────────────────────────────────────
+  const ws1 = wb.addWorksheet('Fornitori');
+  ws1.columns = [
+    { header: 'Nome *', key: 'name', width: 30 },
+    { header: 'Contatto', key: 'contact', width: 25 },
+    { header: 'Email', key: 'email', width: 30 },
+    { header: 'Telefono', key: 'phone', width: 18 },
+    { header: 'Indirizzo', key: 'address', width: 40 },
+    { header: 'Note', key: 'notes', width: 40 },
+  ];
+  styleHeader(ws1.getRow(1), 'FF6A1B9A');
+  exampleRow(ws1, ['Mario Rossi Srl', 'Mario Rossi', 'mario@esempio.it', '+39 02 12345678', 'Via Roma 1, Milano', 'Fornitore carni']);
+
+  // ── 2. OPERAZIONI ──────────────────────────────────────────────────────────
+  const ws2 = wb.addWorksheet('Operazioni');
+  ws2.columns = [
+    { header: 'Nome *', key: 'name', width: 30 },
+    { header: 'Tipo Costo * (LAVORO/ENERGIA)', key: 'costType', width: 26 },
+    { header: 'Tariffa Oraria (€/h) *', key: 'hourlyRate', width: 22 },
+    { header: 'kW Max (solo ENERGIA)', key: 'maxKw', width: 22 },
+    { header: 'kW Medio Consumo', key: 'avgConsumptionKw', width: 22 },
+    { header: 'Moltiplicatore Efficienza', key: 'efficiencyMultiplier', width: 26 },
+  ];
+  styleHeader(ws2.getRow(1), 'FF00695C');
+  addDropdown(ws2, 'B', 500, ['LAVORO', 'ENERGIA'], 'Tipo costo');
+  ws2.getColumn('hourlyRate').numFmt = '€#,##0.00';
+  exampleRow(ws2, ['Operatore cucina', 'LAVORO', 12.50, null, null, null]);
+  exampleRow(ws2, ['Forno combinato', 'ENERGIA', 0.25, 6.5, 4.2, 1.0]);
+
+  // ── 3. INGREDIENTI ─────────────────────────────────────────────────────────
+  const ws3 = wb.addWorksheet('Ingredienti');
+  ws3.columns = [
+    { header: 'Nome *', key: 'name', width: 30 },
+    { header: 'Categoria *', key: 'category', width: 18 },
+    { header: 'Tipo Unità * (kg/unità)', key: 'unitType', width: 20 },
+    { header: 'Quantità Confezione *', key: 'packageQuantity', width: 22 },
+    { header: 'Prezzo Confezione (€) *', key: 'packagePrice', width: 22 },
+    { header: 'Prezzo/kg o /pz (€)', key: 'pricePerKgOrUnit', width: 20 },
+    { header: 'Fornitore', key: 'supplier', width: 25 },
+    { header: 'Tipo Confezione', key: 'packageType', width: 18 },
+    { header: 'Reparto', key: 'department', width: 14 },
+    { header: 'Marca', key: 'brand', width: 20 },
+    { header: 'Q.tà Min. Ordine', key: 'minOrderQuantity', width: 18 },
+    { header: 'Allergeni (separati da virgola)', key: 'allergens', width: 38 },
+    { header: 'È Alimento', key: 'isFood', width: 14 },
+    { header: 'Ordinabile', key: 'isOrderable', width: 14 },
+    { header: 'Vendibile', key: 'isSellable', width: 14 },
+    { header: 'Sottocategoria', key: 'subcategory', width: 20 },
+    { header: 'Note', key: 'notes', width: 38 },
+  ];
+  styleHeader(ws3.getRow(1), 'FF2E7D32');
+  addDropdown(ws3, 'B', 2000, [...VALID_CATEGORIES], 'Categoria');
+  addDropdown(ws3, 'C', 2000, ['kg', 'unità'], 'Tipo unità');
+  addDropdown(ws3, 'H', 2000, [...VALID_PACKAGE_TYPES], 'Tipo confezione');
+  addDropdown(ws3, 'I', 2000, ['Cucina', 'Sala'], 'Reparto');
+  addYesNo(ws3, 'M', 2000);
+  addYesNo(ws3, 'N', 2000);
+  addYesNo(ws3, 'O', 2000);
+  ws3.getColumn('packagePrice').numFmt = '€#,##0.00';
+  ws3.getColumn('pricePerKgOrUnit').numFmt = '€#,##0.00';
+  ws3.getColumn('packageQuantity').numFmt = '#,##0.000';
+  ws3.getColumn('minOrderQuantity').numFmt = '#,##0.000';
+  exampleRow(ws3, [
+    'Farina 00 Molino Rosso', 'Farine', 'kg', 25, 18.50, 0.74,
+    'Molino Rosso', 'Sacco', 'Cucina', 'Molino Rosso', 25,
+    'Glutine', 'SI', 'SI', 'SI', 'farine tipo 00', 'Per impasti base',
+  ]);
+
+  // ── 4. SEMILAVORATI ────────────────────────────────────────────────────────
+  const ws4 = wb.addWorksheet('Semilavorati');
+  ws4.columns = [
+    { header: 'Codice * (univoco per negozio)', key: 'code', width: 26 },
+    { header: 'Nome *', key: 'name', width: 30 },
+    { header: 'Categoria *', key: 'category', width: 18 },
+    { header: 'Resa % * (0-100)', key: 'yieldPercentage', width: 18 },
+    { header: 'Prezzo Finale /kg (€) *', key: 'finalPricePerKg', width: 22 },
+    { header: 'Vita Commerciale (giorni) *', key: 'shelfLifeDays', width: 26 },
+    { header: 'Metodo Conservazione *', key: 'storageMethod', width: 35 },
+    { header: 'Quantità Tot. Prodotta (kg)', key: 'totalQuantityProduced', width: 28 },
+    { header: 'Passaggi Produzione (testo)', key: 'productionSteps', width: 50 },
+  ];
+  styleHeader(ws4.getRow(1), 'FFB71C1C');
+  addDropdown(ws4, 'C', 1000, ['SPEZIE', 'SALSE', 'VERDURA', 'CARNE', 'ALTRO'], 'Categoria');
+  ws4.getColumn('finalPricePerKg').numFmt = '€#,##0.00';
+  exampleRow(ws4, [
+    'SLV-001', 'Salsa Barbecue Base', 'SALSE', 85, 4.20, 5,
+    'Frigorifero +4°C', 10, 'Cuocere 30 min mescolando',
+  ]);
+
+  // ── 5. COMPONENTI SEMILAVORATI ─────────────────────────────────────────────
+  const ws5 = wb.addWorksheet('Componenti_Semilavorati');
+  ws5.columns = [
+    { header: 'Codice Semilavorato *', key: 'semiFinishedCode', width: 28 },
+    { header: 'Tipo Componente *', key: 'componentType', width: 22 },
+    { header: 'Nome Componente *', key: 'componentName', width: 30 },
+    { header: 'Quantità *', key: 'quantity', width: 14 },
+    { header: 'Unità (kg/u)', key: 'unit', width: 14 },
+    { header: 'Ordine Visualizzazione', key: 'sortOrder', width: 22 },
+  ];
+  styleHeader(ws5.getRow(1), 'FFB71C1C');
+  addDropdown(ws5, 'B', 5000, ['INGREDIENTE', 'SEMILAVORATO', 'OPERAZIONE'], 'Tipo componente');
+  addDropdown(ws5, 'E', 5000, ['kg', 'u'], 'Unità');
+  ws5.getColumn('quantity').numFmt = '#,##0.000';
+  const noteSemi = ws5.addRow(['← Inserisci qui il codice del semilavorato (foglio Semilavorati col. A)']);
+  noteSemi.getCell(1).font = { italic: true, color: { argb: 'FF1565C0' } };
+  exampleRow(ws5, ['SLV-001', 'INGREDIENTE', 'Pomodori pelati', 2.000, 'kg', 1]);
+  exampleRow(ws5, ['SLV-001', 'INGREDIENTE', 'Cipolla', 0.300, 'kg', 2]);
+  exampleRow(ws5, ['SLV-001', 'OPERAZIONE', 'Operatore cucina', 0.500, 'u', 3]);
+
+  // ── 6. RICETTE FINALI ──────────────────────────────────────────────────────
+  const ws6 = wb.addWorksheet('Ricette_Finali');
+  ws6.columns = [
+    { header: 'Codice * (univoco per negozio)', key: 'code', width: 28 },
+    { header: 'Nome *', key: 'name', width: 30 },
+    { header: 'Categoria *', key: 'category', width: 20 },
+    { header: 'Resa % * (0-100)', key: 'yieldPercentage', width: 18 },
+    { header: 'Costo Totale (€) *', key: 'totalCost', width: 18 },
+    { header: 'Metodo Conservazione *', key: 'conservationMethod', width: 35 },
+    { header: 'Tempo Max Conservazione *', key: 'maxConservationTime', width: 28 },
+    { header: 'Tipo Unità (kg/u)', key: 'unitType', width: 18 },
+    { header: 'Peso Unitario (kg)', key: 'unitWeight', width: 18 },
+    { header: 'Quantità Prodotta', key: 'producedQuantity', width: 20 },
+    { header: 'Tipo Misura', key: 'measurementType', width: 20 },
+    { header: 'Peso Pezzo (kg)', key: 'pieceWeight', width: 18 },
+    { header: 'Spreco Servizio %', key: 'serviceWastePercentage', width: 20 },
+    { header: 'Prezzo Vendita (€)', key: 'sellingPrice', width: 20 },
+    { header: 'È Semilavorato', key: 'isSemiFinished', width: 18 },
+    { header: 'Vendibile', key: 'isSellable', width: 14 },
+    { header: 'Attivo', key: 'isActive', width: 12 },
+  ];
+  styleHeader(ws6.getRow(1), 'FFE65100');
+  addDropdown(ws6, 'C', 1000, ['Pane', 'Carne', 'Salse', 'Verdure', 'Formaggi', 'Altro'], 'Categoria');
+  addDropdown(ws6, 'H', 1000, ['kg', 'u'], 'Tipo unità');
+  addDropdown(ws6, 'K', 1000, ['weight_only', 'unit_only', 'both'], 'Tipo misura');
+  addYesNo(ws6, 'O', 1000);
+  addYesNo(ws6, 'P', 1000);
+  addYesNo(ws6, 'Q', 1000);
+  ws6.getColumn('totalCost').numFmt = '€#,##0.00';
+  ws6.getColumn('sellingPrice').numFmt = '€#,##0.00';
+  exampleRow(ws6, [
+    'RIC-001', 'Burger Classico', 'Carne', 90, 3.80,
+    'Frigorifero +4°C', '24 ore', 'u', 0.250, 50,
+    'both', 0.250, 2, 8.50, 'NO', 'SI', 'SI',
+  ]);
+
+  // ── 7. COMPONENTI RICETTE FINALI ───────────────────────────────────────────
+  const ws7 = wb.addWorksheet('Componenti_Ricette');
+  ws7.columns = [
+    { header: 'Codice Ricetta *', key: 'recipeCode', width: 26 },
+    { header: 'Tipo Componente *', key: 'componentType', width: 22 },
+    { header: 'Nome Componente *', key: 'componentName', width: 30 },
+    { header: 'Quantità *', key: 'quantity', width: 14 },
+    { header: 'Unità (kg/u)', key: 'unit', width: 14 },
+    { header: 'Ordine Visualizzazione', key: 'sortOrder', width: 22 },
+  ];
+  styleHeader(ws7.getRow(1), 'FFE65100');
+  addDropdown(ws7, 'B', 5000, ['INGREDIENTE', 'SEMILAVORATO', 'OPERAZIONE'], 'Tipo componente');
+  addDropdown(ws7, 'E', 5000, ['kg', 'u'], 'Unità');
+  ws7.getColumn('quantity').numFmt = '#,##0.000';
+  const noteRic = ws7.addRow(['← Inserisci qui il codice della ricetta (foglio Ricette_Finali col. A)']);
+  noteRic.getCell(1).font = { italic: true, color: { argb: 'FF1565C0' } };
+  exampleRow(ws7, ['RIC-001', 'INGREDIENTE', 'Hamburger bovino 150g', 0.150, 'kg', 1]);
+  exampleRow(ws7, ['RIC-001', 'SEMILAVORATO', 'Salsa Barbecue Base', 0.040, 'kg', 2]);
+  exampleRow(ws7, ['RIC-001', 'INGREDIENTE', 'Panino brioche', 1, 'u', 3]);
+  exampleRow(ws7, ['RIC-001', 'OPERAZIONE', 'Operatore cucina', 0.083, 'u', 4]);
+
+  // ── 8. FRIGORIFERI ─────────────────────────────────────────────────────────
+  const ws8 = wb.addWorksheet('Frigoriferi');
+  ws8.columns = [
+    { header: 'Nome *', key: 'name', width: 30 },
+    { header: 'Tipo * (fridge/freezer)', key: 'type', width: 22 },
+    { header: 'Ubicazione * (kitchen/sala)', key: 'location', width: 24 },
+    { header: 'Categoria', key: 'category', width: 20 },
+    { header: 'Temp. Min (°C) *', key: 'minTemp', width: 18 },
+    { header: 'Temp. Max (°C) *', key: 'maxTemp', width: 18 },
+    { header: 'Attivo', key: 'isActive', width: 12 },
+    { header: 'Note', key: 'notes', width: 38 },
+  ];
+  styleHeader(ws8.getRow(1), 'FF1565C0');
+  addDropdown(ws8, 'B', 200, ['fridge', 'freezer'], 'Tipo');
+  addDropdown(ws8, 'C', 200, ['kitchen', 'sala'], 'Ubicazione');
+  addYesNo(ws8, 'G', 200);
+  exampleRow(ws8, ['Cella Carni', 'fridge', 'kitchen', 'Carni', 0, 4, 'SI', 'Cella principale cucina']);
+  exampleRow(ws8, ['Freezer Produzione', 'freezer', 'kitchen', 'Surgelati', -25, -18, 'SI', '']);
+
+  // ── 9. PRODUZIONI SETTIMANALI ──────────────────────────────────────────────
+  const ws9 = wb.addWorksheet('Produzioni_Settimanali');
+  ws9.columns = [
+    { header: 'Data Inizio Settimana * (AAAA-MM-GG)', key: 'weekStartDate', width: 36 },
+    { header: 'Tipo Produzione * (final/semifinished)', key: 'productionType', width: 34 },
+    { header: 'Codice Ricetta Finale', key: 'recipeFinalCode', width: 28 },
+    { header: 'Codice Semilavorato', key: 'semiFinishedCode', width: 26 },
+    { header: 'Quantità *', key: 'quantity', width: 14 },
+  ];
+  styleHeader(ws9.getRow(1), 'FF37474F');
+  addDropdown(ws9, 'B', 2000, ['final', 'semifinished'], 'Tipo produzione');
+  ws9.getColumn('quantity').numFmt = '#,##0.000';
+  const noteProd = ws9.addRow([
+    '← Formato data: 2024-01-08 | Compilare SOLO il codice corretto in base al Tipo Produzione',
+  ]);
+  noteProd.getCell(1).font = { italic: true, color: { argb: 'FF1565C0' } };
+  exampleRow(ws9, ['2024-01-08', 'final', 'RIC-001', null, 50]);
+  exampleRow(ws9, ['2024-01-08', 'semifinished', null, 'SLV-001', 10]);
+
+  const buffer = await wb.xlsx.writeBuffer();
+  return Buffer.from(buffer);
+}
+
 export async function exportIngredientsToExcel(ingredients: any[]): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('Ingredienti');
