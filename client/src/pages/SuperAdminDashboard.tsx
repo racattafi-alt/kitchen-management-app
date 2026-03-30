@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Building2, Users, Package, ChefHat, TrendingUp, TrendingDown, Plus, ArrowLeft, Edit3, Shield, UserCog, Globe, Search, Save, ExternalLink } from "lucide-react";
+import { Building2, Users, Package, ChefHat, TrendingUp, TrendingDown, Plus, ArrowLeft, Edit3, Shield, UserCog, Globe, Search, Save, ExternalLink, Download, FileSpreadsheet } from "lucide-react";
 import { useState, useMemo } from "react";
 import {
   Dialog,
@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
-type Tab = "negozi" | "utenti" | "prezzi";
+type Tab = "negozi" | "utenti" | "prezzi" | "importazione";
 type SortBy = "name" | "supplier" | "category";
 
 interface PriceEdit {
@@ -95,6 +95,34 @@ export default function SuperAdminDashboard() {
     },
     onError: (error) => { toast.error(error.message || "Errore aggiornamento ruolo"); },
   });
+
+  // ---- Import template ----
+  const templateQuery = trpc.ingredients.downloadImportTemplate.useQuery(undefined, { enabled: false });
+  const [isDownloadingTemplate, setIsDownloadingTemplate] = useState(false);
+
+  async function handleDownloadTemplate() {
+    setIsDownloadingTemplate(true);
+    try {
+      const result = await templateQuery.refetch();
+      if (result.data) {
+        const { data, filename, mimeType } = result.data;
+        const blob = new Blob([Uint8Array.from(atob(data), c => c.charCodeAt(0))], { type: mimeType });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        toast.success("Template Excel scaricato con successo");
+      } else if (result.error) {
+        toast.error(`Errore: ${result.error.message}`);
+      }
+    } finally {
+      setIsDownloadingTemplate(false);
+    }
+  }
 
   const bulkUpdateMutation = trpc.ingredients.bulkUpdatePrices.useMutation({
     onSuccess: (result) => {
@@ -322,6 +350,12 @@ export default function SuperAdminDashboard() {
         >
           <TrendingUp className="inline h-4 w-4 mr-2" />Aggiorna Prezzi
           {changedCount > 0 && <span className="ml-2 bg-amber-500 text-white text-xs rounded-full px-2 py-0.5">{changedCount}</span>}
+        </button>
+        <button
+          className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === "importazione" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+          onClick={() => setActiveTab("importazione")}
+        >
+          <FileSpreadsheet className="inline h-4 w-4 mr-2" />Importazione Dati
         </button>
       </div>
 
@@ -797,6 +831,95 @@ export default function SuperAdminDashboard() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ===== TAB: Importazione ===== */}
+      {activeTab === "importazione" && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-semibold tracking-tight">Importazione Dati</h2>
+            <p className="text-muted-foreground mt-1">Scarica i template Excel per importare i dati nel database</p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <FileSpreadsheet className="h-6 w-6 text-green-700" />
+                  </div>
+                  <div>
+                    <CardTitle>Template Master Importazione</CardTitle>
+                    <CardDescription className="mt-1">
+                      File Excel con tutti i fogli necessari per popolare il database da zero
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p className="font-medium text-foreground">Fogli inclusi (in ordine di importazione):</p>
+                  <ol className="list-decimal list-inside space-y-1">
+                    <li>Fornitori</li>
+                    <li>Operazioni (costi lavoro/energia)</li>
+                    <li>Ingredienti</li>
+                    <li>Semilavorati</li>
+                    <li>Componenti Semilavorati</li>
+                    <li>Ricette Finali</li>
+                    <li>Componenti Ricette</li>
+                    <li>Frigoriferi</li>
+                    <li>Produzioni Settimanali</li>
+                  </ol>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+                  Ogni foglio contiene istruzioni, esempi e menu a tendina per guidare la compilazione.
+                </div>
+                <Button
+                  onClick={handleDownloadTemplate}
+                  disabled={isDownloadingTemplate}
+                  className="w-full"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  {isDownloadingTemplate ? "Generazione in corso..." : "Scarica Template Excel"}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Package className="h-6 w-6 text-blue-700" />
+                  </div>
+                  <div>
+                    <CardTitle>Dove Importare i Dati</CardTitle>
+                    <CardDescription className="mt-1">
+                      Ogni sezione dell'app ha il proprio pannello di importazione
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                {[
+                  { label: "Ingredienti", path: "/ingredients", desc: "Import/export ingredienti con template dedicato" },
+                  { label: "Ricette & Semilavorati", path: "/recipes", desc: "Gestione ricette e componenti" },
+                  { label: "Frigoriferi", path: "/fridges", desc: "Celle frigo e freezer per HACCP" },
+                  { label: "Fornitori", path: "/suppliers", desc: "Anagrafica fornitori" },
+                ].map(({ label, path, desc }) => (
+                  <div key={path} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 transition-colors">
+                    <div>
+                      <p className="font-medium">{label}</p>
+                      <p className="text-muted-foreground text-xs">{desc}</p>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => window.location.href = path}>
+                      <ExternalLink className="h-3.5 w-3.5 mr-1" />Vai
+                    </Button>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       )}
 
