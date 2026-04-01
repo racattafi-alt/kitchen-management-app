@@ -28,6 +28,8 @@ export default function ShoppingList() {
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
   const [selectedWeekGroup, setSelectedWeekGroup] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'supplier' | 'name' | 'category'>('supplier');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 30;
   const [orderQuantities, setOrderQuantities] = useState<Record<string, number>>({});
   const [orderPackages, setOrderPackages] = useState<Record<string, number>>({});
   const [extraItems, setExtraItems] = useState<Array<{
@@ -118,6 +120,16 @@ export default function ShoppingList() {
       return (a.itemName || '').localeCompare(b.itemName || '');
     }
   });
+
+  // Reset pagina quando cambiano i filtri
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedSupplier, selectedDepartment, selectedWeekGroup, sortBy]);
+
+  // Paginazione
+  const totalPages = Math.ceil((filteredList?.length || 0) / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedList = filteredList?.slice(startIndex, startIndex + itemsPerPage);
 
   // Fornitori unici
   const suppliers = Array.from(new Set(shoppingList?.map((item: any) => item.supplier) || []));
@@ -748,10 +760,10 @@ export default function ShoppingList() {
               <>
                 {/* Layout Mobile: Card */}
                 <div className="block md:hidden space-y-3">
-                  {filteredList.reduce((acc: any[], item: any, index: number) => {
+                  {paginatedList!.reduce((acc: any[], item: any, index: number) => {
                     const orderQty = orderQuantities[item.id] || 0;
                     const orderCost = orderQty * item.pricePerUnit;
-                    const prevItem = index > 0 ? filteredList[index - 1] : null;
+                    const prevItem = index > 0 ? paginatedList![index - 1] : null;
                     const showSupplierHeader = !prevItem || prevItem.supplier !== item.supplier;
                     
                     if (showSupplierHeader) {
@@ -875,7 +887,7 @@ export default function ShoppingList() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredList.map((item: any) => {
+                    {paginatedList!.map((item: any) => {
                       const orderQty = orderQuantities[item.id] || 0;
                       const orderCost = orderQty * item.pricePerUnit;
                       
@@ -984,6 +996,55 @@ export default function ShoppingList() {
                   </TableBody>
                 </Table>
                 </div>
+
+                {/* Paginazione */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                    <div className="text-sm text-muted-foreground">
+                      Mostrando {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredList!.length)} di {filteredList!.length} articoli
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(1)}
+                        disabled={currentPage === 1}
+                      >
+                        Prima
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        Precedente
+                      </Button>
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm font-medium px-3 py-1 bg-primary text-primary-foreground rounded">
+                          {currentPage}
+                        </span>
+                        <span className="text-sm text-muted-foreground">di {totalPages}</span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                      >
+                        Successiva
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(totalPages)}
+                        disabled={currentPage === totalPages}
+                      >
+                        Ultima
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </CardContent>
