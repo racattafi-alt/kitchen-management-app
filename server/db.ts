@@ -950,6 +950,23 @@ export type ComponentInput = {
 };
 
 /** Restituisce i componenti di una ricetta finale con una singola JOIN. */
+/** Converte un blob JSON di componenti (formato legacy) nel formato RelationalComponent. */
+function parseJsonBlobComponents(blob: unknown): RelationalComponent[] {
+  const arr = Array.isArray(blob) ? blob : (() => { try { return JSON.parse(blob as string); } catch { return []; } })();
+  if (!Array.isArray(arr)) return [];
+  return arr.map((c: any, i: number) => ({
+    id: c.id || `blob-${i}`,
+    type: c.type || 'ingredient',
+    componentId: c.componentId || c.id || '',
+    componentName: c.componentName || c.name || 'Sconosciuto',
+    quantity: parseFloat(c.quantity ?? 0),
+    unit: c.unit || 'kg',
+    pricePerUnit: parseFloat(c.pricePerUnit ?? 0),
+    sortOrder: c.sortOrder ?? i,
+    costType: c.costType,
+  }));
+}
+
 export async function getRecipeComponents(recipeId: string): Promise<RelationalComponent[]> {
   const db = await getDb();
   if (!db) return [];
@@ -984,7 +1001,7 @@ export async function getRecipeComponents(recipeId: string): Promise<RelationalC
     .where(eq(recipeComponents.recipeId, recipeId))
     .orderBy(recipeComponents.sortOrder);
 
-  return rows.map((r) => {
+  const mapped = rows.map((r) => {
     if (r.ingredientId) {
       return {
         id: r.id,
@@ -1009,7 +1026,6 @@ export async function getRecipeComponents(recipeId: string): Promise<RelationalC
         sortOrder: r.sortOrder,
       };
     }
-    // operation
     return {
       id: r.id,
       type: "operation" as const,
@@ -1022,6 +1038,14 @@ export async function getRecipeComponents(recipeId: string): Promise<RelationalC
       sortOrder: r.sortOrder,
     };
   });
+
+  // Fallback: se la tabella relazionale è vuota, leggi dal JSON blob della ricetta
+  if (mapped.length === 0) {
+    const recipe = await getFinalRecipeById(recipeId);
+    if (recipe?.components) return parseJsonBlobComponents(recipe.components);
+  }
+
+  return mapped;
 }
 
 /** Sostituisce tutti i componenti di una ricetta finale (delete + bulk insert). */
@@ -1084,7 +1108,7 @@ export async function getSemiFinishedComponentsRelational(semiFinishedId: string
     .where(eq(semiFinishedComponents.semiFinishedRecipeId, semiFinishedId))
     .orderBy(semiFinishedComponents.sortOrder);
 
-  return rows.map((r) => {
+  const mapped = rows.map((r) => {
     if (r.ingredientId) {
       return {
         id: r.id,
@@ -1121,6 +1145,14 @@ export async function getSemiFinishedComponentsRelational(semiFinishedId: string
       sortOrder: r.sortOrder,
     };
   });
+
+  // Fallback: se la tabella relazionale è vuota, leggi dal JSON blob del semilavorato
+  if (mapped.length === 0) {
+    const semi = await getSemiFinishedById(semiFinishedId);
+    if (semi?.components) return parseJsonBlobComponents(semi.components);
+  }
+
+  return mapped;
 }
 
 /** Sostituisce tutti i componenti di un semilavorato (delete + bulk insert). */

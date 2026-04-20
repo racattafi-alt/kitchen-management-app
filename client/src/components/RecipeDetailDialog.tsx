@@ -47,8 +47,8 @@ export default function RecipeDetailDialog({
     { enabled: open && recipeType === 'final' && !!recipeId }
   );
 
-  // Carica dettagli semilavorato
-  const { data: semiRecipe, isLoading: loadingSemi } = trpc.semiFinished.getById.useQuery(
+  // Carica dettagli semilavorato (con componenti relazionali + fallback JSON blob)
+  const { data: semiRecipe, isLoading: loadingSemi } = trpc.semiFinished.getDetails.useQuery(
     { id: recipeId || "" },
     { enabled: open && recipeType === 'semi' && !!recipeId }
   );
@@ -58,9 +58,10 @@ export default function RecipeDetailDialog({
 
   if (!open || !recipe) return null;
 
-  const components = recipeType === 'final' 
-    ? (recipe as any).componentsWithDetails || []
-    : (recipe as any).components || [];
+  const rawComponents = (recipe as any).components;
+  const components: any[] = Array.isArray(rawComponents)
+    ? rawComponents
+    : (typeof rawComponents === 'string' ? (() => { try { return JSON.parse(rawComponents); } catch { return []; } })() : []);
 
   const handlePrint = () => {
     toast.info("Funzionalità stampa in arrivo");
@@ -169,11 +170,15 @@ export default function RecipeDetailDialog({
                         return (
                           <TableRow key={idx}>
                             <TableCell className="font-medium">
-                              {comp.name || 'Sconosciuto'}
+                              {comp.componentName || comp.name || 'Sconosciuto'}
                             </TableCell>
                             <TableCell>
-                              <Badge variant={comp.type === 'ingredient' ? 'default' : 'secondary'}>
-                                {comp.type === 'ingredient' ? 'Ingrediente' : 'Semilavorato'}
+                              <Badge variant={
+                                comp.type === 'ingredient' ? 'default' :
+                                comp.type === 'operation' ? 'outline' : 'secondary'
+                              }>
+                                {comp.type === 'ingredient' ? 'Ingrediente' :
+                                 comp.type === 'operation' ? 'Operazione' : 'Semilavorato'}
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right">

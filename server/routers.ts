@@ -464,6 +464,14 @@ const semiFinishedRouter = router({
     .query(async ({ input }) => {
       return db.getSemiFinishedById(input.id);
     }),
+  getDetails: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input }) => {
+      const semi = await db.getSemiFinishedById(input.id);
+      if (!semi) return null;
+      const components = await db.getSemiFinishedComponentsRelational(input.id);
+      return { ...semi, components };
+    }),
   create: protectedProcedure
     .input(
       z.object({
