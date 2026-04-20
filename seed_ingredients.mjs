@@ -1,31 +1,26 @@
 /**
  * seed_ingredients.mjs
  *
- * Importa tutti gli ingredienti dal catalogo MENUUNION2026 nel database.
- * Chiama l'API dell'app (tRPC) con autenticazione cookie.
+ * Importa tutti gli ingredienti MENUUNION2026 direttamente nel database MySQL.
+ * Richiede DATABASE_URL (stessa variabile usata dall'app).
  *
  * Uso:
- *   API_URL=https://tua-app.railway.app \
- *   ADMIN_EMAIL=admin@example.com \
- *   ADMIN_PASSWORD=tua_password \
- *   node seed_ingredients.mjs
+ *   DATABASE_URL="mysql://user:pass@host:3306/dbname" node seed_ingredients.mjs
  *
- * Se l'app gira in locale:
- *   API_URL=http://localhost:5000 ADMIN_EMAIL=... ADMIN_PASSWORD=... node seed_ingredients.mjs
+ * Su Railway:
+ *   railway run node seed_ingredients.mjs
  */
 
+import mysql from "mysql2/promise";
 import { randomUUID } from "crypto";
 
-const API_URL = process.env.API_URL || "http://localhost:5000";
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-
-if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
-  console.error("❌ Imposta ADMIN_EMAIL e ADMIN_PASSWORD come variabili d'ambiente");
+const DATABASE_URL = process.env.DATABASE_URL;
+if (!DATABASE_URL) {
+  console.error("❌  Imposta DATABASE_URL come variabile d'ambiente");
   process.exit(1);
 }
 
-// ─── TUTTI GLI INGREDIENTI DAL PDF MENUUNION2026 ───────────────────────────
+// ─── TUTTI GLI INGREDIENTI DAL CATALOGO MENUUNION2026 ─────────────────────
 // Formato: [nome, qtyGrammi, prezzoConfezione, categoria, isFood]
 const INGREDIENTS = [
   // Additivi
@@ -187,113 +182,71 @@ const INGREDIENTS = [
   ["Spugne", 5, 3.29, "Non Food", false],
 ];
 
-// ─── HELPERS ───────────────────────────────────────────────────────────────
+// ─── CONNESSIONE DB ─────────────────────────────────────────────────────────
 
-async function login() {
-  const res = await fetch(`${API_URL}/api/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Login fallito (${res.status}): ${body}`);
-  }
-  // Estrai cookie di sessione
-  const setCookie = res.headers.get("set-cookie") || "";
-  const sessionCookie = setCookie.split(";")[0];
-  console.log("✅ Login effettuato\n");
-  return sessionCookie;
-}
+const conn = await mysql.createConnection(DATABASE_URL);
+console.log("✅ Connesso al database\n");
 
-async function getExistingIngredients(cookie) {
-  const res = await fetch(`${API_URL}/api/trpc/ingredients.list`, {
-    headers: { Cookie: cookie },
-  });
-  const data = await res.json();
-  // tRPC v11 batch format: array of results
-  const items = Array.isArray(data) ? data[0]?.result?.data : data?.result?.data;
-  return items || [];
-}
+// Carica tutti gli store attivi
+const [stores] = await conn.execute("SELECT id, name FROM stores WHERE is_active = 1 OR is_active IS NULL");
+console.log(`Store trovati: ${stores.map(s => s.name).join(", ")}\n`);
 
-async function createIngredient(cookie, ingredient) {
-  const res = await fetch(`${API_URL}/api/trpc/ingredients.create`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Cookie: cookie,
-    },
-    body: JSON.stringify({ "0": { json: ingredient } }),
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`HTTP ${res.status}: ${body}`);
-  }
-  const data = await res.json();
-  const result = Array.isArray(data) ? data[0] : data;
-  if (result?.error) throw new Error(JSON.stringify(result.error));
-  return result?.result?.data;
-}
-
-// ─── MAIN ───────────────────────────────────────────────────────────────────
-
-console.log("=".repeat(60));
-console.log("IMPORT INGREDIENTI - MENUUNION2026");
-console.log(`API: ${API_URL}`);
-console.log(`Ingredienti da importare: ${INGREDIENTS.length}`);
-console.log("=".repeat(60) + "\n");
-
-const cookie = await login();
-
-// Carica ingredienti esistenti
-const existing = await getExistingIngredients(cookie);
-const existingNames = new Set(existing.map((i) => i.name.toLowerCase().trim()));
+// Carica ingredienti già esistenti (per evitare duplicati)
+const [existing] = await conn.execute("SELECT name FROM ingredients");
+const existingNames = new Set(existing.map(r => r.name.toLowerCase().trim()));
 console.log(`Ingredienti già nel DB: ${existing.length}\n`);
 
 let created = 0;
 let skipped = 0;
 let errors = 0;
 
-for (const [name, qtyG, price, category, isFood] of INGREDIENTS) {
-  const nameKey = name.toLowerCase().trim();
+console.log("─".repeat(60));
 
-  if (existingNames.has(nameKey)) {
+for (const [name, qtyG, price, category, isFood] of INGREDIENTS) {
+  if (existingNames.has(name.toLowerCase().trim())) {
     skipped++;
     continue;
   }
 
+  const id = randomUUID();
   const pkgQty = qtyG / 1000.0;
-  // Per packaging/non-food venduti a unità, usa unitType 'u'; per food usa 'k'
   const unitType = isFood ? "k" : "u";
-  const pricePerKgOrUnit = pkgQty > 0 ? price / pkgQty : 0;
+  const pricePerKg = pkgQty > 0 ? Math.round((price / pkgQty) * 100) / 100 : 0;
+  const now = new Date();
 
   try {
-    await createIngredient(cookie, {
-      id: randomUUID(),
-      name,
-      category,
-      unitType,
-      packageQuantity: pkgQty,
-      packagePrice: price,
-      pricePerKgOrUnit: Math.round(pricePerKgOrUnit * 100) / 100,
-      isFood,
-      supplier: "Non specificato",
-    });
-    console.log(`+ ${name} → €${price}/${pkgQty}kg (${category})`);
+    await conn.execute(
+      `INSERT INTO ingredients
+         (id, name, category, unitType, packageQuantity, packagePrice, pricePerKgOrUnit,
+          is_food, isActive, isOrderable, isSellable, isSoldByPackage, isSalaItem,
+          supplier, allergens, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 1, 0, 0, 'Non specificato', '[]', ?, ?)`,
+      [id, name, category, unitType, pkgQty, price, pricePerKg, isFood ? 1 : 0, now, now]
+    );
+
+    // Collega l'ingrediente a ogni store attivo
+    for (const store of stores) {
+      await conn.execute(
+        `INSERT IGNORE INTO ingredient_stores (ingredientId, storeId, isActive, createdAt, updatedAt)
+         VALUES (?, ?, 1, ?, ?)`,
+        [id, store.id, now, now]
+      );
+    }
+
+    console.log(`+ ${name.padEnd(40)} €${price}/${pkgQty}kg  [${category}]`);
     created++;
-    existingNames.add(nameKey);
+    existingNames.add(name.toLowerCase().trim());
   } catch (err) {
     console.error(`✗ ${name}: ${err.message}`);
     errors++;
   }
-
-  // Piccola pausa per non sovraccaricare l'API
-  await new Promise((r) => setTimeout(r, 80));
 }
 
+await conn.end();
+
 console.log("\n" + "=".repeat(60));
-console.log(`✅ Creati:   ${created}`);
-console.log(`⏭  Saltati:  ${skipped} (già presenti)`);
-if (errors) console.log(`❌ Errori:   ${errors}`);
-console.log(`📦 Totale:   ${INGREDIENTS.length}`);
+console.log(`✅  Creati:   ${created}`);
+console.log(`⏭   Saltati:  ${skipped} (già presenti)`);
+if (errors) console.log(`❌  Errori:   ${errors}`);
+console.log(`📦  Totale:   ${INGREDIENTS.length}`);
 console.log("=".repeat(60));
