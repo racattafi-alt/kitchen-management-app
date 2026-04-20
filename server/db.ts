@@ -1,5 +1,5 @@
 import * as crypto from "crypto";
-import { eq, and, desc, like, gte, ne, sql, inArray } from "drizzle-orm";
+import { eq, and, desc, like, gte, ne, sql, inArray, isNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,
@@ -177,7 +177,8 @@ export async function updateUserRole(userId: number, role: "user" | "admin" | "m
 
 /**
  * Crea un ingrediente globale e lo attiva opzionalmente in uno store.
- * Se storeId è fornito, crea una riga in ingredient_stores con isActive=true.
+ * Idempotente: se esiste già un ingrediente con lo stesso nome+fornitore,
+ * riusa il record esistente e aggiorna lo store senza fallire.
  */
 export async function createIngredient(
   data: Omit<Ingredient, "createdAt" | "updatedAt">,
@@ -185,15 +186,34 @@ export async function createIngredient(
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.insert(ingredients).values(data as any);
-  if (storeId) {
-    await db.insert(ingredientStores).values({
-      ingredientId: data.id,
-      storeId,
-      isActive: true,
-    });
+
+  // Check se esiste già (stesso nome + stesso fornitore)
+  const existingFilter = data.supplierId
+    ? and(eq(ingredients.name, data.name), eq(ingredients.supplierId, data.supplierId))
+    : and(eq(ingredients.name, data.name), isNull(ingredients.supplierId));
+  const existing = await db
+    .select({ id: ingredients.id })
+    .from(ingredients)
+    .where(existingFilter)
+    .limit(1);
+
+  const ingredientId = existing.length > 0 ? existing[0].id : data.id;
+
+  if (existing.length === 0) {
+    await db.insert(ingredients).values(data as any);
   }
-  return data;
+
+  if (storeId) {
+    try {
+      await db.insert(ingredientStores)
+        .values({ ingredientId, storeId, isActive: true })
+        .onDuplicateKeyUpdate({ set: { isActive: true } });
+    } catch (storeErr: any) {
+      // ingredient_stores potrebbe non esistere ancora (migration pendente)
+      console.warn("[createIngredient] ingredient_stores insert failed:", storeErr?.message);
+    }
+  }
+  return { ...data, id: ingredientId };
 }
 
 /**

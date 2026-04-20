@@ -102,16 +102,19 @@ const ingredientsRouter = router({
       try {
         if (await isStoreGlobal(ctx.currentStoreId)) {
           const storeIds = await getAllActiveStoreIds();
-          await db.createIngredient(ingredientData as any, null);
+          const created = await db.createIngredient(ingredientData as any, null);
           for (const sid of storeIds) {
-            await db.activateIngredientInStore(input.id, sid);
+            try {
+              await db.activateIngredientInStore(created.id, sid);
+            } catch (storeErr: any) {
+              console.warn(`[ingredients.create] activateIngredientInStore failed for store ${sid}:`, storeErr?.message);
+            }
           }
-          return { ...ingredientData, storeId: "all" };
+          return { ...ingredientData, id: created.id, storeId: "all" };
         }
         return db.createIngredient(ingredientData as any, ctx.currentStoreId || 'default-store-001');
       } catch (err: any) {
         const msg = err?.message || String(err);
-        // Surface MySQL error detail to client
         throw new Error(`Salvataggio fallito: ${msg}`);
       }
     }),
