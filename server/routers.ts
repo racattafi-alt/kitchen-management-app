@@ -442,9 +442,8 @@ const ingredientsRouter = router({
 
 // ============ PROCEDURE SEMILAVORATI ============
 const semiFinishedRouter = router({
-  list: protectedProcedure.query(async () => {
-    // I semilavorati sono un catalogo condiviso tra tutti gli store
-    return db.getSemiFinishedRecipes();
+  list: protectedProcedure.query(async ({ ctx }) => {
+    return db.getSemiFinishedRecipes(ctx.currentStoreId);
   }),
   getById: protectedProcedure
     .input(z.object({ id: z.string() }))
@@ -473,6 +472,7 @@ const semiFinishedRouter = router({
       }
       await db.createSemiFinished({
         ...input,
+        storeId: ctx.currentStoreId || 'default-store-001',
         finalPricePerKg: input.finalPricePerKg.toString(),
         yieldPercentage: input.yieldPercentage.toString(),
         totalQuantityProduced: input.totalQuantityProduced?.toString() || null,
@@ -828,7 +828,7 @@ const menuRouter = router({
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
-      return db.createMenuType(input as any);
+      return db.createMenuType({ ...input, storeId: ctx.currentStoreId || 'default-store-001' } as any);
     }),
   createItem: protectedProcedure
     .input(
@@ -846,6 +846,7 @@ const menuRouter = router({
       }
       return db.createMenuItem({
         ...input,
+        storeId: ctx.currentStoreId || 'default-store-001',
         estimatedPortions: input.estimatedPortions.toString(),
       } as any);
     }),
@@ -1248,6 +1249,7 @@ const wasteRouter = router({
       }
       return db.createWasteRecord({
         ...input,
+        storeId: ctx.currentStoreId || 'default-store-001',
         quantity: input.quantity.toString(),
       } as any);
     }),
@@ -1279,6 +1281,7 @@ const haccpRouter = router({
       }
       return db.createProductionBatch({
         ...input,
+        storeId: ctx.currentStoreId || 'default-store-001',
         quantityProduced: input.quantityProduced.toString(),
       } as any);
     }),
@@ -1298,7 +1301,7 @@ const haccpRouter = router({
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
-      return db.createHACCPRecord(input as any);
+      return db.createHACCPRecord({ ...input, storeId: ctx.currentStoreId || 'default-store-001' } as any);
     }),
 });
 
