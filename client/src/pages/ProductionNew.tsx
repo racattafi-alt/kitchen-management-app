@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
-import { Calendar, CheckCircle, Search, Trash2 } from "lucide-react";
+import { Calendar, CheckCircle, Search, Trash2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -100,7 +100,10 @@ export default function ProductionNew() {
   return (
     <DashboardLayout>
       <div className="flex flex-col h-full min-h-0">
-        <div className="flex justify-between items-center pt-4 pb-3 px-0">
+        <div className="flex items-center gap-3 pt-4 pb-3 px-0">
+          <Button variant="ghost" size="icon" onClick={() => window.history.back()} className="shrink-0 md:hidden">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
           <div>
             <h1 className="text-2xl font-bold">Pianificazione Produzione</h1>
             <p className="text-muted-foreground text-sm mt-1">

@@ -7,12 +7,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, CheckCircle2, Clock, ThermometerSnowflake, Flame } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AlertCircle, CheckCircle2, Clock, ThermometerSnowflake, Flame, Plus, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 export default function HACCP() {
   const [activeTab, setActiveTab] = useState("current");
-  
+  // Dialog non conformità
+  const [ncDialogCheckId, setNcDialogCheckId] = useState<string | null>(null);
+  const [ncDialogRecipeName, setNcDialogRecipeName] = useState<string>("");
+  const [ncForm, setNcForm] = useState({ description: "", immediateAction: "", productTreatment: "" });
+  const [showNcForm, setShowNcForm] = useState(false);
+
   // Query scheda HACCP settimana corrente
   const { data: currentSheet, isLoading: loadingSheet } = trpc.haccpSheets.getCurrentWeek.useQuery();
   const { data: productionChecks, isLoading: loadingChecks, refetch: refetchChecks } = trpc.haccpSheets.getProductionChecks.useQuery(
@@ -45,6 +53,42 @@ export default function HACCP() {
     },
   });
   
+  // Non conformità
+  const { data: ncList = [], refetch: refetchNc } = trpc.nonConformities.getByProductionCheck.useQuery(
+    { productionCheckId: ncDialogCheckId! },
+    { enabled: !!ncDialogCheckId }
+  );
+  const createNc = trpc.nonConformities.create.useMutation({
+    onSuccess: () => {
+      toast.success("Non conformità registrata");
+      setNcForm({ description: "", immediateAction: "", productTreatment: "" });
+      setShowNcForm(false);
+      refetchNc();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const handleOpenNcDialog = (checkId: string, recipeName: string) => {
+    setNcDialogCheckId(checkId);
+    setNcDialogRecipeName(recipeName);
+    setShowNcForm(false);
+    setNcForm({ description: "", immediateAction: "", productTreatment: "" });
+  };
+
+  const handleCreateNc = () => {
+    if (!ncDialogCheckId || !ncForm.description.trim()) {
+      toast.error("La descrizione è obbligatoria");
+      return;
+    }
+    createNc.mutate({
+      productionCheckId: ncDialogCheckId,
+      recipeName: ncDialogRecipeName,
+      description: ncForm.description,
+      immediateAction: ncForm.immediateAction || undefined,
+      productTreatment: ncForm.productTreatment || undefined,
+    });
+  };
+
   const updateSheet = trpc.haccpSheets.updateSheet.useMutation({
     onSuccess: () => {
       toast.success("Scheda HACCP aggiornata");
@@ -132,16 +176,23 @@ export default function HACCP() {
   
   return (
     <DashboardLayout>
-      <div className="container mx-auto py-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">HACCP - Controlli Settimanali</h1>
-            <p className="text-gray-500 mt-1">
-              Settimana dal {new Date(currentSheet.weekStartDate).toLocaleDateString("it-IT")} 
-              {" "}al {new Date(currentSheet.weekEndDate).toLocaleDateString("it-IT")}
-            </p>
-          </div>
+      <div className="container mx-auto py-4 md:py-8">
+        {/* Header mobile-responsive */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => window.history.back()} className="shrink-0">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-xl md:text-3xl font-bold">HACCP - Controlli Settimanali</h1>
+              <p className="text-gray-500 text-sm mt-0.5">
+                {new Date(currentSheet.weekStartDate).toLocaleDateString("it-IT")}
+                {" — "}
+                {new Date(currentSheet.weekEndDate).toLocaleDateString("it-IT")}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 ml-11 sm:ml-0">
             <Badge variant={currentSheet.status === "completed" ? "default" : "secondary"}>
               {currentSheet.status === "draft" && <><Clock className="h-4 w-4 mr-1" /> Bozza</>}
               {currentSheet.status === "completed" && <><CheckCircle2 className="h-4 w-4 mr-1" /> Completata</>}
@@ -176,22 +227,33 @@ export default function HACCP() {
               productionChecks.map((check) => (
                 <Card key={check.id}>
                   <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle>{check.recipeName}</CardTitle>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-base sm:text-lg">{check.recipeName}</CardTitle>
                         <CardDescription>
                           Quantità prodotta: {check.quantityProduced} kg
                         </CardDescription>
                       </div>
-                      {check.isCompliant ? (
-                        <Badge variant="default" className="bg-green-600">
-                          <CheckCircle2 className="h-4 w-4 mr-1" /> Conforme
-                        </Badge>
-                      ) : (
-                        <Badge variant="destructive">
-                          <AlertCircle className="h-4 w-4 mr-1" /> Non Conforme
-                        </Badge>
-                      )}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {check.isCompliant ? (
+                          <Badge variant="default" className="bg-green-600">
+                            <CheckCircle2 className="h-4 w-4 mr-1" /> Conforme
+                          </Badge>
+                        ) : (
+                          <Badge variant="destructive">
+                            <AlertCircle className="h-4 w-4 mr-1" /> Non Conforme
+                          </Badge>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs"
+                          onClick={() => handleOpenNcDialog(check.id, check.recipeName || "")}
+                        >
+                          <AlertCircle className="h-3 w-3 mr-1 text-red-500" />
+                          Non Conformità
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -330,6 +392,106 @@ export default function HACCP() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Dialog Non Conformità */}
+      <Dialog open={!!ncDialogCheckId} onOpenChange={(open) => { if (!open) { setNcDialogCheckId(null); setShowNcForm(false); } }}>
+        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-base">
+              Non Conformità — {ncDialogRecipeName}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+            {/* Lista NC esistenti */}
+            {ncList.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-muted-foreground">Registrate ({ncList.length})</p>
+                {ncList.map((nc: any) => (
+                  <div key={nc.id} className="border rounded p-3 text-sm space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Badge variant={nc.status === "closed" ? "default" : nc.status === "open" ? "destructive" : "secondary"} className="text-xs">
+                        {nc.status === "open" ? "Aperta" : nc.status === "in_progress" ? "In corso" : nc.status === "closed" ? "Chiusa" : nc.status}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(nc.detectedAt).toLocaleDateString("it-IT")}
+                      </span>
+                    </div>
+                    <p className="font-medium">{nc.description}</p>
+                    {nc.immediateAction && (
+                      <p className="text-muted-foreground text-xs">Azione immediata: {nc.immediateAction}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">Nessuna non conformità registrata</p>
+            )}
+
+            {/* Form nuova NC */}
+            {showNcForm ? (
+              <div className="border rounded-lg p-4 space-y-3 bg-red-50">
+                <p className="text-sm font-semibold text-red-700">Nuova Non Conformità</p>
+                <div className="space-y-1">
+                  <Label className="text-xs">Descrizione problema *</Label>
+                  <Textarea
+                    value={ncForm.description}
+                    onChange={(e) => setNcForm(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Descrivi il problema..."
+                    rows={2}
+                    className="text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Azione immediata</Label>
+                  <Input
+                    value={ncForm.immediateAction}
+                    onChange={(e) => setNcForm(prev => ({ ...prev, immediateAction: e.target.value }))}
+                    placeholder="Azione correttiva immediata..."
+                    className="text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Trattamento prodotto</Label>
+                  <Input
+                    value={ncForm.productTreatment}
+                    onChange={(e) => setNcForm(prev => ({ ...prev, productTreatment: e.target.value }))}
+                    placeholder="Come è stato trattato il prodotto..."
+                    className="text-sm"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setShowNcForm(false)} className="flex-1">
+                    Annulla
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleCreateNc}
+                    disabled={createNc.isPending || !ncForm.description.trim()}
+                    className="flex-1 bg-red-600 hover:bg-red-700"
+                  >
+                    {createNc.isPending ? "Salvataggio..." : "Salva"}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full border-dashed"
+                onClick={() => setShowNcForm(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Registra nuova non conformità
+              </Button>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="ghost" size="sm" onClick={() => setNcDialogCheckId(null)}>Chiudi</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
