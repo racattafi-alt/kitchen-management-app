@@ -200,7 +200,17 @@ export async function createIngredient(
   const ingredientId = existing.length > 0 ? existing[0].id : data.id;
 
   if (existing.length === 0) {
-    await db.insert(ingredients).values(data as any);
+    try {
+      await db.insert(ingredients).values(data as any);
+    } catch (insertErr: any) {
+      console.error("[createIngredient] INSERT FAILED:", {
+        code: insertErr?.code,
+        errno: insertErr?.errno,
+        sqlMessage: insertErr?.sqlMessage,
+        message: insertErr?.message,
+      });
+      throw insertErr;
+    }
   }
 
   if (storeId) {
