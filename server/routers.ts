@@ -21,6 +21,7 @@ import {
   updateRecipeAcrossStores,
 } from "./multiStoreEditorDb.js";
 import { getAllStores, isStoreGlobal } from "./storesDb.js";
+import { logAction, AuditActions, EntityTypes } from "./auditLogHelper";
 
 async function getAllActiveStoreIds(): Promise<string[]> {
   const stores = await getAllStores();
@@ -629,7 +630,14 @@ const productionRouter = router({
       if (input.recipeFinalId) {
         await db.updateProducedQuantity(input.recipeFinalId);
       }
-      
+      await logAction({
+        storeId: ctx.currentStoreId || 'default-store-001',
+        userId: ctx.user!.openId,
+        action: AuditActions.PRODUCTION_CREATED,
+        entityType: EntityTypes.PRODUCTION,
+        entityId: String(result?.insertId || ''),
+        details: { recipeFinalId: input.recipeFinalId, quantity: input.quantity, weekStartDate: input.weekStartDate },
+      });
       return result;
     }),
 
@@ -640,12 +648,18 @@ const productionRouter = router({
         throw new Error("Unauthorized");
       }
       const result = await db.deleteWeeklyProduction(input.id);
-      
+
       // Aggiorna la quantità totale prodotta nella ricetta
       if (result.recipeFinalId) {
         await db.updateProducedQuantity(result.recipeFinalId);
       }
-      
+      await logAction({
+        storeId: ctx.currentStoreId || 'default-store-001',
+        userId: ctx.user!.openId,
+        action: AuditActions.PRODUCTION_DELETED,
+        entityType: EntityTypes.PRODUCTION,
+        entityId: input.id,
+      });
       return result;
     }),
 
@@ -998,6 +1012,14 @@ const finalRecipesRouter = router({
         sellingPrice: null,
       } as any);
       await db.setRecipeComponents(newId, input.components);
+      await logAction({
+        storeId: ctx.currentStoreId || 'default-store-001',
+        userId: ctx.user!.openId,
+        action: AuditActions.RECIPE_CREATED,
+        entityType: EntityTypes.RECIPE,
+        entityId: newId,
+        details: { name: input.name, code: input.code },
+      });
       return { id: newId };
     }),
 
@@ -1111,6 +1133,14 @@ const finalRecipesRouter = router({
       if (input.components) {
         await db.setRecipeComponents(input.id, input.components);
       }
+      await logAction({
+        storeId: ctx.currentStoreId || 'default-store-001',
+        userId: ctx.user!.openId,
+        action: AuditActions.RECIPE_UPDATED,
+        entityType: EntityTypes.RECIPE,
+        entityId: input.id,
+        details: { updatedFields: Object.keys(updateData) },
+      });
       return;
     }),
 
@@ -1199,7 +1229,15 @@ const finalRecipesRouter = router({
       if (ctx.user?.role !== "admin") {
         throw new Error("Unauthorized: Only admins can delete recipes");
       }
-      return db.deleteFinalRecipe(input.id);
+      const result = await db.deleteFinalRecipe(input.id);
+      await logAction({
+        storeId: ctx.currentStoreId || 'default-store-001',
+        userId: ctx.user!.openId,
+        action: AuditActions.RECIPE_DELETED,
+        entityType: EntityTypes.RECIPE,
+        entityId: input.id,
+      });
+      return result;
     }),
 
   toggleActive: protectedProcedure
