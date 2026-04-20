@@ -16,32 +16,84 @@ import { ENV } from "./env";
 
 /**
  * Applies critical schema fixes directly via mysql2, bypassing Drizzle's migration system.
- * This runs before runMigrations() so even if migration 0046/0047 fail, the app works.
+ * Handles incomplete migrations 0045 (storeId removal) and 0047 (piecesPerBox).
+ * Every check is idempotent — safe to run on every startup.
  */
 async function runSafetyMigrations() {
   const dbUrl = process.env.DATABASE_URL;
   if (!dbUrl) return;
   let conn: mysql.Connection | null = null;
+
+  const colExists = async (table: string, col: string): Promise<boolean> => {
+    const [r] = await conn!.execute<mysql.RowDataPacket[]>(
+      `SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+      [table, col]
+    );
+    return r[0].cnt > 0;
+  };
+
+  const tableExists = async (table: string): Promise<boolean> => {
+    const [r] = await conn!.execute<mysql.RowDataPacket[]>(
+      `SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.TABLES
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?`,
+      [table]
+    );
+    return r[0].cnt > 0;
+  };
+
   try {
     conn = await mysql.createConnection(dbUrl);
 
-    // Add piecesPerBox if missing
-    const [rows] = await conn.execute<mysql.RowDataPacket[]>(
-      `SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS
-       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'ingredients' AND COLUMN_NAME = 'piecesPerBox'`
-    );
-    if (rows[0].cnt === 0) {
+    // ── FIX 1: Ensure ingredient_stores table exists (migration 0045 may have failed) ──
+    if (!(await tableExists("ingredient_stores"))) {
+      await conn.execute(`
+        CREATE TABLE \`ingredient_stores\` (
+          \`ingredientId\` varchar(36) NOT NULL,
+          \`storeId\` varchar(36) NOT NULL,
+          \`isActive\` boolean NOT NULL DEFAULT true,
+          \`createdAt\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          \`updatedAt\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          PRIMARY KEY (\`ingredientId\`, \`storeId\`)
+        )
+      `);
+      console.log("[SafetyMigration] ✓ Created ingredient_stores table.");
+    }
+
+    // ── FIX 2: Remove storeId from ingredients if still present ──
+    // (migration 0045 created ingredient_stores but never dropped the old column)
+    if (await colExists("ingredients", "storeId")) {
+      // Copy existing storeId values into ingredient_stores before dropping
+      await conn.execute(`
+        INSERT IGNORE INTO \`ingredient_stores\` (\`ingredientId\`, \`storeId\`, \`isActive\`, \`createdAt\`, \`updatedAt\`)
+        SELECT \`id\`, \`storeId\`, \`isActive\`, \`createdAt\`, NOW()
+        FROM \`ingredients\`
+        WHERE \`storeId\` IS NOT NULL AND \`storeId\` != ''
+      `);
+      await conn.execute("ALTER TABLE `ingredients` DROP COLUMN `storeId`");
+      console.log("[SafetyMigration] ✓ Removed storeId column from ingredients (migrated to ingredient_stores).");
+    }
+
+    // ── FIX 3: Remove storeId from suppliers if still present ──
+    if (await colExists("suppliers", "storeId")) {
+      await conn.execute("ALTER TABLE `suppliers` DROP COLUMN `storeId`");
+      console.log("[SafetyMigration] ✓ Removed storeId column from suppliers.");
+    }
+
+    // ── FIX 4: Add piecesPerBox if missing (migration 0047) ──
+    if (!(await colExists("ingredients", "piecesPerBox"))) {
       await conn.execute("ALTER TABLE `ingredients` ADD COLUMN `piecesPerBox` int DEFAULT NULL");
       console.log("[SafetyMigration] ✓ Added piecesPerBox column to ingredients.");
     }
 
-    // Ensure 'Fusto' is in packageType enum (MODIFY is safe/idempotent)
+    // ── FIX 5: Ensure 'Fusto' is in packageType enum (migration 0048) ──
     await conn.execute(
       "ALTER TABLE `ingredients` MODIFY COLUMN `packageType` enum('Sacco','Busta','Brick','Cartone','Scatola','Bottiglia','Barattolo','Lattina','Sfuso','Fusto')"
     );
-    console.log("[SafetyMigration] ✓ packageType enum verified.");
+    console.log("[SafetyMigration] ✓ packageType enum verified (Fusto included).");
+
   } catch (err) {
-    console.error("[SafetyMigration] Error (non-fatal):", err);
+    console.error("[SafetyMigration] Error (non-fatal, server continues):", err);
   } finally {
     if (conn) await conn.end();
   }
