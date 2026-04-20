@@ -95,7 +95,7 @@ const ingredientsRouter = router({
         isActive: true,
         isFood: input.isFood ?? true,
         isSoldByPackage: input.isSoldByPackage ?? false,
-        piecesPerBox: input.piecesPerBox ?? null,
+        ...(input.piecesPerBox != null ? { piecesPerBox: input.piecesPerBox } : {}),
         allergens: input.allergens || [],
       };
       // Crea l'ingrediente globale e attivalo negli store appropriati
@@ -171,7 +171,7 @@ const ingredientsRouter = router({
       if (input.notes !== undefined) updateData.notes = input.notes;
       if (input.isFood !== undefined) updateData.isFood = input.isFood;
       if (input.isSoldByPackage !== undefined) updateData.isSoldByPackage = input.isSoldByPackage;
-      if (input.piecesPerBox !== undefined) updateData.piecesPerBox = input.piecesPerBox;
+      if (input.piecesPerBox !== undefined && input.piecesPerBox !== null) updateData.piecesPerBox = input.piecesPerBox;
       if (input.allergens !== undefined) updateData.allergens = input.allergens;
       // Ingredienti globali: l'aggiornamento si applica all'unico record globale
       return db.updateIngredient(input.id, updateData);
