@@ -1,8 +1,9 @@
 -- Migration 0046: Soluzione D — Normalizzazione componenti ricette
 -- Crea tabelle relazionali per i componenti al posto dei JSON blob
 -- I JSON blob esistenti vengono mantenuti per sicurezza (drop in migrazione futura)
+-- Idempotente: usa IF NOT EXISTS e indici inline per sicurezza in caso di retry dopo fallimento parziale
 
-CREATE TABLE `recipe_components` (
+CREATE TABLE IF NOT EXISTS `recipe_components` (
   `id` varchar(36) NOT NULL,
   `recipeId` varchar(36) NOT NULL,
   `ingredientId` varchar(36) NULL,
@@ -14,6 +15,9 @@ CREATE TABLE `recipe_components` (
   `priceSnapshot` decimal(10,4) NULL,
   `sortOrder` int NOT NULL DEFAULT 0,
   CONSTRAINT `recipe_components_pk` PRIMARY KEY (`id`),
+  KEY `rc_recipeId_idx` (`recipeId`),
+  KEY `rc_ingredientId_idx` (`ingredientId`),
+  KEY `rc_semiFinishedId_idx` (`semiFinishedId`),
   CONSTRAINT `recipe_components_recipeId_fk`
     FOREIGN KEY (`recipeId`) REFERENCES `final_recipes`(`id`) ON DELETE CASCADE,
   CONSTRAINT `recipe_components_ingredientId_fk`
@@ -24,13 +28,7 @@ CREATE TABLE `recipe_components` (
     FOREIGN KEY (`operationId`) REFERENCES `operations`(`id`) ON DELETE RESTRICT
 );
 --> statement-breakpoint
-CREATE INDEX `rc_recipeId_idx` ON `recipe_components` (`recipeId`);
---> statement-breakpoint
-CREATE INDEX `rc_ingredientId_idx` ON `recipe_components` (`ingredientId`);
---> statement-breakpoint
-CREATE INDEX `rc_semiFinishedId_idx` ON `recipe_components` (`semiFinishedId`);
---> statement-breakpoint
-CREATE TABLE `semi_finished_components` (
+CREATE TABLE IF NOT EXISTS `semi_finished_components` (
   `id` varchar(36) NOT NULL,
   `semiFinishedRecipeId` varchar(36) NOT NULL,
   `ingredientId` varchar(36) NULL,
@@ -42,6 +40,9 @@ CREATE TABLE `semi_finished_components` (
   `priceSnapshot` decimal(10,4) NULL,
   `sortOrder` int NOT NULL DEFAULT 0,
   CONSTRAINT `semi_finished_components_pk` PRIMARY KEY (`id`),
+  KEY `sfc_semiFinishedRecipeId_idx` (`semiFinishedRecipeId`),
+  KEY `sfc_ingredientId_idx` (`ingredientId`),
+  KEY `sfc_childSemiFinishedId_idx` (`childSemiFinishedId`),
   CONSTRAINT `semi_finished_components_parentId_fk`
     FOREIGN KEY (`semiFinishedRecipeId`) REFERENCES `semi_finished_recipes`(`id`) ON DELETE CASCADE,
   CONSTRAINT `semi_finished_components_ingredientId_fk`
@@ -51,9 +52,3 @@ CREATE TABLE `semi_finished_components` (
   CONSTRAINT `semi_finished_components_operationId_fk`
     FOREIGN KEY (`operationId`) REFERENCES `operations`(`id`) ON DELETE RESTRICT
 );
---> statement-breakpoint
-CREATE INDEX `sfc_semiFinishedRecipeId_idx` ON `semi_finished_components` (`semiFinishedRecipeId`);
---> statement-breakpoint
-CREATE INDEX `sfc_ingredientId_idx` ON `semi_finished_components` (`ingredientId`);
---> statement-breakpoint
-CREATE INDEX `sfc_childSemiFinishedId_idx` ON `semi_finished_components` (`childSemiFinishedId`);

@@ -203,13 +203,25 @@ export async function createIngredient(
     try {
       await db.insert(ingredients).values(data as any);
     } catch (insertErr: any) {
+      const cause = insertErr?.cause;
       console.error("[createIngredient] INSERT FAILED:", {
-        code: insertErr?.code,
-        errno: insertErr?.errno,
-        sqlMessage: insertErr?.sqlMessage,
-        message: insertErr?.message,
+        code: insertErr?.code ?? cause?.code,
+        errno: insertErr?.errno ?? cause?.errno,
+        sqlState: cause?.sqlState,
+        sqlMessage: insertErr?.sqlMessage ?? cause?.sqlMessage,
+        causeMessage: cause?.message,
+        dataKeys: Object.keys(data || {}),
       });
-      throw insertErr;
+      // Se l'errore è un duplicate entry su UNIQUE(name, supplierId), trattalo come successo idempotente
+      const errCode = insertErr?.code ?? cause?.code;
+      const errNo = insertErr?.errno ?? cause?.errno;
+      if (errCode === "ER_DUP_ENTRY" || errNo === 1062) {
+        console.warn("[createIngredient] duplicate entry — treating as success (idempotent)");
+      } else {
+        // Rilancia con messaggio più esplicito
+        const detail = cause?.sqlMessage || cause?.message || insertErr?.message || "unknown";
+        throw new Error(`INSERT ingredienti fallito: ${detail}`);
+      }
     }
   }
 
