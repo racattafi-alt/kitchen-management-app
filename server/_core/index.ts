@@ -5,6 +5,7 @@ import { createServer } from "http";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { drizzle } from "drizzle-orm/mysql2";
 import { migrate } from "drizzle-orm/mysql2/migrator";
+import mysql from "mysql2/promise";
 import { registerOAuthRoutes } from "./oauth";
 import { registerLocalAuthRoutes } from "./localAuthRoutes";
 import { registerGoogleAuthRoutes } from "./googleAuthRoutes";
@@ -12,6 +13,39 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { ENV } from "./env";
+
+/**
+ * Applies critical schema fixes directly via mysql2, bypassing Drizzle's migration system.
+ * This runs before runMigrations() so even if migration 0046/0047 fail, the app works.
+ */
+async function runSafetyMigrations() {
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) return;
+  let conn: mysql.Connection | null = null;
+  try {
+    conn = await mysql.createConnection(dbUrl);
+
+    // Add piecesPerBox if missing
+    const [rows] = await conn.execute<mysql.RowDataPacket[]>(
+      `SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'ingredients' AND COLUMN_NAME = 'piecesPerBox'`
+    );
+    if (rows[0].cnt === 0) {
+      await conn.execute("ALTER TABLE `ingredients` ADD COLUMN `piecesPerBox` int DEFAULT NULL");
+      console.log("[SafetyMigration] ✓ Added piecesPerBox column to ingredients.");
+    }
+
+    // Ensure 'Fusto' is in packageType enum (MODIFY is safe/idempotent)
+    await conn.execute(
+      "ALTER TABLE `ingredients` MODIFY COLUMN `packageType` enum('Sacco','Busta','Brick','Cartone','Scatola','Bottiglia','Barattolo','Lattina','Sfuso','Fusto')"
+    );
+    console.log("[SafetyMigration] ✓ packageType enum verified.");
+  } catch (err) {
+    console.error("[SafetyMigration] Error (non-fatal):", err);
+  } finally {
+    if (conn) await conn.end();
+  }
+}
 
 async function runMigrations() {
   const dbUrl = process.env.DATABASE_URL;
@@ -48,7 +82,9 @@ async function startServer() {
     });
   });
 
-  // Run migrations AFTER the server is listening (non-fatal)
+  // Apply critical column fixes first (idempotent, bypasses Drizzle migration state)
+  await runSafetyMigrations();
+  // Run Drizzle migrations (non-fatal)
   await runMigrations();
 
   // Configure body parser with larger size limit for file uploads
