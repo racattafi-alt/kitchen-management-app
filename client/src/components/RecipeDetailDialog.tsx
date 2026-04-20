@@ -21,12 +21,14 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChefHat, Package, Calculator, Printer, Edit } from "lucide-react";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
 
 interface RecipeDetailDialogProps {
   recipeId: string | null;
   recipeType: 'final' | 'semi' | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onEdit?: () => void;
 }
 
 export default function RecipeDetailDialog({
@@ -34,8 +36,10 @@ export default function RecipeDetailDialog({
   recipeType,
   open,
   onOpenChange,
+  onEdit,
 }: RecipeDetailDialogProps) {
   const [multiplier, setMultiplier] = useState(1);
+  const [, navigate] = useLocation();
 
   // Carica dettagli ricetta finale
   const { data: finalRecipe, isLoading: loadingFinal } = trpc.finalRecipes.getDetails.useQuery(
@@ -63,7 +67,12 @@ export default function RecipeDetailDialog({
   };
 
   const handleEdit = () => {
-    toast.info("Funzionalità modifica in arrivo");
+    onOpenChange(false);
+    if (onEdit) {
+      onEdit();
+    } else {
+      navigate("/final-recipes");
+    }
   };
 
   return (

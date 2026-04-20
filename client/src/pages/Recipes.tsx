@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Search, ChefHat, Plus, ArrowLeft } from "lucide-react";
+import { useLocation } from "wouter";
 import RecipeDetailDialog from "@/components/RecipeDetailDialog";
 
 export default function Recipes() {
+  const [, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
   const [selectedRecipeType, setSelectedRecipeType] = useState<'final' | 'semi' | null>(null);
@@ -169,6 +171,7 @@ export default function Recipes() {
         recipeType={selectedRecipeType}
         open={isDetailOpen}
         onOpenChange={setIsDetailOpen}
+        onEdit={() => navigate("/final-recipes")}
       />
     </DashboardLayout>
   );
