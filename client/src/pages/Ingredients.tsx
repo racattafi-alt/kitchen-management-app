@@ -47,11 +47,12 @@ export default function Ingredients() {
     unitType: "k" as const,
     packageType: "" as "Sacco" | "Busta" | "Brick" | "Cartone" | "Scatola" | "Bottiglia" | "Barattolo" | "Lattina" | "Sfuso" | "",
     department: "Cucina" as "Cucina" | "Sala",
-    packageQuantity: 0,
+    packageQuantity: 1,
     packagePrice: 0,
     brand: "",
     notes: "",
     isSoldByPackage: false,
+    piecesPerBox: null as number | null,
     allergens: [] as string[],
   });
   const [editFormData, setEditFormData] = useState({
@@ -62,12 +63,13 @@ export default function Ingredients() {
     unitType: "k" as const,
     packageType: "" as "Sacco" | "Busta" | "Brick" | "Cartone" | "Scatola" | "Bottiglia" | "Barattolo" | "Lattina" | "Sfuso" | "",
     department: "Cucina" as "Cucina" | "Sala",
-    packageQuantity: 0,
+    packageQuantity: 1,
     packagePrice: 0,
     brand: "",
     notes: "",
     isFood: true,
     isSoldByPackage: false,
+    piecesPerBox: null as number | null,
     allergens: [] as string[],
   });
 
@@ -276,11 +278,12 @@ export default function Ingredients() {
       unitType: "k" as const,
       packageType: "",
       department: "Cucina" as "Cucina" | "Sala",
-      packageQuantity: 0,
+      packageQuantity: 1,
       packagePrice: 0,
       brand: "",
       notes: "",
       isSoldByPackage: false,
+      piecesPerBox: null as number | null,
       allergens: [] as string[],
     });
   };
@@ -323,6 +326,7 @@ export default function Ingredients() {
       brand: formData.brand || undefined,
       notes: formData.notes || undefined,
       isSoldByPackage: formData.isSoldByPackage,
+      piecesPerBox: formData.piecesPerBox,
       allergens: formData.allergens,
     });
   };
@@ -337,12 +341,13 @@ export default function Ingredients() {
       unitType: ingredient.unitType,
       packageType: ingredient.packageType || "",
       department: ingredient.department || "Cucina",
-      packageQuantity: parseFloat(ingredient.packageQuantity) || 0,
+      packageQuantity: parseFloat(ingredient.packageQuantity) || 1,
       packagePrice: parseFloat(ingredient.packagePrice) || 0,
       brand: ingredient.brand || "",
       notes: ingredient.notes || "",
       isFood: ingredient.isFood !== false,
       isSoldByPackage: ingredient.isSoldByPackage === true,
+      piecesPerBox: ingredient.piecesPerBox ?? null,
       allergens: ingredient.allergens || [],
     });
   };
@@ -407,6 +412,7 @@ export default function Ingredients() {
       notes: editFormData.notes || undefined,
       isFood: editFormData.isFood,
       isSoldByPackage: editFormData.isSoldByPackage,
+      piecesPerBox: editFormData.piecesPerBox,
       allergens: editFormData.allergens,
     });
   };
@@ -653,7 +659,7 @@ export default function Ingredients() {
                       <Label className="mb-2 block">Modalità vendita</Label>
                       <button
                         type="button"
-                        onClick={() => setFormData({ ...formData, isSoldByPackage: !formData.isSoldByPackage })}
+                        onClick={() => setFormData({ ...formData, isSoldByPackage: !formData.isSoldByPackage, piecesPerBox: !formData.isSoldByPackage ? formData.piecesPerBox : null })}
                         className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-all ${
                           formData.isSoldByPackage
                             ? "bg-blue-100 border-blue-400 text-blue-700"
@@ -664,6 +670,23 @@ export default function Ingredients() {
                         Venduto per confezione
                       </button>
                     </div>
+                    {formData.isSoldByPackage && (
+                      <div className="col-span-2">
+                        <Label htmlFor="piecesPerBox">Pezzi per confezione di vendita</Label>
+                        <p className="text-xs text-muted-foreground mb-1">
+                          Quante unità contiene una confezione (es. 6 bottiglie/scatola)
+                        </p>
+                        <Input
+                          id="piecesPerBox"
+                          type="number"
+                          min="1"
+                          step="1"
+                          placeholder="es. 6"
+                          value={formData.piecesPerBox ?? ""}
+                          onChange={(e) => setFormData({ ...formData, piecesPerBox: e.target.value ? parseInt(e.target.value) : null })}
+                        />
+                      </div>
+                    )}
                     <div className="col-span-2">
                       <Label>Allergeni</Label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 p-4 border rounded-lg max-h-48 overflow-y-auto">
@@ -900,7 +923,7 @@ export default function Ingredients() {
                   <Label className="mb-2 block">Modalità vendita</Label>
                   <button
                     type="button"
-                    onClick={() => setEditFormData({ ...editFormData, isSoldByPackage: !editFormData.isSoldByPackage })}
+                    onClick={() => setEditFormData({ ...editFormData, isSoldByPackage: !editFormData.isSoldByPackage, piecesPerBox: !editFormData.isSoldByPackage ? editFormData.piecesPerBox : null })}
                     className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-all ${
                       editFormData.isSoldByPackage
                         ? "bg-blue-100 border-blue-400 text-blue-700"
@@ -911,6 +934,23 @@ export default function Ingredients() {
                     Venduto per confezione
                   </button>
                 </div>
+                {editFormData.isSoldByPackage && (
+                  <div className="col-span-2">
+                    <Label htmlFor="edit-piecesPerBox">Pezzi per confezione di vendita</Label>
+                    <p className="text-xs text-muted-foreground mb-1">
+                      Quante unità contiene una confezione (es. 6 bottiglie/scatola)
+                    </p>
+                    <Input
+                      id="edit-piecesPerBox"
+                      type="number"
+                      min="1"
+                      step="1"
+                      placeholder="es. 6"
+                      value={editFormData.piecesPerBox ?? ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, piecesPerBox: e.target.value ? parseInt(e.target.value) : null })}
+                    />
+                  </div>
+                )}
                 <div className="col-span-2">
                   <div className="flex items-center space-x-2">
                     <input
@@ -1091,7 +1131,7 @@ export default function Ingredients() {
                           {ingredient.isSoldByPackage && (
                             <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 flex items-center gap-1">
                               <Package className="h-3 w-3" />
-                              Confezione
+                              Confezione{ingredient.piecesPerBox ? ` ×${ingredient.piecesPerBox}` : ""}
                             </span>
                           )}
                         </div>

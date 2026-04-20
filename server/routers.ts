@@ -67,6 +67,7 @@ const ingredientsRouter = router({
         notes: z.string().optional(),
         isFood: z.boolean().optional(),
         isSoldByPackage: z.boolean().optional(),
+        piecesPerBox: z.number().int().optional().nullable(),
         allergens: z.array(z.string()).optional(),
       })
     )
@@ -94,6 +95,7 @@ const ingredientsRouter = router({
         isActive: true,
         isFood: input.isFood ?? true,
         isSoldByPackage: input.isSoldByPackage ?? false,
+        piecesPerBox: input.piecesPerBox ?? null,
         allergens: input.allergens || [],
       };
       // Crea l'ingrediente globale e attivalo negli store appropriati
@@ -127,6 +129,7 @@ const ingredientsRouter = router({
         notes: z.string().optional(),
         isFood: z.boolean().optional(),
         isSoldByPackage: z.boolean().optional(),
+        piecesPerBox: z.number().int().optional().nullable(),
         allergens: z.array(z.string()).optional(),
       })
     )
@@ -168,6 +171,7 @@ const ingredientsRouter = router({
       if (input.notes !== undefined) updateData.notes = input.notes;
       if (input.isFood !== undefined) updateData.isFood = input.isFood;
       if (input.isSoldByPackage !== undefined) updateData.isSoldByPackage = input.isSoldByPackage;
+      if (input.piecesPerBox !== undefined) updateData.piecesPerBox = input.piecesPerBox;
       if (input.allergens !== undefined) updateData.allergens = input.allergens;
       // Ingredienti globali: l'aggiornamento si applica all'unico record globale
       return db.updateIngredient(input.id, updateData);
