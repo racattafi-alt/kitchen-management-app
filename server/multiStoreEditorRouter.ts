@@ -202,6 +202,55 @@ export const multiStoreEditorRouter = router({
       return { success: errors.length === 0, totalMigrated, results, errors };
     }),
 
+  // Copia entità selezionate (per nome) da uno store sorgente a store destinazione
+  copySelectedEntities: protectedProcedure
+    .input(z.object({
+      entityType: z.enum(["ingredient", "recipe", "supplier"]),
+      entityNames: z.array(z.string()),
+      sourceStoreId: z.string(),
+      destinationStoreIds: z.array(z.string()),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Solo gli amministratori possono copiare entità" });
+      }
+      if (input.destinationStoreIds.includes(input.sourceStoreId)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Lo store sorgente non può essere anche destinazione" });
+      }
+
+      const allEntities = await getAllEntitiesFromStore(input.entityType, input.sourceStoreId);
+      const selectedEntities = allEntities.filter(e => input.entityNames.includes((e as any).name));
+
+      let totalMigrated = 0;
+      const errors: { name: string; error: string }[] = [];
+
+      for (const entity of selectedEntities) {
+        try {
+          const { id, storeId, createdAt, updatedAt, ...data } = entity as any;
+          if (input.entityType === "ingredient") {
+            await updateIngredientAcrossStores(entity.name, data, input.destinationStoreIds);
+          } else if (input.entityType === "recipe") {
+            await updateRecipeAcrossStores(entity.name, data, input.destinationStoreIds);
+          } else {
+            await updateSupplierAcrossStores(entity.name, data, input.destinationStoreIds);
+          }
+          totalMigrated++;
+        } catch (err) {
+          errors.push({ name: (entity as any).name ?? "unknown", error: err instanceof Error ? err.message : String(err) });
+        }
+      }
+
+      await logAction({
+        storeId: input.sourceStoreId,
+        userId: ctx.user.openId,
+        action: "multistore.copy_selected",
+        entityType: input.entityType,
+        details: { entityNames: input.entityNames, destinationStoreIds: input.destinationStoreIds, totalMigrated, errors: errors.length },
+      });
+
+      return { success: errors.length === 0, totalMigrated, errors };
+    }),
+
   // Confronto tra due store: mostra cosa c'è solo in A, solo in B, o in entrambi
   compareStores: protectedProcedure
     .input(z.object({

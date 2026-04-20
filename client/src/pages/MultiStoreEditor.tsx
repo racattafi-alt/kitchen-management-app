@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, Save, AlertTriangle, Check, ArrowRight, Database, GitCompare, Copy, ChevronDown, ChevronUp } from "lucide-react";
 import { useStore } from "@/contexts/StoreContext";
 import RecipeForm, { RecipeFormData, ComponentWithDetails } from "@/components/RecipeForm";
@@ -48,7 +49,42 @@ export default function MultiStoreEditor() {
     }
   );
 
+  const { currentStoreId } = useStore();
   const { data: stores } = trpc.stores.list.useQuery();
+
+  // Stato per copia entità selezionate
+  const [copyDialogOpen, setCopyDialogOpen] = useState(false);
+  const [copyDestStoreIds, setCopyDestStoreIds] = useState<string[]>([]);
+
+  const copySelectedMutation = trpc.multiStoreEditor.copySelectedEntities.useMutation({
+    onSuccess: (result) => {
+      const errMsg = result.errors.length > 0 ? ` (${result.errors.length} errori)` : "";
+      toast.success(`Copia completata: ${result.totalMigrated} entità copiate${errMsg}`);
+      setCopyDialogOpen(false);
+      setCopyDestStoreIds([]);
+      setSelectedEntities([]);
+    },
+    onError: (error) => {
+      toast.error(`Errore copia: ${error.message}`);
+    },
+  });
+
+  const handleConfirmCopy = () => {
+    if (!currentStoreId) {
+      toast.error("Nessuno store selezionato come sorgente");
+      return;
+    }
+    if (copyDestStoreIds.length === 0) {
+      toast.error("Seleziona almeno uno store di destinazione");
+      return;
+    }
+    copySelectedMutation.mutate({
+      entityType,
+      entityNames: selectedEntities,
+      sourceStoreId: currentStoreId,
+      destinationStoreIds: copyDestStoreIds,
+    });
+  };
 
   // Stato per migrazione bulk store
   const [migrationSourceStoreId, setMigrationSourceStoreId] = useState<string>("");
@@ -244,15 +280,11 @@ export default function MultiStoreEditor() {
 
   const handleCopySelected = () => {
     if (selectedEntities.length === 0) {
-      alert("Seleziona almeno un'entità");
+      toast.error("Seleziona almeno un'entità");
       return;
     }
-    if (selectedStores.length === 0) {
-      alert("Seleziona almeno uno store di destinazione");
-      return;
-    }
-    // TODO: Implementare copia batch
-    alert(`Copia di ${selectedEntities.length} entità in ${selectedStores.length} store`);
+    setCopyDestStoreIds([]);
+    setCopyDialogOpen(true);
   };
 
   // Aggiorna form data quando entityData cambia
@@ -884,6 +916,46 @@ export default function MultiStoreEditor() {
           </Card>
         </div>
       </div>
+
+      {/* Dialog copia entità selezionate */}
+      <Dialog open={copyDialogOpen} onOpenChange={setCopyDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Copia {selectedEntities.length} {entityType === "ingredient" ? "ingredienti" : entityType === "recipe" ? "ricette" : "fornitori"}</DialogTitle>
+            <DialogDescription>
+              Seleziona gli store di destinazione. La sorgente è lo store attivo corrente.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 max-h-60 overflow-y-auto">
+            {stores?.filter(s => s.storeId !== currentStoreId).map(store => (
+              <div key={store.storeId} className="flex items-center gap-3 p-2 rounded border hover:bg-gray-50">
+                <Checkbox
+                  checked={copyDestStoreIds.includes(store.storeId)}
+                  onCheckedChange={(checked) => {
+                    setCopyDestStoreIds(prev =>
+                      checked ? [...prev, store.storeId] : prev.filter(id => id !== store.storeId)
+                    );
+                  }}
+                />
+                <span className="font-medium">{store.storeName}</span>
+              </div>
+            ))}
+            {stores?.filter(s => s.storeId !== currentStoreId).length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">Nessun altro store disponibile</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCopyDialogOpen(false)}>Annulla</Button>
+            <Button
+              onClick={handleConfirmCopy}
+              disabled={copyDestStoreIds.length === 0 || copySelectedMutation.isPending}
+            >
+              <Copy className="h-4 w-4 mr-2" />
+              {copySelectedMutation.isPending ? "Copia in corso..." : `Copia in ${copyDestStoreIds.length} store`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
