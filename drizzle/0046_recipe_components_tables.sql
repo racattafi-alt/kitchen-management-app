@@ -23,13 +23,13 @@ CREATE TABLE `recipe_components` (
   CONSTRAINT `recipe_components_operationId_fk`
     FOREIGN KEY (`operationId`) REFERENCES `operations`(`id`) ON DELETE RESTRICT
 );
--->statement-breakpoint
+--> statement-breakpoint
 CREATE INDEX `rc_recipeId_idx` ON `recipe_components` (`recipeId`);
--->statement-breakpoint
+--> statement-breakpoint
 CREATE INDEX `rc_ingredientId_idx` ON `recipe_components` (`ingredientId`);
--->statement-breakpoint
+--> statement-breakpoint
 CREATE INDEX `rc_semiFinishedId_idx` ON `recipe_components` (`semiFinishedId`);
--->statement-breakpoint
+--> statement-breakpoint
 CREATE TABLE `semi_finished_components` (
   `id` varchar(36) NOT NULL,
   `semiFinishedRecipeId` varchar(36) NOT NULL,
@@ -51,9 +51,9 @@ CREATE TABLE `semi_finished_components` (
   CONSTRAINT `semi_finished_components_operationId_fk`
     FOREIGN KEY (`operationId`) REFERENCES `operations`(`id`) ON DELETE RESTRICT
 );
--->statement-breakpoint
+--> statement-breakpoint
 CREATE INDEX `sfc_semiFinishedRecipeId_idx` ON `semi_finished_components` (`semiFinishedRecipeId`);
--->statement-breakpoint
+--> statement-breakpoint
 CREATE INDEX `sfc_ingredientId_idx` ON `semi_finished_components` (`ingredientId`);
--->statement-breakpoint
+--> statement-breakpoint
 CREATE INDEX `sfc_childSemiFinishedId_idx` ON `semi_finished_components` (`childSemiFinishedId`);
