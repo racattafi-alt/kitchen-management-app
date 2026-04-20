@@ -99,15 +99,21 @@ const ingredientsRouter = router({
         allergens: input.allergens || [],
       };
       // Crea l'ingrediente globale e attivalo negli store appropriati
-      if (await isStoreGlobal(ctx.currentStoreId)) {
-        const storeIds = await getAllActiveStoreIds();
-        await db.createIngredient(ingredientData as any, null);
-        for (const sid of storeIds) {
-          await db.activateIngredientInStore(input.id, sid);
+      try {
+        if (await isStoreGlobal(ctx.currentStoreId)) {
+          const storeIds = await getAllActiveStoreIds();
+          await db.createIngredient(ingredientData as any, null);
+          for (const sid of storeIds) {
+            await db.activateIngredientInStore(input.id, sid);
+          }
+          return { ...ingredientData, storeId: "all" };
         }
-        return { ...ingredientData, storeId: "all" };
+        return db.createIngredient(ingredientData as any, ctx.currentStoreId || 'default-store-001');
+      } catch (err: any) {
+        const msg = err?.message || String(err);
+        // Surface MySQL error detail to client
+        throw new Error(`Salvataggio fallito: ${msg}`);
       }
-      return db.createIngredient(ingredientData as any, ctx.currentStoreId || 'default-store-001');
     }),
   update: protectedProcedure
     .input(
