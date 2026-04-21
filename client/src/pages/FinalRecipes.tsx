@@ -885,13 +885,24 @@ export default function FinalRecipes() {
                       </tr>
                     </thead>
                     <tbody>
-                      {((recipeDetails.components as ComponentWithDetails[]) || []).map((comp: ComponentWithDetails, idx: number) => (
+                      {((recipeDetails.components as ComponentWithDetails[]) || []).map((comp: ComponentWithDetails, idx: number) => {
+                        const compAny = comp as any;
+                        const lookupId = compAny.componentId || compAny.ingredientId || compAny.semiFinishedId || compAny.operationId || compAny.id;
+                        const ing = comp.type === 'ingredient' ? ingredients?.find(i => i.id === lookupId) : null;
+                        const semi = comp.type === 'semi_finished' ? (semiFinished?.find(s => s.id === lookupId) || allRecipes?.find((r: any) => r.id === lookupId)) : null;
+                        const op = comp.type === 'operation' ? operations?.find(o => o.id === lookupId || o.name === compAny.componentName) : null;
+                        const displayName = ing?.name || semi?.name || op?.name || compAny.componentName || comp.name || 'Sconosciuto';
+                        const livePrice = ing ? parseFloat((ing as any).pricePerKgOrUnit || '0')
+                          : semi ? parseFloat((semi as any).finalPricePerKg || (semi as any).totalCost || '0')
+                          : op ? parseFloat((op as any).hourlyRate || '0')
+                          : parseFloat(String(comp.pricePerUnit || 0));
+                        return (
                         <tr key={idx} className="border-t">
-                          <td className="p-3">{(comp as any).componentName || comp.name}</td>
+                          <td className="p-3">{displayName}</td>
                           <td className="p-3">
                             <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                              comp.type === 'ingredient' 
-                                ? 'bg-blue-100 text-blue-700' 
+                              comp.type === 'ingredient'
+                                ? 'bg-blue-100 text-blue-700'
                                 : comp.type === 'operation'
                                 ? 'bg-orange-100 text-orange-700'
                                 : 'bg-purple-100 text-purple-700'
@@ -901,12 +912,13 @@ export default function FinalRecipes() {
                           </td>
                           <td className="p-3 text-right">{comp.quantity}</td>
                           <td className="p-3 text-right">{comp.unit}</td>
-                          <td className="p-3 text-right">€ {parseFloat(String(comp.pricePerUnit || 0)).toFixed(2)}</td>
+                          <td className="p-3 text-right">€ {livePrice.toFixed(2)}</td>
                           <td className="p-3 text-right font-medium">
-                            € {(parseFloat(String(comp.quantity)) * parseFloat(String(comp.pricePerUnit || 0))).toFixed(2)}
+                            € {(parseFloat(String(comp.quantity)) * livePrice).toFixed(2)}
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

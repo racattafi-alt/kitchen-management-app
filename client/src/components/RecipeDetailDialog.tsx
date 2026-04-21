@@ -53,15 +53,40 @@ export default function RecipeDetailDialog({
     { enabled: open && recipeType === 'semi' && !!recipeId }
   );
 
+  // Liste locali per arricchire nomi/prezzi client-side quando il server li perde
+  const { data: ingredientsList } = trpc.ingredients.list.useQuery();
+  const { data: semiList } = trpc.semiFinished.list.useQuery();
+  const { data: operationsList } = trpc.operations.list.useQuery();
+  const { data: finalsList } = trpc.finalRecipes.list.useQuery();
+
   const recipe = recipeType === 'final' ? finalRecipe : semiRecipe;
   const isLoading = loadingFinal || loadingSemi;
 
   if (!open || !recipe) return null;
 
   const rawComponents = (recipe as any).components;
-  const components: any[] = Array.isArray(rawComponents)
+  const rawArr: any[] = Array.isArray(rawComponents)
     ? rawComponents
     : (typeof rawComponents === 'string' ? (() => { try { return JSON.parse(rawComponents); } catch { return []; } })() : []);
+
+  // Arricchimento client-side: cerca nome e prezzo live dalle liste locali
+  const components: any[] = rawArr.map((c: any) => {
+    const lookupId = c.componentId || c.ingredientId || c.semiFinishedId || c.operationId || c.id;
+    const ing = c.type === 'ingredient' ? ingredientsList?.find((i: any) => i.id === lookupId) : null;
+    const semi = c.type === 'semi_finished' ? (semiList?.find((s: any) => s.id === lookupId) || finalsList?.find((r: any) => r.id === lookupId)) : null;
+    const op = c.type === 'operation' ? operationsList?.find((o: any) => o.id === lookupId || o.name === c.componentName) : null;
+    const displayName = ing?.name || semi?.name || op?.name || c.componentName || c.name || 'Sconosciuto';
+    const livePrice = ing ? parseFloat(ing.pricePerKgOrUnit || '0')
+      : semi ? parseFloat(semi.finalPricePerKg || semi.totalCost || '0')
+      : op ? parseFloat(op.hourlyRate || '0')
+      : parseFloat(String(c.pricePerUnit || 0));
+    return {
+      ...c,
+      componentName: displayName,
+      name: displayName,
+      pricePerUnit: livePrice,
+    };
+  });
 
   const handlePrint = () => {
     toast.info("Funzionalità stampa in arrivo");
