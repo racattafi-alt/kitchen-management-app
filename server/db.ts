@@ -1006,81 +1006,84 @@ export async function getRecipeComponents(recipeId: string): Promise<RelationalC
   const db = await getDb();
   if (!db) return [];
 
-  const rows = await db
-    .select({
-      id: recipeComponents.id,
-      ingredientId: recipeComponents.ingredientId,
-      semiFinishedId: recipeComponents.semiFinishedId,
-      operationId: recipeComponents.operationId,
-      componentName: recipeComponents.componentName,
-      quantity: recipeComponents.quantity,
-      unitSnapshot: recipeComponents.unitSnapshot,
-      priceSnapshot: recipeComponents.priceSnapshot,
-      sortOrder: recipeComponents.sortOrder,
-      // Dati live ingrediente
-      ingName: ingredients.name,
-      ingPrice: ingredients.pricePerKgOrUnit,
-      ingUnit: ingredients.unitType,
-      // Dati live semilavorato
-      semiName: semiFinishedRecipes.name,
-      semiPrice: semiFinishedRecipes.finalPricePerKg,
-      // Dati live operazione
-      opName: operations.name,
-      opRate: operations.hourlyRate,
-      opCostType: operations.costType,
-    })
-    .from(recipeComponents)
-    .leftJoin(ingredients, eq(recipeComponents.ingredientId, ingredients.id))
-    .leftJoin(semiFinishedRecipes, eq(recipeComponents.semiFinishedId, semiFinishedRecipes.id))
-    .leftJoin(operations, eq(recipeComponents.operationId, operations.id))
-    .where(eq(recipeComponents.recipeId, recipeId))
-    .orderBy(recipeComponents.sortOrder);
+  try {
+    const rows = await db
+      .select({
+        id: recipeComponents.id,
+        ingredientId: recipeComponents.ingredientId,
+        semiFinishedId: recipeComponents.semiFinishedId,
+        operationId: recipeComponents.operationId,
+        componentName: recipeComponents.componentName,
+        quantity: recipeComponents.quantity,
+        unitSnapshot: recipeComponents.unitSnapshot,
+        priceSnapshot: recipeComponents.priceSnapshot,
+        sortOrder: recipeComponents.sortOrder,
+        ingName: ingredients.name,
+        ingPrice: ingredients.pricePerKgOrUnit,
+        ingUnit: ingredients.unitType,
+        semiName: semiFinishedRecipes.name,
+        semiPrice: semiFinishedRecipes.finalPricePerKg,
+        opName: operations.name,
+        opRate: operations.hourlyRate,
+        opCostType: operations.costType,
+      })
+      .from(recipeComponents)
+      .leftJoin(ingredients, eq(recipeComponents.ingredientId, ingredients.id))
+      .leftJoin(semiFinishedRecipes, eq(recipeComponents.semiFinishedId, semiFinishedRecipes.id))
+      .leftJoin(operations, eq(recipeComponents.operationId, operations.id))
+      .where(eq(recipeComponents.recipeId, recipeId))
+      .orderBy(recipeComponents.sortOrder);
 
-  const mapped = rows.map((r) => {
-    if (r.ingredientId) {
+    const mapped: RelationalComponent[] = rows.map((r) => {
+      if (r.ingredientId) {
+        return {
+          id: r.id,
+          type: "ingredient" as const,
+          componentId: r.ingredientId,
+          componentName: r.ingName || r.componentName || 'Sconosciuto',
+          quantity: parseFloat(r.quantity as any),
+          unit: r.unitSnapshot || (r.ingUnit === "u" ? "unità" : "kg"),
+          pricePerUnit: parseFloat((r.ingPrice ?? r.priceSnapshot ?? "0") as any),
+          sortOrder: r.sortOrder,
+        };
+      }
+      if (r.semiFinishedId) {
+        return {
+          id: r.id,
+          type: "semi_finished" as const,
+          componentId: r.semiFinishedId,
+          componentName: r.semiName || r.componentName || 'Sconosciuto',
+          quantity: parseFloat(r.quantity as any),
+          unit: r.unitSnapshot || "kg",
+          pricePerUnit: parseFloat((r.semiPrice ?? r.priceSnapshot ?? "0") as any),
+          sortOrder: r.sortOrder,
+        };
+      }
       return {
         id: r.id,
-        type: "ingredient" as const,
-        componentId: r.ingredientId,
-        componentName: r.ingName || r.componentName,
+        type: "operation" as const,
+        componentId: r.operationId!,
+        componentName: r.opName || r.componentName || 'Sconosciuto',
         quantity: parseFloat(r.quantity as any),
-        unit: r.unitSnapshot || (r.ingUnit === "u" ? "unità" : "kg"),
-        pricePerUnit: parseFloat((r.ingPrice ?? r.priceSnapshot ?? "0") as any),
+        unit: r.unitSnapshot || "ore",
+        pricePerUnit: parseFloat((r.opRate ?? r.priceSnapshot ?? "0") as any),
+        costType: r.opCostType || undefined,
         sortOrder: r.sortOrder,
       };
-    }
-    if (r.semiFinishedId) {
-      return {
-        id: r.id,
-        type: "semi_finished" as const,
-        componentId: r.semiFinishedId,
-        componentName: r.semiName || r.componentName,
-        quantity: parseFloat(r.quantity as any),
-        unit: r.unitSnapshot || "kg",
-        pricePerUnit: parseFloat((r.semiPrice ?? r.priceSnapshot ?? "0") as any),
-        sortOrder: r.sortOrder,
-      };
-    }
-    return {
-      id: r.id,
-      type: "operation" as const,
-      componentId: r.operationId!,
-      componentName: r.opName || r.componentName,
-      quantity: parseFloat(r.quantity as any),
-      unit: r.unitSnapshot || "ore",
-      pricePerUnit: parseFloat((r.opRate ?? r.priceSnapshot ?? "0") as any),
-      costType: r.opCostType || undefined,
-      sortOrder: r.sortOrder,
-    };
-  });
+    });
 
-  // Fallback: se la tabella relazionale è vuota, leggi dal JSON blob della ricetta
-  if (mapped.length === 0) {
+    if (mapped.length === 0) {
+      const recipe = await getFinalRecipeById(recipeId);
+      if (recipe?.components) return enrichBlobWithLivePrices(parseJsonBlobComponents(recipe.components));
+    }
+
+    return mapped;
+  } catch {
+    // Tabella non esiste o query fallita: fallback al blob JSON
     const recipe = await getFinalRecipeById(recipeId);
     if (recipe?.components) return enrichBlobWithLivePrices(parseJsonBlobComponents(recipe.components));
+    return [];
   }
-
-  return mapped;
 }
 
 /** Sostituisce tutti i componenti di una ricetta finale (delete + bulk insert). */
@@ -1113,81 +1116,86 @@ export async function getSemiFinishedComponentsRelational(semiFinishedId: string
   const db = await getDb();
   if (!db) return [];
 
-  // Alias per la self-join su semi_finished_recipes
   const childSemi = semiFinishedRecipes;
 
-  const rows = await db
-    .select({
-      id: semiFinishedComponents.id,
-      ingredientId: semiFinishedComponents.ingredientId,
-      childSemiFinishedId: semiFinishedComponents.childSemiFinishedId,
-      operationId: semiFinishedComponents.operationId,
-      componentName: semiFinishedComponents.componentName,
-      quantity: semiFinishedComponents.quantity,
-      unitSnapshot: semiFinishedComponents.unitSnapshot,
-      priceSnapshot: semiFinishedComponents.priceSnapshot,
-      sortOrder: semiFinishedComponents.sortOrder,
-      ingName: ingredients.name,
-      ingPrice: ingredients.pricePerKgOrUnit,
-      ingUnit: ingredients.unitType,
-      semiName: childSemi.name,
-      semiPrice: childSemi.finalPricePerKg,
-      opName: operations.name,
-      opRate: operations.hourlyRate,
-      opCostType: operations.costType,
-    })
-    .from(semiFinishedComponents)
-    .leftJoin(ingredients, eq(semiFinishedComponents.ingredientId, ingredients.id))
-    .leftJoin(childSemi, eq(semiFinishedComponents.childSemiFinishedId, childSemi.id))
-    .leftJoin(operations, eq(semiFinishedComponents.operationId, operations.id))
-    .where(eq(semiFinishedComponents.semiFinishedRecipeId, semiFinishedId))
-    .orderBy(semiFinishedComponents.sortOrder);
+  try {
+    const rows = await db
+      .select({
+        id: semiFinishedComponents.id,
+        ingredientId: semiFinishedComponents.ingredientId,
+        childSemiFinishedId: semiFinishedComponents.childSemiFinishedId,
+        operationId: semiFinishedComponents.operationId,
+        componentName: semiFinishedComponents.componentName,
+        quantity: semiFinishedComponents.quantity,
+        unitSnapshot: semiFinishedComponents.unitSnapshot,
+        priceSnapshot: semiFinishedComponents.priceSnapshot,
+        sortOrder: semiFinishedComponents.sortOrder,
+        ingName: ingredients.name,
+        ingPrice: ingredients.pricePerKgOrUnit,
+        ingUnit: ingredients.unitType,
+        semiName: childSemi.name,
+        semiPrice: childSemi.finalPricePerKg,
+        opName: operations.name,
+        opRate: operations.hourlyRate,
+        opCostType: operations.costType,
+      })
+      .from(semiFinishedComponents)
+      .leftJoin(ingredients, eq(semiFinishedComponents.ingredientId, ingredients.id))
+      .leftJoin(childSemi, eq(semiFinishedComponents.childSemiFinishedId, childSemi.id))
+      .leftJoin(operations, eq(semiFinishedComponents.operationId, operations.id))
+      .where(eq(semiFinishedComponents.semiFinishedRecipeId, semiFinishedId))
+      .orderBy(semiFinishedComponents.sortOrder);
 
-  const mapped = rows.map((r) => {
-    if (r.ingredientId) {
+    const mapped: RelationalComponent[] = rows.map((r) => {
+      if (r.ingredientId) {
+        return {
+          id: r.id,
+          type: "ingredient" as const,
+          componentId: r.ingredientId,
+          componentName: r.ingName || r.componentName || 'Sconosciuto',
+          quantity: parseFloat(r.quantity as any),
+          unit: r.unitSnapshot || (r.ingUnit === "u" ? "unità" : "kg"),
+          pricePerUnit: parseFloat((r.ingPrice ?? r.priceSnapshot ?? "0") as any),
+          sortOrder: r.sortOrder,
+        };
+      }
+      if (r.childSemiFinishedId) {
+        return {
+          id: r.id,
+          type: "semi_finished" as const,
+          componentId: r.childSemiFinishedId,
+          componentName: r.semiName || r.componentName || 'Sconosciuto',
+          quantity: parseFloat(r.quantity as any),
+          unit: r.unitSnapshot || "kg",
+          pricePerUnit: parseFloat((r.semiPrice ?? r.priceSnapshot ?? "0") as any),
+          sortOrder: r.sortOrder,
+        };
+      }
       return {
         id: r.id,
-        type: "ingredient" as const,
-        componentId: r.ingredientId,
-        componentName: r.ingName || r.componentName,
+        type: "operation" as const,
+        componentId: r.operationId!,
+        componentName: r.opName || r.componentName || 'Sconosciuto',
         quantity: parseFloat(r.quantity as any),
-        unit: r.unitSnapshot || (r.ingUnit === "u" ? "unità" : "kg"),
-        pricePerUnit: parseFloat((r.ingPrice ?? r.priceSnapshot ?? "0") as any),
+        unit: r.unitSnapshot || "ore",
+        pricePerUnit: parseFloat((r.opRate ?? r.priceSnapshot ?? "0") as any),
+        costType: r.opCostType || undefined,
         sortOrder: r.sortOrder,
       };
-    }
-    if (r.childSemiFinishedId) {
-      return {
-        id: r.id,
-        type: "semi_finished" as const,
-        componentId: r.childSemiFinishedId,
-        componentName: r.semiName || r.componentName,
-        quantity: parseFloat(r.quantity as any),
-        unit: r.unitSnapshot || "kg",
-        pricePerUnit: parseFloat((r.semiPrice ?? r.priceSnapshot ?? "0") as any),
-        sortOrder: r.sortOrder,
-      };
-    }
-    return {
-      id: r.id,
-      type: "operation" as const,
-      componentId: r.operationId!,
-      componentName: r.opName || r.componentName,
-      quantity: parseFloat(r.quantity as any),
-      unit: r.unitSnapshot || "ore",
-      pricePerUnit: parseFloat((r.opRate ?? r.priceSnapshot ?? "0") as any),
-      costType: r.opCostType || undefined,
-      sortOrder: r.sortOrder,
-    };
-  });
+    });
 
-  // Fallback: se la tabella relazionale è vuota, leggi dal JSON blob del semilavorato
-  if (mapped.length === 0) {
+    if (mapped.length === 0) {
+      const semi = await getSemiFinishedById(semiFinishedId);
+      if (semi?.components) return enrichBlobWithLivePrices(parseJsonBlobComponents(semi.components));
+    }
+
+    return mapped;
+  } catch {
+    // Tabella non esiste o query fallita: fallback al blob JSON
     const semi = await getSemiFinishedById(semiFinishedId);
     if (semi?.components) return enrichBlobWithLivePrices(parseJsonBlobComponents(semi.components));
+    return [];
   }
-
-  return mapped;
 }
 
 /** Sostituisce tutti i componenti di un semilavorato (delete + bulk insert). */

@@ -92,6 +92,52 @@ async function runSafetyMigrations() {
     );
     console.log("[SafetyMigration] ✓ packageType enum verified (Fusto included).");
 
+    // ── FIX 6: Ensure recipe_components table exists (migration 0046 may have failed) ──
+    if (!(await tableExists("recipe_components"))) {
+      await conn.execute(`
+        CREATE TABLE \`recipe_components\` (
+          \`id\` varchar(36) NOT NULL,
+          \`recipeId\` varchar(36) NOT NULL,
+          \`ingredientId\` varchar(36) NULL,
+          \`semiFinishedId\` varchar(36) NULL,
+          \`operationId\` varchar(36) NULL,
+          \`componentName\` varchar(255) NOT NULL DEFAULT '',
+          \`quantity\` decimal(10,3) NOT NULL,
+          \`unitSnapshot\` varchar(20) NULL,
+          \`priceSnapshot\` decimal(10,4) NULL,
+          \`sortOrder\` int NOT NULL DEFAULT 0,
+          PRIMARY KEY (\`id\`),
+          KEY \`rc_recipeId_idx\` (\`recipeId\`),
+          KEY \`rc_ingredientId_idx\` (\`ingredientId\`),
+          KEY \`rc_semiFinishedId_idx\` (\`semiFinishedId\`)
+        )
+      `);
+      console.log("[SafetyMigration] ✓ Created recipe_components table.");
+    }
+
+    // ── FIX 7: Ensure semi_finished_components table exists (migration 0046 may have failed) ──
+    if (!(await tableExists("semi_finished_components"))) {
+      await conn.execute(`
+        CREATE TABLE \`semi_finished_components\` (
+          \`id\` varchar(36) NOT NULL,
+          \`semiFinishedRecipeId\` varchar(36) NOT NULL,
+          \`ingredientId\` varchar(36) NULL,
+          \`childSemiFinishedId\` varchar(36) NULL,
+          \`operationId\` varchar(36) NULL,
+          \`componentName\` varchar(255) NOT NULL DEFAULT '',
+          \`quantity\` decimal(10,3) NOT NULL,
+          \`unitSnapshot\` varchar(20) NULL,
+          \`priceSnapshot\` decimal(10,4) NULL,
+          \`sortOrder\` int NOT NULL DEFAULT 0,
+          PRIMARY KEY (\`id\`),
+          KEY \`sfc_semiFinishedRecipeId_idx\` (\`semiFinishedRecipeId\`),
+          KEY \`sfc_ingredientId_idx\` (\`ingredientId\`),
+          KEY \`sfc_childSemiFinishedId_idx\` (\`childSemiFinishedId\`)
+        )
+      `);
+      console.log("[SafetyMigration] ✓ Created semi_finished_components table.");
+    }
+
   } catch (err) {
     console.error("[SafetyMigration] Error (non-fatal, server continues):", err);
   } finally {
