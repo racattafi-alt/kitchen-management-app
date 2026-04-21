@@ -872,7 +872,7 @@ export default function FinalRecipes() {
 
               <div>
                 <h3 className="font-semibold text-lg mb-3">Componenti</h3>
-                <div className="border rounded-lg overflow-hidden">
+                <div className="border rounded-lg overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-slate-50">
                       <tr>
@@ -887,7 +887,7 @@ export default function FinalRecipes() {
                     <tbody>
                       {((recipeDetails.components as ComponentWithDetails[]) || []).map((comp: ComponentWithDetails, idx: number) => (
                         <tr key={idx} className="border-t">
-                          <td className="p-3">{comp.name}</td>
+                          <td className="p-3">{(comp as any).componentName || comp.name}</td>
                           <td className="p-3">
                             <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
                               comp.type === 'ingredient' 

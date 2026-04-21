@@ -949,7 +949,6 @@ export type ComponentInput = {
   costType?: string;
 };
 
-/** Restituisce i componenti di una ricetta finale con una singola JOIN. */
 /** Converte un blob JSON di componenti (formato legacy) nel formato RelationalComponent. */
 function parseJsonBlobComponents(blob: unknown): RelationalComponent[] {
   const arr = Array.isArray(blob) ? blob : (() => { try { return JSON.parse(blob as string); } catch { return []; } })();
@@ -964,6 +963,42 @@ function parseJsonBlobComponents(blob: unknown): RelationalComponent[] {
     pricePerUnit: parseFloat(c.pricePerUnit ?? 0),
     sortOrder: c.sortOrder ?? i,
     costType: c.costType,
+  }));
+}
+
+/** Arricchisce componenti blob JSON con prezzi aggiornati dal database. */
+async function enrichBlobWithLivePrices(comps: RelationalComponent[]): Promise<RelationalComponent[]> {
+  const db = await getDb();
+  if (!db || comps.length === 0) return comps;
+  return Promise.all(comps.map(async (comp) => {
+    if (comp.type === 'ingredient' && comp.componentId) {
+      const [row] = await db.select({ price: ingredients.pricePerKgOrUnit, name: ingredients.name })
+        .from(ingredients).where(eq(ingredients.id, comp.componentId)).limit(1);
+      if (row) return {
+        ...comp,
+        componentName: row.name || comp.componentName,
+        pricePerUnit: parseFloat((row.price ?? comp.pricePerUnit) as any),
+      };
+    }
+    if (comp.type === 'semi_finished' && comp.componentId) {
+      const [row] = await db.select({ price: semiFinishedRecipes.finalPricePerKg, name: semiFinishedRecipes.name })
+        .from(semiFinishedRecipes).where(eq(semiFinishedRecipes.id, comp.componentId)).limit(1);
+      if (row) return {
+        ...comp,
+        componentName: row.name || comp.componentName,
+        pricePerUnit: parseFloat((row.price ?? comp.pricePerUnit) as any),
+      };
+    }
+    if (comp.type === 'operation' && comp.componentId) {
+      const [row] = await db.select({ rate: operations.hourlyRate, name: operations.name })
+        .from(operations).where(eq(operations.id, comp.componentId)).limit(1);
+      if (row) return {
+        ...comp,
+        componentName: row.name || comp.componentName,
+        pricePerUnit: parseFloat((row.rate ?? comp.pricePerUnit) as any),
+      };
+    }
+    return comp;
   }));
 }
 
@@ -1042,7 +1077,7 @@ export async function getRecipeComponents(recipeId: string): Promise<RelationalC
   // Fallback: se la tabella relazionale è vuota, leggi dal JSON blob della ricetta
   if (mapped.length === 0) {
     const recipe = await getFinalRecipeById(recipeId);
-    if (recipe?.components) return parseJsonBlobComponents(recipe.components);
+    if (recipe?.components) return enrichBlobWithLivePrices(parseJsonBlobComponents(recipe.components));
   }
 
   return mapped;
@@ -1149,7 +1184,7 @@ export async function getSemiFinishedComponentsRelational(semiFinishedId: string
   // Fallback: se la tabella relazionale è vuota, leggi dal JSON blob del semilavorato
   if (mapped.length === 0) {
     const semi = await getSemiFinishedById(semiFinishedId);
-    if (semi?.components) return parseJsonBlobComponents(semi.components);
+    if (semi?.components) return enrichBlobWithLivePrices(parseJsonBlobComponents(semi.components));
   }
 
   return mapped;

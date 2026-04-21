@@ -432,7 +432,7 @@ function RecipeForm({
 
         {/* Lista componenti */}
         {components.length > 0 ? (
-          <div className="border rounded-lg overflow-hidden bg-white max-h-[300px] overflow-y-auto">
+          <div className="border rounded-lg overflow-x-auto overflow-y-auto bg-white max-h-[300px]">
             <table className="w-full">
               <thead className="bg-slate-50 sticky top-0">
                 <tr>
@@ -448,7 +448,7 @@ function RecipeForm({
               <tbody>
                 {components.map((comp, idx) => (
                   <tr key={idx} className="border-t">
-                    <td className="p-3">{comp.name}</td>
+                    <td className="p-3">{comp.componentName || comp.name}</td>
                     <td className="p-3">
                       <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
                         comp.type === 'ingredient' 
