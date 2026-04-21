@@ -1667,6 +1667,62 @@ import { auditLogRouter } from "./auditLogRouter";
 import { multiStoreEditorRouter } from "./multiStoreEditorRouter";
 import { foodMatrixV2Router } from "./foodMatrixV2Router";
 
+// ============ ADMIN IMPORT ROUTER ============
+const adminImportRouter = router({
+  deleteAllRecipes: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      await db.deleteAllRecipes();
+      return { success: true };
+    }),
+
+  previewSemiFinished: protectedProcedure
+    .input(z.object({
+      rows: z.array(z.object({
+        sl_id: z.string(),
+        ingrediente_nome: z.string(),
+        qty: z.number(),
+        um: z.number(),
+        eur_riga: z.number(),
+      })),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      return db.previewSemiFinishedImport(input.rows);
+    }),
+
+  importSemiFinished: protectedProcedure
+    .input(z.object({
+      rows: z.array(z.object({
+        sl_id: z.string(),
+        ingrediente_nome: z.string(),
+        qty: z.number(),
+        um: z.number(),
+        eur_riga: z.number(),
+      })),
+      metadata: z.record(z.object({
+        name: z.string().optional(),
+        category: z.enum(["SPEZIE", "SALSE", "VERDURA", "CARNE", "ALTRO"]).optional(),
+        shelfLifeDays: z.number().optional(),
+        storageMethod: z.string().optional(),
+      })).optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      return db.importSemiFinishedBulk(
+        input.rows,
+        input.metadata ?? {},
+        ctx.currentStoreId
+      );
+    }),
+});
+
 export const appRouter = router({
   auth: authRouter,
   users: usersRouter,
@@ -1693,6 +1749,7 @@ export const appRouter = router({
   multiStoreEditor: multiStoreEditorRouter,
   foodMatrixV2: foodMatrixV2Router,
   system: systemRouter,
+  adminImport: adminImportRouter,
 });
 
 export type AppRouter = typeof appRouter;

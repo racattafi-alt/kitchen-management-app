@@ -24,7 +24,7 @@ import { useIsMobile } from "@/hooks/useMobile";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import GlobalSearch from "@/components/GlobalSearch";
 import { useStore } from "@/contexts/StoreContext";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Package, Utensils, ChefHat, BarChart3, Calendar, DollarSign, AlertTriangle, Shield, FolderOpen, Bot, ShoppingCart, Building2, History, TrendingUp, Crown, Globe } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Package, Utensils, ChefHat, BarChart3, Calendar, DollarSign, AlertTriangle, Shield, FolderOpen, Bot, ShoppingCart, Building2, History, TrendingUp, Crown, Globe, Upload } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -50,6 +50,7 @@ const menuItems = [
 
 const adminMenuItems = [
   { icon: Crown, label: "Super Admin", path: "/super-admin" },
+  { icon: Upload, label: "Importa Ricette", path: "/import-recipes" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

@@ -32,6 +32,7 @@ import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import MultiStoreEditor from "./pages/MultiStoreEditor";
 import LocalLogin from "./pages/LocalLogin";
 import PriceUpdate from "./pages/PriceUpdate";
+import ImportRecipes from "./pages/ImportRecipes";
 
 function Router() {
   return (
@@ -65,6 +66,7 @@ function Router() {
       <Route path={"/invoices"} component={Invoices} />
       <Route path={"/fridges"} component={Fridges} />
       <Route path={"/documents"} component={DocumentArchive} />
+      <Route path={"/import-recipes"} component={ImportRecipes} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

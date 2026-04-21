@@ -44,6 +44,7 @@ import {
   semiFinishedComponents,
   InsertRecipeComponent,
   InsertSemiFinishedComponent,
+  InsertSemiFinishedRecipe,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -1221,4 +1222,224 @@ export async function setSemiFinishedComponents(semiFinishedId: string, comps: C
   }));
 
   await db.insert(semiFinishedComponents).values(rows as any);
+}
+
+// ============ IMPORT RICETTE DA TABELLA ============
+
+export type ImportRow = {
+  sl_id: string;
+  ingrediente_nome: string;
+  qty: number;
+  um: number;        // 1000 = grammi → converti in kg; 1 = pezzi
+  eur_riga: number;
+};
+
+export type SlMetadata = {
+  name?: string;
+  category?: "SPEZIE" | "SALSE" | "VERDURA" | "CARNE" | "ALTRO";
+  shelfLifeDays?: number;
+  storageMethod?: string;
+};
+
+export type ComponentMatchResult = {
+  ingrediente_nome: string;
+  qty: number;
+  um: number;
+  matchType: "ingredient_exact" | "ingredient_partial" | "semi_exact" | "semi_partial" | "not_found";
+  matchId?: string;
+  matchName?: string;
+  matchedType?: "ingredient" | "semi_finished";
+};
+
+export type SlPreviewResult = {
+  sl_id: string;
+  components: ComponentMatchResult[];
+  totalCost: number;
+  totalQtyKg: number;
+  estimatedPricePerKg: number;
+  unmatchedCount: number;
+};
+
+function fuzzyMatchCandidate(
+  search: string,
+  candidates: Array<{ id: string; name: string }>
+): { id: string; name: string; confidence: "exact" | "partial" } | null {
+  const s = search.toLowerCase().trim();
+  const exact = candidates.find((c) => c.name.toLowerCase().trim() === s);
+  if (exact) return { id: exact.id, name: exact.name, confidence: "exact" };
+  const partial = candidates.find(
+    (c) => c.name.toLowerCase().includes(s) || s.includes(c.name.toLowerCase())
+  );
+  if (partial) return { id: partial.id, name: partial.name, confidence: "partial" };
+  return null;
+}
+
+/** Analizza le righe senza toccare il DB — ritorna preview del matching. */
+export async function previewSemiFinishedImport(rows: ImportRow[]): Promise<SlPreviewResult[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const allIngredients = await db.select({ id: ingredients.id, name: ingredients.name }).from(ingredients);
+  const allSemis = await db.select({ id: semiFinishedRecipes.id, name: semiFinishedRecipes.name }).from(semiFinishedRecipes);
+
+  const grouped = new Map<string, ImportRow[]>();
+  for (const row of rows) {
+    if (!grouped.has(row.sl_id)) grouped.set(row.sl_id, []);
+    grouped.get(row.sl_id)!.push(row);
+  }
+
+  const results: SlPreviewResult[] = [];
+
+  for (const [sl_id, slRows] of grouped) {
+    const components: ComponentMatchResult[] = [];
+    let totalCost = 0;
+    let totalQtyKg = 0;
+
+    for (const row of slRows) {
+      totalCost += row.eur_riga;
+      if (row.um === 1000) totalQtyKg += row.qty / 1000;
+
+      const ingMatch = fuzzyMatchCandidate(row.ingrediente_nome, allIngredients);
+      if (ingMatch) {
+        components.push({
+          ingrediente_nome: row.ingrediente_nome,
+          qty: row.qty, um: row.um,
+          matchType: ingMatch.confidence === "exact" ? "ingredient_exact" : "ingredient_partial",
+          matchId: ingMatch.id, matchName: ingMatch.name, matchedType: "ingredient",
+        });
+        continue;
+      }
+
+      const semiMatch = fuzzyMatchCandidate(row.ingrediente_nome, allSemis);
+      if (semiMatch) {
+        components.push({
+          ingrediente_nome: row.ingrediente_nome,
+          qty: row.qty, um: row.um,
+          matchType: semiMatch.confidence === "exact" ? "semi_exact" : "semi_partial",
+          matchId: semiMatch.id, matchName: semiMatch.name, matchedType: "semi_finished",
+        });
+        continue;
+      }
+
+      components.push({ ingrediente_nome: row.ingrediente_nome, qty: row.qty, um: row.um, matchType: "not_found" });
+    }
+
+    results.push({
+      sl_id, components, totalCost, totalQtyKg,
+      estimatedPricePerKg: totalQtyKg > 0 ? totalCost / totalQtyKg : totalCost,
+      unmatchedCount: components.filter((c) => c.matchType === "not_found").length,
+    });
+  }
+
+  return results;
+}
+
+const SL_DEFAULT_NAMES: Record<string, string> = {
+  SL_SBACON: "Spezia Bacon",
+  SL_SPULLED: "Spezia Pulled Pork",
+  SL_SRIBS: "Spezia Ribs",
+  SL_STENDERS: "Spezia Tenders",
+  SL_KETCHUP: "Ketchup",
+  SL_BBQ: "Salsa BBQ",
+  SL_BBQRIBS: "Salsa BBQ Ribs",
+  SL_MEMPHIS: "Salsa Memphis",
+  SL_SENAPE: "Senape",
+  SL_SSOVRACOSCE: "Spezia Sovracosce",
+};
+
+/** Elimina tutte le ricette finali e i semilavorati (con i loro componenti). */
+export async function deleteAllRecipes(): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(recipeComponents);
+  await db.delete(semiFinishedComponents);
+  await db.delete(finalRecipes);
+  await db.delete(semiFinishedRecipes);
+}
+
+/** Importa semilavorati da tabella TSV in due passate (gestisce cross-riferimenti). */
+export async function importSemiFinishedBulk(
+  rows: ImportRow[],
+  metadata: Record<string, SlMetadata>,
+  storeId: string
+): Promise<{ created: string[]; unmatched: { sl_id: string; ingrediente_nome: string }[] }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const allIngredients = await db.select({ id: ingredients.id, name: ingredients.name }).from(ingredients);
+
+  const grouped = new Map<string, ImportRow[]>();
+  for (const row of rows) {
+    if (!grouped.has(row.sl_id)) grouped.set(row.sl_id, []);
+    grouped.get(row.sl_id)!.push(row);
+  }
+
+  const created: string[] = [];
+  const unmatched: { sl_id: string; ingrediente_nome: string }[] = [];
+
+  // Due passate: pass 0 salta SL che hanno riferimenti non ancora risolti
+  // pass 1 forza l'inserimento anche con riferimenti mancanti
+  for (let pass = 0; pass < 2; pass++) {
+    const allSemis = await db.select({ id: semiFinishedRecipes.id, name: semiFinishedRecipes.name }).from(semiFinishedRecipes);
+
+    for (const [sl_id, slRows] of grouped) {
+      if (created.includes(sl_id)) continue;
+
+      const meta = metadata[sl_id] || {};
+      const displayName = meta.name || SL_DEFAULT_NAMES[sl_id] || sl_id;
+      const category = (meta.category || (sl_id.match(/SL_S[A-Z]/) ? "SPEZIE" : "SALSE")) as InsertSemiFinishedRecipe["category"];
+      const shelfLifeDays = meta.shelfLifeDays ?? 30;
+      const storageMethod = meta.storageMethod ?? "Refrigerato";
+
+      let totalCost = 0;
+      let totalQtyKg = 0;
+      const comps: ComponentInput[] = [];
+      let hasUnresolved = false;
+
+      for (const row of slRows) {
+        const qtyConverted = row.um === 1 ? row.qty : row.qty / 1000;
+        const unit = row.um === 1 ? "unità" : "kg";
+        if (row.um === 1000) totalQtyKg += qtyConverted;
+        totalCost += row.eur_riga;
+
+        const ingMatch = fuzzyMatchCandidate(row.ingrediente_nome, allIngredients);
+        if (ingMatch) {
+          comps.push({ type: "ingredient", componentId: ingMatch.id, componentName: ingMatch.name, quantity: qtyConverted, unit, pricePerUnit: qtyConverted > 0 ? row.eur_riga / qtyConverted : 0 });
+          continue;
+        }
+
+        const semiMatch = fuzzyMatchCandidate(row.ingrediente_nome, allSemis);
+        if (semiMatch) {
+          comps.push({ type: "semi_finished", componentId: semiMatch.id, componentName: semiMatch.name, quantity: qtyConverted, unit: "kg", pricePerUnit: qtyConverted > 0 ? row.eur_riga / qtyConverted : 0 });
+          continue;
+        }
+
+        if (pass === 0) { hasUnresolved = true; break; }
+        unmatched.push({ sl_id, ingrediente_nome: row.ingrediente_nome });
+        // Inserisce comunque con componentId vuoto per non perdere la ricetta
+        comps.push({ type: "ingredient", componentId: "", componentName: row.ingrediente_nome, quantity: qtyConverted, unit, pricePerUnit: 0 });
+      }
+
+      if (hasUnresolved) continue;
+
+      const finalPricePerKg = totalQtyKg > 0 ? totalCost / totalQtyKg : totalCost;
+      const id = crypto.randomUUID();
+
+      await db.insert(semiFinishedRecipes).values({
+        id, storeId, code: sl_id, name: displayName, category,
+        finalPricePerKg: String(finalPricePerKg.toFixed(2)),
+        yieldPercentage: "100",
+        shelfLifeDays, storageMethod,
+        totalQuantityProduced: String(totalQtyKg.toFixed(3)),
+        components: JSON.stringify(comps),
+      } as any);
+
+      const validComps = comps.filter((c) => c.componentId !== "");
+      if (validComps.length > 0) await setSemiFinishedComponents(id, validComps);
+
+      created.push(sl_id);
+    }
+  }
+
+  return { created, unmatched };
 }
