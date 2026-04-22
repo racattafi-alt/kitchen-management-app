@@ -91,20 +91,24 @@ function parseEurValue(s: string): number {
   return parseFloat(s.replace(/[€\s]/g, "").replace(",", ".")) || 0;
 }
 
-function parseTSV(text: string): ImportRow[] {
+function parseTSV(text: string): { rows: ImportRow[]; skipped: number } {
   const lines = text.trim().split("\n").filter((l) => l.trim());
   const rows: ImportRow[] = [];
+  let skipped = 0;
   for (const line of lines) {
     const cols = line.split("\t").map((c) => c.trim());
-    if (cols.length < 4) continue;
+    if (cols.length < 4) { skipped++; continue; }
     const [sl_id, ingrediente_nome, qtyRaw, umRaw, , eurRaw] = cols;
     if (!sl_id || sl_id === "SL_ID") continue; // salta intestazione
+    // Scarta righe senza nome ingrediente: non possiamo salvarle senza perdere
+    // il riferimento e risulterebbero irrecuperabili nella pagina debug.
+    if (!ingrediente_nome || ingrediente_nome.trim() === "") { skipped++; continue; }
     const qty = parseFloat(qtyRaw.replace(",", ".")) || 0;
     const um = parseFloat(umRaw.replace(",", ".")) || 1;
     const eur_riga = parseEurValue(eurRaw ?? "0");
     rows.push({ sl_id, ingrediente_nome, qty, um, eur_riga });
   }
-  return rows;
+  return { rows, skipped };
 }
 
 // ─── Badge colori match ───────────────────────────────────────────────────────
@@ -171,10 +175,13 @@ export default function ImportRecipes() {
   });
 
   function handleParse() {
-    const rows = parseTSV(tsvText);
+    const { rows, skipped } = parseTSV(tsvText);
     if (rows.length === 0) {
       toast.error("Nessuna riga valida trovata. Controlla il formato TSV.");
       return;
+    }
+    if (skipped > 0) {
+      toast.warning(`${skipped} righe scartate (nome ingrediente mancante o colonne insufficienti).`);
     }
     setParsedRows(rows);
     previewMutation.mutate({ rows });

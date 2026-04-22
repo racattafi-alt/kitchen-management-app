@@ -1336,6 +1336,9 @@ export async function previewSemiFinishedImport(rows: ImportRow[]): Promise<SlPr
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
+  // Scarta righe con nome ingrediente vuoto: non sono recuperabili a valle.
+  rows = rows.filter((r) => r.ingrediente_nome && r.ingrediente_nome.trim() !== "");
+
   const allIngredients = await db
     .select({ id: ingredients.id, name: ingredients.name, price: ingredients.pricePerKgOrUnit })
     .from(ingredients);
@@ -1468,6 +1471,10 @@ export async function importSemiFinishedBulk(
 ): Promise<{ created: string[]; unmatched: { sl_id: string; ingrediente_nome: string }[] }> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+
+  // Scarta righe con nome ingrediente vuoto: altrimenti finirebbero in DB come
+  // "(senza nome)" e non sarebbero più risolvibili dalla pagina debug.
+  rows = rows.filter((r) => r.ingrediente_nome && r.ingrediente_nome.trim() !== "");
 
   const allIngredients = await db
     .select({ id: ingredients.id, name: ingredients.name, price: ingredients.pricePerKgOrUnit })
@@ -1913,4 +1920,78 @@ export async function resolveComponent(args: {
       })
       .where(eq(recipeComponents.id, args.componentId));
   }
+}
+
+/** Elimina una singola riga componente dalla tabella relazionale. */
+export async function deleteComponentRow(args: {
+  componentRow: "semi_finished_components" | "recipe_components";
+  componentId: string;
+}): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  if (args.componentRow === "semi_finished_components") {
+    await db.delete(semiFinishedComponents).where(eq(semiFinishedComponents.id, args.componentId));
+  } else {
+    await db.delete(recipeComponents).where(eq(recipeComponents.id, args.componentId));
+  }
+}
+
+/**
+ * Elimina in massa tutte le righe componente "senza nome" o non collegate:
+ * righe con tutti gli ID NULL E componentName vuoto/placeholder. Utile per
+ * ripulire residui di import mal formati.
+ */
+export async function deleteUnnamedComponents(): Promise<{ deletedSemi: number; deletedFinal: number }> {
+  const db = await getDb();
+  if (!db) return { deletedSemi: 0, deletedFinal: 0 };
+
+  const isPlaceholder = (n: string | null | undefined) =>
+    !n || n.trim() === "" || n === "(senza nome)" || n === "Sconosciuto";
+
+  let deletedSemi = 0;
+  let deletedFinal = 0;
+
+  try {
+    const sfRows = await db
+      .select({ id: semiFinishedComponents.id, componentName: semiFinishedComponents.componentName })
+      .from(semiFinishedComponents)
+      .where(
+        and(
+          isNull(semiFinishedComponents.ingredientId),
+          isNull(semiFinishedComponents.childSemiFinishedId),
+          isNull(semiFinishedComponents.operationId)
+        )
+      );
+    for (const r of sfRows) {
+      if (isPlaceholder(r.componentName)) {
+        await db.delete(semiFinishedComponents).where(eq(semiFinishedComponents.id, r.id));
+        deletedSemi++;
+      }
+    }
+  } catch (e) {
+    console.warn("[deleteUnnamedComponents] semi_finished_components:", e);
+  }
+
+  try {
+    const rcRows = await db
+      .select({ id: recipeComponents.id, componentName: recipeComponents.componentName })
+      .from(recipeComponents)
+      .where(
+        and(
+          isNull(recipeComponents.ingredientId),
+          isNull(recipeComponents.semiFinishedId),
+          isNull(recipeComponents.operationId)
+        )
+      );
+    for (const r of rcRows) {
+      if (isPlaceholder(r.componentName)) {
+        await db.delete(recipeComponents).where(eq(recipeComponents.id, r.id));
+        deletedFinal++;
+      }
+    }
+  } catch (e) {
+    console.warn("[deleteUnnamedComponents] recipe_components:", e);
+  }
+
+  return { deletedSemi, deletedFinal };
 }

@@ -28,6 +28,7 @@ import {
   Package,
   ChefHat,
   RefreshCw,
+  Trash2,
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -156,6 +157,32 @@ export default function RecipeDebug() {
     onError: (e) => toast.error(e.message),
   });
 
+  const deleteComponentMutation = trpc.recipeDebug.deleteComponent.useMutation({
+    onSuccess: () => {
+      toast.success("Riga eliminata");
+      utils.recipeDebug.listUnmatched.invalidate();
+      utils.recipeDebug.listOrphaned.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const deleteUnnamedMutation = trpc.recipeDebug.deleteUnnamed.useMutation({
+    onSuccess: (res) => {
+      const total = res.deletedSemi + res.deletedFinal;
+      if (total === 0) {
+        toast.info("Nessuna riga senza nome da eliminare.");
+      } else {
+        toast.success(`Eliminate ${total} righe senza nome (${res.deletedSemi} semi, ${res.deletedFinal} finali).`);
+      }
+      utils.recipeDebug.listUnmatched.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const unnamedCount = unmatched.filter((c) =>
+    !c.componentName || c.componentName === "(senza nome)" || c.componentName === "Sconosciuto"
+  ).length;
+
   const totalIssues = unmatched.length + zeroPrice.length + orphaned.length;
   const allGood = !loadingUnmatched && !loadingZero && !loadingOrph && totalIssues === 0;
 
@@ -257,6 +284,31 @@ export default function RecipeDebug() {
                 </p>
               </CardHeader>
               <CardContent>
+                {/* Banner per righe senza nome: non recuperabili, solo eliminabili */}
+                {unnamedCount > 0 && (
+                  <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3 flex-wrap">
+                    <AlertTriangle className="h-5 w-5 text-yellow-700 shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-yellow-900">
+                        {unnamedCount} righe senza nome rilevate
+                      </p>
+                      <p className="text-xs text-yellow-800 mt-0.5">
+                        Queste righe sono state salvate con nome vuoto (probabile import mal formato)
+                        e non sono recuperabili. Puoi eliminarle tutte insieme.
+                      </p>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      disabled={deleteUnnamedMutation.isPending}
+                      onClick={() => deleteUnnamedMutation.mutate()}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                      {deleteUnnamedMutation.isPending ? "Pulizia..." : `Elimina tutte (${unnamedCount})`}
+                    </Button>
+                  </div>
+                )}
+
                 {loadingUnmatched ? (
                   <p className="text-muted-foreground text-sm py-4">Caricamento...</p>
                 ) : unmatched.length === 0 ? (
@@ -349,6 +401,23 @@ export default function RecipeDebug() {
                                     })
                                   }
                                 />
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  disabled={deleteComponentMutation.isPending}
+                                  title="Elimina riga"
+                                  onClick={() => {
+                                    if (confirm(`Eliminare "${c.componentName}" da ${c.parentName}?`)) {
+                                      deleteComponentMutation.mutate({
+                                        componentRow: c.componentRow,
+                                        componentId: c.componentId,
+                                      });
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
                               </div>
                             </TableCell>
                           </TableRow>

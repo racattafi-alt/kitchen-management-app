@@ -1772,6 +1772,27 @@ const recipeDebugRouter = router({
       await db.resolveComponent(input);
       return { success: true };
     }),
+
+  deleteComponent: protectedProcedure
+    .input(z.object({
+      componentRow: z.enum(["semi_finished_components", "recipe_components"]),
+      componentId: z.string(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      await db.deleteComponentRow(input);
+      return { success: true };
+    }),
+
+  deleteUnnamed: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      return db.deleteUnnamedComponents();
+    }),
 });
 
 export const appRouter = router({
