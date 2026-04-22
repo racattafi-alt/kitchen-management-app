@@ -1253,15 +1253,28 @@ export type ComponentMatchResult = {
   matchId?: string;
   matchName?: string;
   matchedType?: "ingredient" | "semi_finished";
+  // Prezzi live dal DB (se match) — fonte di verità per il costo reale
+  livePricePerUnit?: number;    // €/kg o €/unità dal record DB
+  liveCost?: number;             // qty_kg × livePricePerUnit (costo ricalcolato dal DB)
+  // Dati derivati dal TSV (per confronto)
+  tsvEurRiga: number;
+  tsvPricePerUnit?: number;      // tsvEurRiga / qty_kg (prezzo implicito dal TSV)
 };
 
 export type SlPreviewResult = {
   sl_id: string;
   components: ComponentMatchResult[];
-  totalCost: number;
+  // Totali basati sul TSV (quello che l'utente ha inserito)
+  totalCostTsv: number;
+  // Totali ricalcolati usando i prezzi DB dove disponibili, fallback al TSV
+  totalCostDb: number;
   totalQtyKg: number;
-  estimatedPricePerKg: number;
+  estimatedPricePerKgTsv: number;
+  estimatedPricePerKgDb: number;
   unmatchedCount: number;
+  // Backward-compat (deprecati — mantenuti per non rompere eventuali client vecchi)
+  totalCost: number;
+  estimatedPricePerKg: number;
 };
 
 function fuzzyMatchCandidate(
@@ -1278,13 +1291,22 @@ function fuzzyMatchCandidate(
   return null;
 }
 
-/** Analizza le righe senza toccare il DB — ritorna preview del matching. */
+/** Analizza le righe senza toccare il DB — ritorna preview del matching con prezzi live. */
 export async function previewSemiFinishedImport(rows: ImportRow[]): Promise<SlPreviewResult[]> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const allIngredients = await db.select({ id: ingredients.id, name: ingredients.name }).from(ingredients);
-  const allSemis = await db.select({ id: semiFinishedRecipes.id, name: semiFinishedRecipes.name }).from(semiFinishedRecipes);
+  const allIngredients = await db
+    .select({ id: ingredients.id, name: ingredients.name, price: ingredients.pricePerKgOrUnit })
+    .from(ingredients);
+  const allSemis = await db
+    .select({ id: semiFinishedRecipes.id, name: semiFinishedRecipes.name, price: semiFinishedRecipes.finalPricePerKg })
+    .from(semiFinishedRecipes);
+
+  const ingById = new Map<string, { name: string; price: number }>();
+  for (const i of allIngredients) ingById.set(i.id, { name: i.name, price: parseFloat(i.price || "0") });
+  const semiById = new Map<string, { name: string; price: number }>();
+  for (const s of allSemis) semiById.set(s.id, { name: s.name, price: parseFloat(s.price || "0") });
 
   const grouped = new Map<string, ImportRow[]>();
   for (const row of rows) {
@@ -1296,42 +1318,79 @@ export async function previewSemiFinishedImport(rows: ImportRow[]): Promise<SlPr
 
   for (const [sl_id, slRows] of grouped) {
     const components: ComponentMatchResult[] = [];
-    let totalCost = 0;
+    let totalCostTsv = 0;
+    let totalCostDb = 0;
     let totalQtyKg = 0;
 
     for (const row of slRows) {
-      totalCost += row.eur_riga;
-      if (row.um === 1000) totalQtyKg += row.qty / 1000;
+      totalCostTsv += row.eur_riga;
+      const qtyConverted = row.um === 1 ? row.qty : row.qty / 1000;
+      if (row.um === 1000) totalQtyKg += qtyConverted;
+      const tsvPricePerUnit = qtyConverted > 0 ? row.eur_riga / qtyConverted : undefined;
+
+      const base: ComponentMatchResult = {
+        ingrediente_nome: row.ingrediente_nome,
+        qty: row.qty,
+        um: row.um,
+        matchType: "not_found",
+        tsvEurRiga: row.eur_riga,
+        tsvPricePerUnit,
+      };
 
       const ingMatch = fuzzyMatchCandidate(row.ingrediente_nome, allIngredients);
       if (ingMatch) {
+        const livePrice = ingById.get(ingMatch.id)?.price ?? 0;
+        const liveCost = qtyConverted * livePrice;
+        totalCostDb += liveCost;
         components.push({
-          ingrediente_nome: row.ingrediente_nome,
-          qty: row.qty, um: row.um,
+          ...base,
           matchType: ingMatch.confidence === "exact" ? "ingredient_exact" : "ingredient_partial",
-          matchId: ingMatch.id, matchName: ingMatch.name, matchedType: "ingredient",
+          matchId: ingMatch.id,
+          matchName: ingMatch.name,
+          matchedType: "ingredient",
+          livePricePerUnit: livePrice,
+          liveCost,
         });
         continue;
       }
 
       const semiMatch = fuzzyMatchCandidate(row.ingrediente_nome, allSemis);
       if (semiMatch) {
+        const livePrice = semiById.get(semiMatch.id)?.price ?? 0;
+        const liveCost = qtyConverted * livePrice;
+        totalCostDb += liveCost;
         components.push({
-          ingrediente_nome: row.ingrediente_nome,
-          qty: row.qty, um: row.um,
+          ...base,
           matchType: semiMatch.confidence === "exact" ? "semi_exact" : "semi_partial",
-          matchId: semiMatch.id, matchName: semiMatch.name, matchedType: "semi_finished",
+          matchId: semiMatch.id,
+          matchName: semiMatch.name,
+          matchedType: "semi_finished",
+          livePricePerUnit: livePrice,
+          liveCost,
         });
         continue;
       }
 
-      components.push({ ingrediente_nome: row.ingrediente_nome, qty: row.qty, um: row.um, matchType: "not_found" });
+      // Non trovato → usa il costo TSV come fallback per il totale DB
+      totalCostDb += row.eur_riga;
+      components.push(base);
     }
 
+    const estimatedPricePerKgTsv = totalQtyKg > 0 ? totalCostTsv / totalQtyKg : totalCostTsv;
+    const estimatedPricePerKgDb = totalQtyKg > 0 ? totalCostDb / totalQtyKg : totalCostDb;
+
     results.push({
-      sl_id, components, totalCost, totalQtyKg,
-      estimatedPricePerKg: totalQtyKg > 0 ? totalCost / totalQtyKg : totalCost,
+      sl_id,
+      components,
+      totalCostTsv,
+      totalCostDb,
+      totalQtyKg,
+      estimatedPricePerKgTsv,
+      estimatedPricePerKgDb,
       unmatchedCount: components.filter((c) => c.matchType === "not_found").length,
+      // alias backward-compat
+      totalCost: totalCostTsv,
+      estimatedPricePerKg: estimatedPricePerKgTsv,
     });
   }
 
@@ -1370,7 +1429,11 @@ export async function importSemiFinishedBulk(
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const allIngredients = await db.select({ id: ingredients.id, name: ingredients.name }).from(ingredients);
+  const allIngredients = await db
+    .select({ id: ingredients.id, name: ingredients.name, price: ingredients.pricePerKgOrUnit })
+    .from(ingredients);
+  const ingPriceById = new Map<string, number>();
+  for (const i of allIngredients) ingPriceById.set(i.id, parseFloat(i.price || "0"));
 
   const grouped = new Map<string, ImportRow[]>();
   for (const row of rows) {
@@ -1384,7 +1447,11 @@ export async function importSemiFinishedBulk(
   // Due passate: pass 0 salta SL che hanno riferimenti non ancora risolti
   // pass 1 forza l'inserimento anche con riferimenti mancanti
   for (let pass = 0; pass < 2; pass++) {
-    const allSemis = await db.select({ id: semiFinishedRecipes.id, name: semiFinishedRecipes.name }).from(semiFinishedRecipes);
+    const allSemis = await db
+      .select({ id: semiFinishedRecipes.id, name: semiFinishedRecipes.name, price: semiFinishedRecipes.finalPricePerKg })
+      .from(semiFinishedRecipes);
+    const semiPriceById = new Map<string, number>();
+    for (const s of allSemis) semiPriceById.set(s.id, parseFloat(s.price || "0"));
 
     for (const [sl_id, slRows] of grouped) {
       if (created.includes(sl_id)) continue;
@@ -1395,7 +1462,7 @@ export async function importSemiFinishedBulk(
       const shelfLifeDays = meta.shelfLifeDays ?? 30;
       const storageMethod = meta.storageMethod ?? "Refrigerato";
 
-      let totalCost = 0;
+      let totalCost = 0;       // costo ricalcolato usando prezzi DB (fonte di verità)
       let totalQtyKg = 0;
       const comps: ComponentInput[] = [];
       let hasUnresolved = false;
@@ -1404,24 +1471,34 @@ export async function importSemiFinishedBulk(
         const qtyConverted = row.um === 1 ? row.qty : row.qty / 1000;
         const unit = row.um === 1 ? "unità" : "kg";
         if (row.um === 1000) totalQtyKg += qtyConverted;
-        totalCost += row.eur_riga;
 
         const ingMatch = fuzzyMatchCandidate(row.ingrediente_nome, allIngredients);
         if (ingMatch) {
-          comps.push({ type: "ingredient", componentId: ingMatch.id, componentName: ingMatch.name, quantity: qtyConverted, unit, pricePerUnit: qtyConverted > 0 ? row.eur_riga / qtyConverted : 0 });
+          // Prezzo DB è la fonte di verità; se a 0 fallback al prezzo implicito TSV
+          const livePrice = ingPriceById.get(ingMatch.id) ?? 0;
+          const tsvPrice = qtyConverted > 0 ? row.eur_riga / qtyConverted : 0;
+          const pricePerUnit = livePrice > 0 ? livePrice : tsvPrice;
+          totalCost += qtyConverted * pricePerUnit;
+          comps.push({ type: "ingredient", componentId: ingMatch.id, componentName: ingMatch.name, quantity: qtyConverted, unit, pricePerUnit });
           continue;
         }
 
         const semiMatch = fuzzyMatchCandidate(row.ingrediente_nome, allSemis);
         if (semiMatch) {
-          comps.push({ type: "semi_finished", componentId: semiMatch.id, componentName: semiMatch.name, quantity: qtyConverted, unit: "kg", pricePerUnit: qtyConverted > 0 ? row.eur_riga / qtyConverted : 0 });
+          const livePrice = semiPriceById.get(semiMatch.id) ?? 0;
+          const tsvPrice = qtyConverted > 0 ? row.eur_riga / qtyConverted : 0;
+          const pricePerUnit = livePrice > 0 ? livePrice : tsvPrice;
+          totalCost += qtyConverted * pricePerUnit;
+          comps.push({ type: "semi_finished", componentId: semiMatch.id, componentName: semiMatch.name, quantity: qtyConverted, unit: "kg", pricePerUnit });
           continue;
         }
 
         if (pass === 0) { hasUnresolved = true; break; }
         unmatched.push({ sl_id, ingrediente_nome: row.ingrediente_nome });
-        // Inserisce comunque con componentId vuoto per non perdere la ricetta
-        comps.push({ type: "ingredient", componentId: "", componentName: row.ingrediente_nome, quantity: qtyConverted, unit, pricePerUnit: 0 });
+        // Non trovato → fallback al costo TSV per non perdere il valore
+        totalCost += row.eur_riga;
+        const tsvPrice = qtyConverted > 0 ? row.eur_riga / qtyConverted : 0;
+        comps.push({ type: "ingredient", componentId: "", componentName: row.ingrediente_nome, quantity: qtyConverted, unit, pricePerUnit: tsvPrice });
       }
 
       if (hasUnresolved) continue;

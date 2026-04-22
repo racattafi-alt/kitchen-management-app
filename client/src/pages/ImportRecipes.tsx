@@ -40,15 +40,24 @@ type ComponentMatch = {
   matchId?: string;
   matchName?: string;
   matchedType?: "ingredient" | "semi_finished";
+  livePricePerUnit?: number;
+  liveCost?: number;
+  tsvEurRiga: number;
+  tsvPricePerUnit?: number;
 };
 
 type SlPreview = {
   sl_id: string;
   components: ComponentMatch[];
-  totalCost: number;
+  totalCostTsv: number;
+  totalCostDb: number;
   totalQtyKg: number;
-  estimatedPricePerKg: number;
+  estimatedPricePerKgTsv: number;
+  estimatedPricePerKgDb: number;
   unmatchedCount: number;
+  // alias backward-compat
+  totalCost?: number;
+  estimatedPricePerKg?: number;
 };
 
 // ─── Default metadata ─────────────────────────────────────────────────────────
@@ -318,15 +327,32 @@ export default function ImportRecipes() {
             </Card>
 
             {/* Schede per ogni semilavorato */}
-            {preview.map((sl) => (
+            {preview.map((sl) => {
+              const costDiff = sl.totalCostDb - sl.totalCostTsv;
+              const hasDiff = Math.abs(costDiff) > 0.01;
+              return (
               <Card key={sl.sl_id} className={sl.unmatchedCount > 0 ? "border-yellow-300" : ""}>
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <CardTitle className="text-base">{sl.sl_id}</CardTitle>
-                    <div className="flex gap-3 text-sm text-muted-foreground">
-                      <span>Costo totale: <strong>€ {sl.totalCost.toFixed(2)}</strong></span>
-                      <span>Quantità: <strong>{sl.totalQtyKg.toFixed(3)} kg</strong></span>
-                      <span>€/kg: <strong>{sl.estimatedPricePerKg.toFixed(2)}</strong></span>
+                    <div className="flex gap-4 text-sm flex-wrap">
+                      <span className="text-muted-foreground">
+                        Quantità: <strong className="text-foreground">{sl.totalQtyKg.toFixed(3)} kg</strong>
+                      </span>
+                      <span className="text-muted-foreground">
+                        Costo TSV: <strong className="text-foreground">€ {sl.totalCostTsv.toFixed(2)}</strong>
+                      </span>
+                      <span className={hasDiff ? "text-blue-700" : "text-muted-foreground"}>
+                        Costo DB: <strong>€ {sl.totalCostDb.toFixed(2)}</strong>
+                        {hasDiff && (
+                          <span className="text-xs ml-1">
+                            ({costDiff > 0 ? "+" : ""}{costDiff.toFixed(2)})
+                          </span>
+                        )}
+                      </span>
+                      <span className="font-medium">
+                        €/kg: <strong>{sl.estimatedPricePerKgDb.toFixed(2)}</strong>
+                      </span>
                     </div>
                   </div>
                 </CardHeader>
@@ -384,12 +410,21 @@ export default function ImportRecipes() {
                           <th className="text-left p-2">Ingrediente (Excel)</th>
                           <th className="text-left p-2">Match DB</th>
                           <th className="text-right p-2">Qty</th>
-                          <th className="text-right p-2">Unità</th>
-                          <th className="text-right p-2">EUR riga</th>
+                          <th className="text-right p-2">UM</th>
+                          <th className="text-right p-2 border-l">€/UM TSV</th>
+                          <th className="text-right p-2">€/UM DB</th>
+                          <th className="text-right p-2 border-l">Costo TSV</th>
+                          <th className="text-right p-2">Costo DB</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {sl.components.map((c, i) => (
+                        {sl.components.map((c, i) => {
+                          const hasMatch = c.matchType !== "not_found";
+                          const hasDbPrice = c.livePricePerUnit != null && c.livePricePerUnit > 0;
+                          const priceDiff = hasMatch && hasDbPrice && c.tsvPricePerUnit != null
+                            ? Math.abs((c.livePricePerUnit ?? 0) - c.tsvPricePerUnit) > 0.01
+                            : false;
+                          return (
                           <tr key={i} className={`border-t ${c.matchType === "not_found" ? "bg-red-50" : c.matchType.includes("partial") ? "bg-yellow-50" : ""}`}>
                             <td className="p-2 font-medium">{c.ingrediente_nome}</td>
                             <td className="p-2">
@@ -404,17 +439,43 @@ export default function ImportRecipes() {
                             <td className="p-2 text-right text-muted-foreground">
                               {c.um === 1 ? "pz" : "g"}
                             </td>
-                            <td className="p-2 text-right">
-                              {parsedRows.find(r => r.sl_id === sl.sl_id && r.ingrediente_nome === c.ingrediente_nome)?.eur_riga.toFixed(2) ?? "-"}
+                            <td className="p-2 text-right text-muted-foreground border-l">
+                              {c.tsvPricePerUnit != null ? `€ ${c.tsvPricePerUnit.toFixed(2)}` : "-"}
+                            </td>
+                            <td className={`p-2 text-right ${hasDbPrice ? (priceDiff ? "text-blue-700 font-medium" : "") : "text-muted-foreground"}`}>
+                              {hasMatch
+                                ? hasDbPrice
+                                  ? `€ ${(c.livePricePerUnit as number).toFixed(2)}`
+                                  : <span className="text-red-600 text-xs">DB a 0</span>
+                                : "-"}
+                            </td>
+                            <td className="p-2 text-right text-muted-foreground border-l">
+                              € {c.tsvEurRiga.toFixed(2)}
+                            </td>
+                            <td className={`p-2 text-right ${hasMatch && hasDbPrice ? "font-medium" : "text-muted-foreground"}`}>
+                              {hasMatch && c.liveCost != null
+                                ? `€ ${c.liveCost.toFixed(2)}`
+                                : <span className="text-muted-foreground">€ {c.tsvEurRiga.toFixed(2)}</span>}
                             </td>
                           </tr>
-                        ))}
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Legenda quando ci sono discrepanze */}
+                  {hasDiff && (
+                    <p className="text-xs text-blue-700 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      I costi sono stati ricalcolati usando i prezzi DB (fonte di verità).
+                      La differenza con quelli TSV è {costDiff > 0 ? "+" : ""}{costDiff.toFixed(2)} €.
+                    </p>
+                  )}
                 </CardContent>
               </Card>
-            ))}
+              );
+            })}
 
             {/* Bottoni azione */}
             <div className="flex gap-3">
