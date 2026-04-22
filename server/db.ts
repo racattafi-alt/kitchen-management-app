@@ -1208,18 +1208,22 @@ export async function setSemiFinishedComponents(semiFinishedId: string, comps: C
 
   if (comps.length === 0) return;
 
-  const rows: InsertSemiFinishedComponent[] = comps.map((c, i) => ({
-    id: crypto.randomUUID(),
-    semiFinishedRecipeId: semiFinishedId,
-    ingredientId: c.type === "ingredient" ? c.componentId : null,
-    childSemiFinishedId: c.type === "semi_finished" ? c.componentId : null,
-    operationId: c.type === "operation" ? c.componentId : null,
-    componentName: c.componentName,
-    quantity: String(c.quantity),
-    unitSnapshot: c.unit || null,
-    priceSnapshot: c.pricePerUnit != null ? String(c.pricePerUnit) : null,
-    sortOrder: i,
-  }));
+  const rows: InsertSemiFinishedComponent[] = comps.map((c, i) => {
+    // Se componentId è vuoto → componente "pending" (tutti gli ID a NULL, solo componentName)
+    const hasId = !!c.componentId;
+    return {
+      id: crypto.randomUUID(),
+      semiFinishedRecipeId: semiFinishedId,
+      ingredientId: hasId && c.type === "ingredient" ? c.componentId : null,
+      childSemiFinishedId: hasId && c.type === "semi_finished" ? c.componentId : null,
+      operationId: hasId && c.type === "operation" ? c.componentId : null,
+      componentName: c.componentName,
+      quantity: String(c.quantity),
+      unitSnapshot: c.unit || null,
+      priceSnapshot: c.pricePerUnit != null ? String(c.pricePerUnit) : null,
+      sortOrder: i,
+    };
+  });
 
   await db.insert(semiFinishedComponents).values(rows as any);
 }
@@ -1434,12 +1438,329 @@ export async function importSemiFinishedBulk(
         components: JSON.stringify(comps),
       } as any);
 
-      const validComps = comps.filter((c) => c.componentId !== "");
-      if (validComps.length > 0) await setSemiFinishedComponents(id, validComps);
+      // Scrivi TUTTI i componenti nella tabella relazionale: quelli matchati
+      // con l'ID risolto, quelli unmatched con ID a NULL (solo componentName).
+      // Questo li rende visibili alla pagina /recipe-debug per la risoluzione manuale.
+      if (comps.length > 0) await setSemiFinishedComponents(id, comps);
 
       created.push(sl_id);
     }
   }
 
   return { created, unmatched };
+}
+
+// ============ DEBUG RICETTE ============
+// Funzioni per la pagina /recipe-debug: mostra e permette di risolvere
+// componenti con tutti gli ID a NULL (unmatched), prezzi 0 e riferimenti orfani.
+
+export type UnmatchedComponent = {
+  componentRow: "semi_finished_components" | "recipe_components";
+  componentId: string;
+  parentId: string;
+  parentName: string;
+  parentCode: string | null;
+  parentType: "semi_finished" | "final_recipe";
+  componentName: string;
+  quantity: string;
+  unit: string | null;
+};
+
+export async function listUnmatchedComponents(): Promise<UnmatchedComponent[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const out: UnmatchedComponent[] = [];
+
+  try {
+    const sfRows = await db
+      .select({
+        id: semiFinishedComponents.id,
+        parentId: semiFinishedComponents.semiFinishedRecipeId,
+        componentName: semiFinishedComponents.componentName,
+        quantity: semiFinishedComponents.quantity,
+        unit: semiFinishedComponents.unitSnapshot,
+        parentName: semiFinishedRecipes.name,
+        parentCode: semiFinishedRecipes.code,
+      })
+      .from(semiFinishedComponents)
+      .leftJoin(semiFinishedRecipes, eq(semiFinishedComponents.semiFinishedRecipeId, semiFinishedRecipes.id))
+      .where(
+        and(
+          isNull(semiFinishedComponents.ingredientId),
+          isNull(semiFinishedComponents.childSemiFinishedId),
+          isNull(semiFinishedComponents.operationId)
+        )
+      );
+    for (const r of sfRows) {
+      out.push({
+        componentRow: "semi_finished_components",
+        componentId: r.id,
+        parentId: r.parentId,
+        parentName: r.parentName || "(ricetta sconosciuta)",
+        parentCode: r.parentCode,
+        parentType: "semi_finished",
+        componentName: r.componentName,
+        quantity: String(r.quantity),
+        unit: r.unit,
+      });
+    }
+  } catch (e) {
+    console.warn("[listUnmatchedComponents] semi_finished_components:", e);
+  }
+
+  try {
+    const rcRows = await db
+      .select({
+        id: recipeComponents.id,
+        parentId: recipeComponents.recipeId,
+        componentName: recipeComponents.componentName,
+        quantity: recipeComponents.quantity,
+        unit: recipeComponents.unitSnapshot,
+        parentName: finalRecipes.name,
+        parentCode: finalRecipes.code,
+      })
+      .from(recipeComponents)
+      .leftJoin(finalRecipes, eq(recipeComponents.recipeId, finalRecipes.id))
+      .where(
+        and(
+          isNull(recipeComponents.ingredientId),
+          isNull(recipeComponents.semiFinishedId),
+          isNull(recipeComponents.operationId)
+        )
+      );
+    for (const r of rcRows) {
+      out.push({
+        componentRow: "recipe_components",
+        componentId: r.id,
+        parentId: r.parentId,
+        parentName: r.parentName || "(ricetta sconosciuta)",
+        parentCode: r.parentCode,
+        parentType: "final_recipe",
+        componentName: r.componentName,
+        quantity: String(r.quantity),
+        unit: r.unit,
+      });
+    }
+  } catch (e) {
+    console.warn("[listUnmatchedComponents] recipe_components:", e);
+  }
+
+  return out;
+}
+
+export type ZeroPriceItem = {
+  type: "ingredient" | "semi_finished";
+  id: string;
+  name: string;
+  code: string | null;
+  usedInRecipes: number;
+};
+
+export async function listZeroPriceItems(): Promise<ZeroPriceItem[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const out: ZeroPriceItem[] = [];
+
+  try {
+    const zeroIngredients = await db
+      .select({ id: ingredients.id, name: ingredients.name })
+      .from(ingredients)
+      .where(eq(ingredients.pricePerKgOrUnit, "0.00"));
+    for (const ing of zeroIngredients) {
+      let usedCount = 0;
+      try {
+        const c1 = await db.select({ n: sql<number>`count(*)` }).from(semiFinishedComponents).where(eq(semiFinishedComponents.ingredientId, ing.id));
+        const c2 = await db.select({ n: sql<number>`count(*)` }).from(recipeComponents).where(eq(recipeComponents.ingredientId, ing.id));
+        usedCount = Number(c1[0]?.n || 0) + Number(c2[0]?.n || 0);
+      } catch {}
+      out.push({ type: "ingredient", id: ing.id, name: ing.name, code: null, usedInRecipes: usedCount });
+    }
+  } catch (e) {
+    console.warn("[listZeroPriceItems] ingredients:", e);
+  }
+
+  try {
+    const zeroSemis = await db
+      .select({ id: semiFinishedRecipes.id, name: semiFinishedRecipes.name, code: semiFinishedRecipes.code })
+      .from(semiFinishedRecipes)
+      .where(eq(semiFinishedRecipes.finalPricePerKg, "0.00"));
+    for (const s of zeroSemis) {
+      let usedCount = 0;
+      try {
+        const c1 = await db.select({ n: sql<number>`count(*)` }).from(semiFinishedComponents).where(eq(semiFinishedComponents.childSemiFinishedId, s.id));
+        const c2 = await db.select({ n: sql<number>`count(*)` }).from(recipeComponents).where(eq(recipeComponents.semiFinishedId, s.id));
+        usedCount = Number(c1[0]?.n || 0) + Number(c2[0]?.n || 0);
+      } catch {}
+      out.push({ type: "semi_finished", id: s.id, name: s.name, code: s.code, usedInRecipes: usedCount });
+    }
+  } catch (e) {
+    console.warn("[listZeroPriceItems] semi_finished:", e);
+  }
+
+  return out;
+}
+
+export type OrphanedComponent = {
+  componentRow: "semi_finished_components" | "recipe_components";
+  componentId: string;
+  parentId: string;
+  parentName: string;
+  componentName: string;
+  brokenRef: "ingredient" | "semi_finished" | "operation";
+  brokenId: string;
+};
+
+export async function listOrphanedComponents(): Promise<OrphanedComponent[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const out: OrphanedComponent[] = [];
+
+  // Set di ID validi (fetch una volta solo)
+  const validIngIds = new Set<string>();
+  const validSemiIds = new Set<string>();
+  try {
+    const ingAll = await db.select({ id: ingredients.id }).from(ingredients);
+    for (const r of ingAll) validIngIds.add(r.id);
+  } catch {}
+  try {
+    const semiAll = await db.select({ id: semiFinishedRecipes.id }).from(semiFinishedRecipes);
+    for (const r of semiAll) validSemiIds.add(r.id);
+  } catch {}
+
+  // semi_finished_components
+  try {
+    const sfRows = await db
+      .select({
+        id: semiFinishedComponents.id,
+        parentId: semiFinishedComponents.semiFinishedRecipeId,
+        componentName: semiFinishedComponents.componentName,
+        ingredientId: semiFinishedComponents.ingredientId,
+        childSemiFinishedId: semiFinishedComponents.childSemiFinishedId,
+        parentName: semiFinishedRecipes.name,
+      })
+      .from(semiFinishedComponents)
+      .leftJoin(semiFinishedRecipes, eq(semiFinishedComponents.semiFinishedRecipeId, semiFinishedRecipes.id));
+    for (const r of sfRows) {
+      if (r.ingredientId && !validIngIds.has(r.ingredientId)) {
+        out.push({
+          componentRow: "semi_finished_components",
+          componentId: r.id,
+          parentId: r.parentId,
+          parentName: r.parentName || "(sconosciuto)",
+          componentName: r.componentName,
+          brokenRef: "ingredient",
+          brokenId: r.ingredientId,
+        });
+      }
+      if (r.childSemiFinishedId && !validSemiIds.has(r.childSemiFinishedId)) {
+        out.push({
+          componentRow: "semi_finished_components",
+          componentId: r.id,
+          parentId: r.parentId,
+          parentName: r.parentName || "(sconosciuto)",
+          componentName: r.componentName,
+          brokenRef: "semi_finished",
+          brokenId: r.childSemiFinishedId,
+        });
+      }
+    }
+  } catch (e) {
+    console.warn("[listOrphanedComponents] semi_finished_components:", e);
+  }
+
+  // recipe_components
+  try {
+    const rcRows = await db
+      .select({
+        id: recipeComponents.id,
+        parentId: recipeComponents.recipeId,
+        componentName: recipeComponents.componentName,
+        ingredientId: recipeComponents.ingredientId,
+        semiFinishedId: recipeComponents.semiFinishedId,
+        parentName: finalRecipes.name,
+      })
+      .from(recipeComponents)
+      .leftJoin(finalRecipes, eq(recipeComponents.recipeId, finalRecipes.id));
+    for (const r of rcRows) {
+      if (r.ingredientId && !validIngIds.has(r.ingredientId)) {
+        out.push({
+          componentRow: "recipe_components",
+          componentId: r.id,
+          parentId: r.parentId,
+          parentName: r.parentName || "(sconosciuto)",
+          componentName: r.componentName,
+          brokenRef: "ingredient",
+          brokenId: r.ingredientId,
+        });
+      }
+      if (r.semiFinishedId && !validSemiIds.has(r.semiFinishedId)) {
+        out.push({
+          componentRow: "recipe_components",
+          componentId: r.id,
+          parentId: r.parentId,
+          parentName: r.parentName || "(sconosciuto)",
+          componentName: r.componentName,
+          brokenRef: "semi_finished",
+          brokenId: r.semiFinishedId,
+        });
+      }
+    }
+  } catch (e) {
+    console.warn("[listOrphanedComponents] recipe_components:", e);
+  }
+
+  return out;
+}
+
+/** Risolve un componente unmatched/orfano associandolo a un ingrediente o semilavorato esistente. */
+export async function resolveComponent(args: {
+  componentRow: "semi_finished_components" | "recipe_components";
+  componentId: string;
+  targetType: "ingredient" | "semi_finished";
+  targetId: string;
+}): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Carica nome e prezzo del target
+  let targetName = "";
+  let targetPrice: string | null = null;
+  if (args.targetType === "ingredient") {
+    const [ing] = await db.select().from(ingredients).where(eq(ingredients.id, args.targetId)).limit(1);
+    if (!ing) throw new Error("Ingrediente non trovato");
+    targetName = ing.name;
+    targetPrice = ing.pricePerKgOrUnit;
+  } else {
+    const [semi] = await db.select().from(semiFinishedRecipes).where(eq(semiFinishedRecipes.id, args.targetId)).limit(1);
+    if (!semi) throw new Error("Semilavorato non trovato");
+    targetName = semi.name;
+    targetPrice = semi.finalPricePerKg;
+  }
+
+  if (args.componentRow === "semi_finished_components") {
+    await db
+      .update(semiFinishedComponents)
+      .set({
+        ingredientId: args.targetType === "ingredient" ? args.targetId : null,
+        childSemiFinishedId: args.targetType === "semi_finished" ? args.targetId : null,
+        operationId: null,
+        componentName: targetName,
+        priceSnapshot: targetPrice,
+      })
+      .where(eq(semiFinishedComponents.id, args.componentId));
+  } else {
+    await db
+      .update(recipeComponents)
+      .set({
+        ingredientId: args.targetType === "ingredient" ? args.targetId : null,
+        semiFinishedId: args.targetType === "semi_finished" ? args.targetId : null,
+        operationId: null,
+        componentName: targetName,
+        priceSnapshot: targetPrice,
+      })
+      .where(eq(recipeComponents.id, args.componentId));
+  }
 }

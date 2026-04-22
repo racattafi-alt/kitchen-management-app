@@ -1704,12 +1704,15 @@ const adminImportRouter = router({
         um: z.number(),
         eur_riga: z.number(),
       })),
-      metadata: z.record(z.object({
-        name: z.string().optional(),
-        category: z.enum(["SPEZIE", "SALSE", "VERDURA", "CARNE", "ALTRO"]).optional(),
-        shelfLifeDays: z.number().optional(),
-        storageMethod: z.string().optional(),
-      })).optional(),
+      metadata: z.record(
+        z.string(),
+        z.object({
+          name: z.string().optional(),
+          category: z.enum(["SPEZIE", "SALSE", "VERDURA", "CARNE", "ALTRO"]).optional(),
+          shelfLifeDays: z.number().optional(),
+          storageMethod: z.string().optional(),
+        })
+      ).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
@@ -1720,6 +1723,44 @@ const adminImportRouter = router({
         input.metadata ?? {},
         ctx.currentStoreId
       );
+    }),
+});
+
+const recipeDebugRouter = router({
+  listUnmatched: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+      throw new Error("Unauthorized");
+    }
+    return db.listUnmatchedComponents();
+  }),
+
+  listZeroPrice: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+      throw new Error("Unauthorized");
+    }
+    return db.listZeroPriceItems();
+  }),
+
+  listOrphaned: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+      throw new Error("Unauthorized");
+    }
+    return db.listOrphanedComponents();
+  }),
+
+  resolve: protectedProcedure
+    .input(z.object({
+      componentRow: z.enum(["semi_finished_components", "recipe_components"]),
+      componentId: z.string(),
+      targetType: z.enum(["ingredient", "semi_finished"]),
+      targetId: z.string(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      await db.resolveComponent(input);
+      return { success: true };
     }),
 });
 
@@ -1750,6 +1791,7 @@ export const appRouter = router({
   foodMatrixV2: foodMatrixV2Router,
   system: systemRouter,
   adminImport: adminImportRouter,
+  recipeDebug: recipeDebugRouter,
 });
 
 export type AppRouter = typeof appRouter;

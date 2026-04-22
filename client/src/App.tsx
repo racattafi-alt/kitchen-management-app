@@ -33,6 +33,7 @@ import MultiStoreEditor from "./pages/MultiStoreEditor";
 import LocalLogin from "./pages/LocalLogin";
 import PriceUpdate from "./pages/PriceUpdate";
 import ImportRecipes from "./pages/ImportRecipes";
+import RecipeDebug from "./pages/RecipeDebug";
 
 function Router() {
   return (
@@ -67,6 +68,7 @@ function Router() {
       <Route path={"/fridges"} component={Fridges} />
       <Route path={"/documents"} component={DocumentArchive} />
       <Route path={"/import-recipes"} component={ImportRecipes} />
+      <Route path={"/recipe-debug"} component={RecipeDebug} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
