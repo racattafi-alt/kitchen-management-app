@@ -271,6 +271,7 @@ export default function RecipeDebug() {
                           <TableHead>Componente (nome TSV)</TableHead>
                           <TableHead className="text-right">Qty</TableHead>
                           <TableHead>UM</TableHead>
+                          <TableHead>Suggerimento</TableHead>
                           <TableHead className="text-right">Azione</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -291,19 +292,64 @@ export default function RecipeDebug() {
                             <TableCell>{c.componentName}</TableCell>
                             <TableCell className="text-right font-mono">{parseFloat(c.quantity).toFixed(3)}</TableCell>
                             <TableCell>{c.unit || "-"}</TableCell>
+                            <TableCell>
+                              {c.suggestion ? (
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  {c.suggestion.type === "ingredient" ? (
+                                    <Package className="h-3.5 w-3.5 text-green-600 shrink-0" />
+                                  ) : (
+                                    <ChefHat className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                                  )}
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-medium truncate">{c.suggestion.name}</p>
+                                    <div className="flex items-center gap-1.5 text-xs">
+                                      <Badge
+                                        variant="outline"
+                                        className={c.suggestion.confidence === "exact" ? "text-green-700 border-green-300" : "text-yellow-700 border-yellow-300"}
+                                      >
+                                        {c.suggestion.confidence === "exact" ? "esatto" : "parziale"}
+                                      </Badge>
+                                      <span className="text-muted-foreground">€ {c.suggestion.price.toFixed(2)}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">Nessun match</span>
+                              )}
+                            </TableCell>
                             <TableCell className="text-right">
-                              <ComponentResolver
-                                defaultQuery={c.componentName}
-                                disabled={resolveMutation.isPending}
-                                onSelect={(t) =>
-                                  resolveMutation.mutate({
-                                    componentRow: c.componentRow,
-                                    componentId: c.componentId,
-                                    targetType: t.type,
-                                    targetId: t.id,
-                                  })
-                                }
-                              />
+                              <div className="flex justify-end gap-2">
+                                {c.suggestion && (
+                                  <Button
+                                    size="sm"
+                                    variant="default"
+                                    disabled={resolveMutation.isPending}
+                                    onClick={() =>
+                                      resolveMutation.mutate({
+                                        componentRow: c.componentRow,
+                                        componentId: c.componentId,
+                                        targetType: c.suggestion!.type,
+                                        targetId: c.suggestion!.id,
+                                      })
+                                    }
+                                  >
+                                    <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
+                                    Usa
+                                  </Button>
+                                )}
+                                <ComponentResolver
+                                  defaultQuery={c.componentName}
+                                  disabled={resolveMutation.isPending}
+                                  onSelect={(t) =>
+                                    resolveMutation.mutate({
+                                      componentRow: c.componentRow,
+                                      componentId: c.componentId,
+                                      targetType: t.type,
+                                      targetId: t.id,
+                                    })
+                                  }
+                                />
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}

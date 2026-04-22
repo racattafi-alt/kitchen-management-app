@@ -1067,15 +1067,30 @@ export async function getRecipeComponents(recipeId: string): Promise<RelationalC
           sortOrder: r.sortOrder,
         };
       }
+      if (r.operationId) {
+        return {
+          id: r.id,
+          type: "operation" as const,
+          componentId: r.operationId,
+          componentName: r.opName || r.componentName || 'Sconosciuto',
+          quantity: parseFloat(r.quantity as any),
+          unit: r.unitSnapshot || "ore",
+          pricePerUnit: parseFloat((r.opRate ?? r.priceSnapshot ?? "0") as any),
+          costType: r.opCostType || undefined,
+          sortOrder: r.sortOrder,
+        };
+      }
+      // Tutti gli ID NULL → componente "pending" (non collegato).
+      // Manteniamo il nome inserito dal TSV/utente; type default "ingredient"
+      // perché è il caso più comune e permette al form di riconoscerlo.
       return {
         id: r.id,
-        type: "operation" as const,
-        componentId: r.operationId!,
-        componentName: r.opName || r.componentName || 'Sconosciuto',
+        type: "ingredient" as const,
+        componentId: "",
+        componentName: r.componentName || '(senza nome)',
         quantity: parseFloat(r.quantity as any),
-        unit: r.unitSnapshot || "ore",
-        pricePerUnit: parseFloat((r.opRate ?? r.priceSnapshot ?? "0") as any),
-        costType: r.opCostType || undefined,
+        unit: r.unitSnapshot || "kg",
+        pricePerUnit: parseFloat((r.priceSnapshot ?? "0") as any),
         sortOrder: r.sortOrder,
       };
     });
@@ -1103,18 +1118,23 @@ export async function setRecipeComponents(recipeId: string, comps: ComponentInpu
 
   if (comps.length === 0) return;
 
-  const rows: InsertRecipeComponent[] = comps.map((c, i) => ({
-    id: crypto.randomUUID(),
-    recipeId,
-    ingredientId: c.type === "ingredient" ? c.componentId : null,
-    semiFinishedId: c.type === "semi_finished" ? c.componentId : null,
-    operationId: c.type === "operation" ? c.componentId : null,
-    componentName: c.componentName,
-    quantity: String(c.quantity),
-    unitSnapshot: c.unit || null,
-    priceSnapshot: c.pricePerUnit != null ? String(c.pricePerUnit) : null,
-    sortOrder: i,
-  }));
+  const rows: InsertRecipeComponent[] = comps.map((c, i) => {
+    // Se componentId è vuoto → componente "pending" (tutti gli ID a NULL,
+    // preserviamo il componentName per non perdere il riferimento).
+    const hasId = !!c.componentId;
+    return {
+      id: crypto.randomUUID(),
+      recipeId,
+      ingredientId: hasId && c.type === "ingredient" ? c.componentId : null,
+      semiFinishedId: hasId && c.type === "semi_finished" ? c.componentId : null,
+      operationId: hasId && c.type === "operation" ? c.componentId : null,
+      componentName: c.componentName || '(senza nome)',
+      quantity: String(c.quantity),
+      unitSnapshot: c.unit || null,
+      priceSnapshot: c.pricePerUnit != null ? String(c.pricePerUnit) : null,
+      sortOrder: i,
+    };
+  });
 
   await db.insert(recipeComponents).values(rows as any);
 }
@@ -1179,15 +1199,28 @@ export async function getSemiFinishedComponentsRelational(semiFinishedId: string
           sortOrder: r.sortOrder,
         };
       }
+      if (r.operationId) {
+        return {
+          id: r.id,
+          type: "operation" as const,
+          componentId: r.operationId,
+          componentName: r.opName || r.componentName || 'Sconosciuto',
+          quantity: parseFloat(r.quantity as any),
+          unit: r.unitSnapshot || "ore",
+          pricePerUnit: parseFloat((r.opRate ?? r.priceSnapshot ?? "0") as any),
+          costType: r.opCostType || undefined,
+          sortOrder: r.sortOrder,
+        };
+      }
+      // Tutti gli ID NULL → componente "pending"
       return {
         id: r.id,
-        type: "operation" as const,
-        componentId: r.operationId!,
-        componentName: r.opName || r.componentName || 'Sconosciuto',
+        type: "ingredient" as const,
+        componentId: "",
+        componentName: r.componentName || '(senza nome)',
         quantity: parseFloat(r.quantity as any),
-        unit: r.unitSnapshot || "ore",
-        pricePerUnit: parseFloat((r.opRate ?? r.priceSnapshot ?? "0") as any),
-        costType: r.opCostType || undefined,
+        unit: r.unitSnapshot || "kg",
+        pricePerUnit: parseFloat((r.priceSnapshot ?? "0") as any),
         sortOrder: r.sortOrder,
       };
     });
@@ -1224,7 +1257,7 @@ export async function setSemiFinishedComponents(semiFinishedId: string, comps: C
       ingredientId: hasId && c.type === "ingredient" ? c.componentId : null,
       childSemiFinishedId: hasId && c.type === "semi_finished" ? c.componentId : null,
       operationId: hasId && c.type === "operation" ? c.componentId : null,
-      componentName: c.componentName,
+      componentName: c.componentName || '(senza nome)',
       quantity: String(c.quantity),
       unitSnapshot: c.unit || null,
       priceSnapshot: c.pricePerUnit != null ? String(c.pricePerUnit) : null,
@@ -1548,11 +1581,42 @@ export type UnmatchedComponent = {
   componentName: string;
   quantity: string;
   unit: string | null;
+  // Suggerimento automatico di match (fuzzy sul componentName)
+  suggestion?: {
+    type: "ingredient" | "semi_finished";
+    id: string;
+    name: string;
+    price: number;
+    confidence: "exact" | "partial";
+  };
 };
 
 export async function listUnmatchedComponents(): Promise<UnmatchedComponent[]> {
   const db = await getDb();
   if (!db) return [];
+
+  // Carico ingredienti e semi una volta sola per calcolare i suggerimenti
+  const allIngs = await db
+    .select({ id: ingredients.id, name: ingredients.name, price: ingredients.pricePerKgOrUnit })
+    .from(ingredients);
+  const allSemis = await db
+    .select({ id: semiFinishedRecipes.id, name: semiFinishedRecipes.name, price: semiFinishedRecipes.finalPricePerKg })
+    .from(semiFinishedRecipes);
+
+  const suggest = (name: string): UnmatchedComponent["suggestion"] => {
+    if (!name || name === '(senza nome)') return undefined;
+    const ing = fuzzyMatchCandidate(name, allIngs);
+    if (ing) {
+      const row = allIngs.find((i) => i.id === ing.id)!;
+      return { type: "ingredient", id: ing.id, name: ing.name, price: parseFloat(row.price || "0"), confidence: ing.confidence };
+    }
+    const semi = fuzzyMatchCandidate(name, allSemis);
+    if (semi) {
+      const row = allSemis.find((s) => s.id === semi.id)!;
+      return { type: "semi_finished", id: semi.id, name: semi.name, price: parseFloat(row.price || "0"), confidence: semi.confidence };
+    }
+    return undefined;
+  };
 
   const out: UnmatchedComponent[] = [];
 
@@ -1587,6 +1651,7 @@ export async function listUnmatchedComponents(): Promise<UnmatchedComponent[]> {
         componentName: r.componentName,
         quantity: String(r.quantity),
         unit: r.unit,
+        suggestion: suggest(r.componentName),
       });
     }
   } catch (e) {
@@ -1624,6 +1689,7 @@ export async function listUnmatchedComponents(): Promise<UnmatchedComponent[]> {
         componentName: r.componentName,
         quantity: String(r.quantity),
         unit: r.unit,
+        suggestion: suggest(r.componentName),
       });
     }
   } catch (e) {
