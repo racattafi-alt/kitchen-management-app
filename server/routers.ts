@@ -535,6 +535,16 @@ const semiFinishedRouter = router({
       }
       return;
     }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      await db.deleteSemiFinished(input.id);
+      return { success: true };
+    }),
 });
 
 // ============ PROCEDURE FOOD MATRIX ============

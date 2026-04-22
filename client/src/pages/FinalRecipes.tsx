@@ -9,8 +9,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
-import { ChefHat, Plus, Eye, Pencil, Trash2, Search, FileSpreadsheet, History, EyeOff, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChefHat, Plus, Eye, Pencil, Trash2, Search, FileSpreadsheet, History, EyeOff, ArrowLeft, ChevronLeft, ChevronRight, Package } from "lucide-react";
 import RecipeForm, { ComponentWithDetails } from "@/components/RecipeForm";
+import RecipeDetailDialog from "@/components/RecipeDetailDialog";
 import Breadcrumb from "@/components/Breadcrumb";
 import { toast } from "sonner";
 import { useState, useMemo, useCallback } from "react";
@@ -76,7 +77,9 @@ export default function FinalRecipes() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+  const [filterType, setFilterType] = useState<'all' | 'final' | 'semi'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'hidden'>('all');
+  const [selectedSemiId, setSelectedSemiId] = useState<string | null>(null);
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<any>(null);
@@ -102,30 +105,52 @@ export default function FinalRecipes() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchType, setSearchType] = useState<'ingredient' | 'semi_finished' | 'operation'>('ingredient');
   
-  const { data: allRecipes, isLoading } = trpc.finalRecipes.list.useQuery();
-  // Filtra solo ricette finali (escludendo semilavorati che potrebbero essere nella tabella)
-  const allFinalRecipes = allRecipes?.filter((r: any) => r.category && ['Pane', 'Carne', 'Salse', 'Verdure', 'Formaggi', 'Altro'].includes(r.category)) || [];
-  
-  // Applica filtro stato (attive/nascoste) e ricerca
+  const { data: allRecipes, isLoading: loadingFinal } = trpc.finalRecipes.list.useQuery();
+  const { data: semiFinishedList, isLoading: loadingSemi } = trpc.semiFinished.list.useQuery();
+  const isLoading = loadingFinal || loadingSemi;
+
+  // Lista unificata: tutte le ricette finali + tutti i semilavorati
+  // _source discrimina l'origine per filtri e azioni differenti
+  const allItems = useMemo(() => {
+    const fromFinal = (allRecipes || []).map((r: any) => ({ ...r, _source: 'final' as const }));
+    const fromSemi = (semiFinishedList || []).map((s: any) => ({ ...s, _source: 'semi' as const }));
+    return [...fromFinal, ...fromSemi];
+  }, [allRecipes, semiFinishedList]);
+
+  // Conteggi per il filtro tipo
+  const countFinal = (allRecipes || []).length;
+  const countSemi = (semiFinishedList || []).length;
+  const countAll = countFinal + countSemi;
+
+  // Ricette finali (per conteggi active/hidden) — solo dal DB finale
+  const allFinalRecipes = allRecipes || [];
+
+  // Applica filtro tipo + stato + ricerca
   const recipes = useMemo(() => {
-    return allFinalRecipes.filter((r: any) => {
-      // Filtro stato
-      if (filterStatus === 'active' && r.isActive === false) return false;
-      if (filterStatus === 'hidden' && r.isActive !== false) return false;
-      
+    return allItems.filter((r: any) => {
+      // Filtro tipo — "aperto": un finalRecipe con isSemiFinished compare anche in semi
+      if (filterType === 'final') return r._source === 'final';
+      if (filterType === 'semi') return r._source === 'semi' || !!r.isSemiFinished;
+
+      // Filtro stato: si applica solo alle ricette finali (i semi non hanno isActive)
+      if (r._source === 'final') {
+        if (filterStatus === 'active' && r.isActive === false) return false;
+        if (filterStatus === 'hidden' && r.isActive !== false) return false;
+      }
+
       // Filtro ricerca
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
         return (
           r.name.toLowerCase().includes(query) ||
-          r.code.toLowerCase().includes(query) ||
+          (r.code || '').toLowerCase().includes(query) ||
           (r.category && r.category.toLowerCase().includes(query))
         );
       }
-      
+
       return true;
     });
-  }, [allFinalRecipes, filterStatus, searchQuery]);
+  }, [allItems, filterType, filterStatus, searchQuery]);
 
   // Paginazione
   const totalPages = recipes ? Math.ceil(recipes.length / itemsPerPage) : 0;
@@ -189,6 +214,18 @@ export default function FinalRecipes() {
     },
   });
 
+  const deleteSemiMutation = trpc.semiFinished.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Semilavorato eliminato!");
+      setIsDeleteDialogOpen(false);
+      setRecipeToDelete(null);
+      utils.semiFinished.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Errore eliminazione semilavorato");
+    },
+  });
+
   const deleteMutation = trpc.finalRecipes.delete.useMutation({
     onSuccess: () => {
       toast.success("Ricetta eliminata con successo!");
@@ -203,6 +240,7 @@ export default function FinalRecipes() {
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [recipeToDelete, setRecipeToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [deleteIsSemi, setDeleteIsSemi] = useState(false);
 
   const { data: recipeDetails } = trpc.finalRecipes.getDetails.useQuery(
     { id: selectedRecipeId! },
@@ -583,15 +621,15 @@ export default function FinalRecipes() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <Breadcrumb items={[{ label: "Ricette Finali" }]} />
+        <Breadcrumb items={[{ label: "Ricette" }]} />
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => window.location.href = '/dashboard'}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">Ricette Finali</h1>
-              <p className="text-slate-600 mt-1">Piatti pronti per il menu (Livello 2)</p>
+              <h1 className="text-3xl font-bold text-slate-900">Ricette</h1>
+              <p className="text-slate-600 mt-1">Ricette finali e semilavorati</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -613,32 +651,56 @@ export default function FinalRecipes() {
                 <ChefHat className="h-5 w-5 text-orange-600" />
                 Lista Ricette
               </CardTitle>
+
+              {/* Filtro tipo — pill buttons */}
+              <div className="flex flex-wrap gap-2">
+                {([
+                  { value: 'all',   label: `Tutte (${countAll})` },
+                  { value: 'final', label: `Ricette Finali (${countFinal})` },
+                  { value: 'semi',  label: `Semilavorati (${countSemi})` },
+                ] as const).map(({ value, label }) => (
+                  <button
+                    key={value}
+                    onClick={() => { setFilterType(value); setCurrentPage(1); }}
+                    className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                      filterType === value
+                        ? 'bg-orange-600 text-white border-orange-600'
+                        : 'bg-white text-slate-600 border-slate-300 hover:border-orange-400'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
               <div className="flex flex-col sm:flex-row gap-2">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
                     type="text"
-                    placeholder="Cerca ricetta..."
+                    placeholder="Cerca per nome, codice, categoria..."
                     value={searchQuery}
                     onChange={(e) => handleSearchChange(e.target.value)}
                     className="pl-10 h-10"
                   />
                 </div>
-                <Select value={filterStatus} onValueChange={(value: any) => handleFilterChange(value)}>
-                <SelectTrigger className="w-full sm:w-[180px] h-10">
-                  <SelectValue placeholder="Filtra per stato" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tutte ({allFinalRecipes.length})</SelectItem>
-                  <SelectItem value="active">Solo Attive ({allFinalRecipes.filter((r: any) => r.isActive !== false).length})</SelectItem>
-                  <SelectItem value="hidden">Solo Nascoste ({allFinalRecipes.filter((r: any) => r.isActive === false).length})</SelectItem>
-                </SelectContent>
-              </Select>
+                {(filterType === 'all' || filterType === 'final') && (
+                  <Select value={filterStatus} onValueChange={(value: any) => handleFilterChange(value)}>
+                    <SelectTrigger className="w-full sm:w-[180px] h-10">
+                      <SelectValue placeholder="Stato ricette" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tutte le ricette</SelectItem>
+                      <SelectItem value="active">Solo Attive ({(allFinalRecipes as any[]).filter((r: any) => r.isActive !== false).length})</SelectItem>
+                      <SelectItem value="hidden">Solo Nascoste ({(allFinalRecipes as any[]).filter((r: any) => r.isActive === false).length})</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </div>
             {searchQuery.trim() && (
               <p className="text-sm text-slate-500 mt-2">
-                {recipes.length} ricette trovate su {allFinalRecipes.length} totali
+                {recipes.length} risultati su {countAll} totali
               </p>
             )}
           </CardHeader>
@@ -647,130 +709,156 @@ export default function FinalRecipes() {
               <div className="text-center py-8">Caricamento...</div>
             ) : recipes && recipes.length > 0 ? (
               <div className="space-y-4">
-                {paginatedRecipes?.map((item: any) => (
-                  <div key={item.id} className="p-3 md:p-4 border rounded-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:bg-slate-50">
+                {paginatedRecipes?.map((item: any) => {
+                  const isSemi = item._source === 'semi';
+                  return (
+                  <div key={`${item._source}:${item.id}`} className={`p-3 md:p-4 border rounded-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:bg-slate-50 ${isSemi ? 'border-l-4 border-l-purple-400' : ''}`}>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
+                        {isSemi
+                          ? <Package className="h-4 w-4 text-purple-600 shrink-0" />
+                          : <ChefHat className="h-4 w-4 text-orange-600 shrink-0" />}
                         <h3 className="font-semibold text-sm md:text-base truncate">{item.name}</h3>
-                        {item.isSemiFinished && (
+                        {isSemi && (
                           <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
                             Semilavorato
                           </span>
                         )}
-                        {item.isSellable && (
+                        {!isSemi && item.isSemiFinished && (
+                          <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
+                            Anche semi
+                          </span>
+                        )}
+                        {!isSemi && item.isSellable && (
                           <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
                             Vendibile
                           </span>
                         )}
-                        {item.isActive === false && (
+                        {!isSemi && item.isActive === false && (
                           <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
                             Nascosta
                           </span>
                         )}
-                        {/* Badge Unità Misura */}
-                        {item.measurementType === 'weight_only' && (
-                          <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">
-                            Solo kg
-                          </span>
+                        {!isSemi && item.measurementType === 'weight_only' && (
+                          <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">Solo kg</span>
                         )}
-                        {item.measurementType === 'unit_only' && (
-                          <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">
-                            Solo pezzi
-                          </span>
+                        {!isSemi && item.measurementType === 'unit_only' && (
+                          <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">Solo pezzi</span>
                         )}
-                        {item.measurementType === 'both' && (
-                          <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">
-                            kg + pezzi
-                          </span>
+                        {!isSemi && item.measurementType === 'both' && (
+                          <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">kg + pezzi</span>
                         )}
-                        {/* Badge Allergeni */}
-                        <RecipeAllergensBadge recipeId={item.id} />
+                        {!isSemi && <RecipeAllergensBadge recipeId={item.id} />}
                       </div>
-                      <p className="text-xs md:text-sm text-slate-500">Codice: {item.code}</p>
+
+                      <p className="text-xs md:text-sm text-slate-500">Codice: {item.code || '—'}</p>
                       <p className="text-xs md:text-sm text-slate-600 mt-1">
                         Categoria: <span className="font-medium">{item.category}</span>
                       </p>
-                      {item.totalCost && (
-                        <div className="text-xs md:text-sm text-slate-600 mt-2 space-y-1">
+
+                      {/* Prezzi — campo diverso per final vs semi */}
+                      {isSemi ? (
+                        <div className="text-xs md:text-sm text-slate-600 mt-2 space-y-0.5">
                           <div>
-                            <span className="text-slate-500">Costo:</span>{' '}
-                            <span className="font-medium text-green-600">€ {parseFloat(item.totalCost).toFixed(2)}</span>
+                            <span className="text-slate-500">€/kg:</span>{' '}
+                            <span className="font-medium text-blue-600">
+                              € {parseFloat(item.finalPricePerKg || '0').toFixed(2)}/kg
+                            </span>
                           </div>
-                          {item.unitWeight && (
+                          {item.shelfLifeDays && (
                             <div>
-                              <span className="text-slate-500">€/kg:</span>{' '}
-                              <span className="font-medium text-blue-600">
-                                € {(parseFloat(item.totalCost) / parseFloat(item.unitWeight)).toFixed(2)}/kg
-                              </span>
-                              <span className="text-slate-400 ml-1 text-xs">(peso: {parseFloat(item.unitWeight).toFixed(2)} kg)</span>
-                            </div>
-                          )}
-                          {item.producedQuantity && (
-                            <div>
-                              <span className="text-slate-500">Prezzo unitario:</span>{' '}
-                              <span className="font-medium text-purple-600">
-                                € {(parseFloat(item.totalCost) / parseFloat(item.producedQuantity)).toFixed(2)}/unità
-                              </span>
-                              <span className="text-slate-400 ml-2">(quantità prodotta: {parseFloat(item.producedQuantity).toFixed(0)} unità)</span>
+                              <span className="text-slate-500">Shelf life:</span>{' '}
+                              <span>{item.shelfLifeDays} giorni — {item.storageMethod || '—'}</span>
                             </div>
                           )}
                         </div>
+                      ) : (
+                        item.totalCost && (
+                          <div className="text-xs md:text-sm text-slate-600 mt-2 space-y-1">
+                            <div>
+                              <span className="text-slate-500">Costo:</span>{' '}
+                              <span className="font-medium text-green-600">€ {parseFloat(item.totalCost).toFixed(2)}</span>
+                            </div>
+                            {item.unitWeight && (
+                              <div>
+                                <span className="text-slate-500">€/kg:</span>{' '}
+                                <span className="font-medium text-blue-600">
+                                  € {(parseFloat(item.totalCost) / parseFloat(item.unitWeight)).toFixed(2)}/kg
+                                </span>
+                                <span className="text-slate-400 ml-1 text-xs">(peso: {parseFloat(item.unitWeight).toFixed(2)} kg)</span>
+                              </div>
+                            )}
+                            {item.producedQuantity && (
+                              <div>
+                                <span className="text-slate-500">Prezzo unitario:</span>{' '}
+                                <span className="font-medium text-purple-600">
+                                  € {(parseFloat(item.totalCost) / parseFloat(item.producedQuantity)).toFixed(2)}/unità
+                                </span>
+                                <span className="text-slate-400 ml-2">(quantità prodotta: {parseFloat(item.producedQuantity).toFixed(0)} unità)</span>
+                              </div>
+                            )}
+                          </div>
+                        )
                       )}
                     </div>
+
+                    {/* Azioni */}
                     <div className="flex flex-wrap gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setSelectedRecipeId(item.id)}
+                        onClick={() => isSemi ? setSelectedSemiId(item.id) : setSelectedRecipeId(item.id)}
                         className="h-9"
                       >
                         <Eye className="h-4 w-4 sm:mr-2" />
                         <span className="hidden sm:inline">Dettagli</span>
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(item)}
-                        className="h-9"
-                      >
-                        <Pencil className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Modifica</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedRecipeForHistory(item.id);
-                          setIsVersionHistoryOpen(true);
-                        }}
-                        className="h-9"
-                      >
-                        <History className="h-4 w-4 sm:mr-2" />
-                        Storico
-                      </Button>
-                      <Button
-                        variant={item.isActive === false ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => toggleActiveMutation.mutate({ id: item.id, isActive: !item.isActive })}
-                      >
-                        {item.isActive === false ? (
-                          <>
-                            <Eye className="h-4 w-4 mr-2" />
-                            Attiva
-                          </>
-                        ) : (
-                          <>
-                            <EyeOff className="h-4 w-4 mr-2" />
-                            Nascondi
-                          </>
-                        )}
-                      </Button>
+
+                      {!isSemi && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(item)}
+                            className="h-9"
+                          >
+                            <Pencil className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Modifica</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedRecipeForHistory(item.id);
+                              setIsVersionHistoryOpen(true);
+                            }}
+                            className="h-9"
+                          >
+                            <History className="h-4 w-4 sm:mr-2" />
+                            Storico
+                          </Button>
+                          <Button
+                            variant={item.isActive === false ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => toggleActiveMutation.mutate({ id: item.id, isActive: !item.isActive })}
+                          >
+                            {item.isActive === false ? (
+                              <><Eye className="h-4 w-4 mr-2" />Attiva</>
+                            ) : (
+                              <><EyeOff className="h-4 w-4 mr-2" />Nascondi</>
+                            )}
+                          </Button>
+                        </>
+                      )}
+
                       <Button
                         variant="destructive"
                         size="sm"
                         onClick={() => {
                           setRecipeToDelete({ id: item.id, name: item.name });
                           setIsDeleteDialogOpen(true);
+                          // Salva il tipo per il confirm dialog
+                          setDeleteIsSemi(isSemi);
                         }}
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
@@ -778,7 +866,8 @@ export default function FinalRecipes() {
                       </Button>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
 
                 {/* Controlli Paginazione */}
                 {totalPages > 1 && (
@@ -1124,7 +1213,8 @@ export default function FinalRecipes() {
           <DialogHeader>
             <DialogTitle>Conferma Eliminazione</DialogTitle>
             <DialogDescription>
-              Sei sicuro di voler eliminare la ricetta <strong>{recipeToDelete?.name}</strong>?
+              Sei sicuro di voler eliminare {deleteIsSemi ? 'il semilavorato' : 'la ricetta'}{' '}
+              <strong>{recipeToDelete?.name}</strong>?
               <br />
               <span className="text-red-600 font-medium">Questa azione è irreversibile.</span>
             </DialogDescription>
@@ -1143,16 +1233,28 @@ export default function FinalRecipes() {
               variant="destructive"
               onClick={() => {
                 if (recipeToDelete) {
-                  deleteMutation.mutate({ id: recipeToDelete.id });
+                  if (deleteIsSemi) {
+                    deleteSemiMutation.mutate({ id: recipeToDelete.id });
+                  } else {
+                    deleteMutation.mutate({ id: recipeToDelete.id });
+                  }
                 }
               }}
-              disabled={deleteMutation.isPending}
+              disabled={deleteMutation.isPending || deleteSemiMutation.isPending}
             >
-              {deleteMutation.isPending ? "Eliminazione..." : "Elimina"}
+              {(deleteMutation.isPending || deleteSemiMutation.isPending) ? "Eliminazione..." : "Elimina"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog Dettagli Semilavorato */}
+      <RecipeDetailDialog
+        recipeId={selectedSemiId}
+        recipeType="semi"
+        open={!!selectedSemiId}
+        onOpenChange={(open) => !open && setSelectedSemiId(null)}
+      />
 
       {/* Dialog Storico Versioni */}
       <VersionHistoryDialog

@@ -421,6 +421,13 @@ export async function updateSemiFinished(id: string, data: Partial<SemiFinishedR
   await db.update(semiFinishedRecipes).set(data).where(eq(semiFinishedRecipes.id, id));
 }
 
+export async function deleteSemiFinished(id: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(semiFinishedComponents).where(eq(semiFinishedComponents.semiFinishedRecipeId, id));
+  await db.delete(semiFinishedRecipes).where(eq(semiFinishedRecipes.id, id));
+}
+
 // ============ RICETTE FINALI (Livello 2) ============
 
 export async function createFinalRecipe(data: Omit<FinalRecipe, "createdAt" | "updatedAt">) {
