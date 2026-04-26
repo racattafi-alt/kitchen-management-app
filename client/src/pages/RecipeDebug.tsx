@@ -179,6 +179,18 @@ export default function RecipeDebug() {
     onError: (e) => toast.error(e.message),
   });
 
+  const recoverNamesMutation = trpc.recipeDebug.recoverNames.useMutation({
+    onSuccess: (res) => {
+      if (res.recovered === 0) {
+        toast.info("Nessun nome da recuperare (o tutti i nomi già presenti).");
+      } else {
+        toast.success(`Recuperati ${res.recovered} nomi originali dal blob JSON.`);
+      }
+      utils.recipeDebug.listUnmatched.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   const unnamedCount = unmatched.filter((c) =>
     !c.componentName || c.componentName === "(senza nome)" || c.componentName === "Sconosciuto"
   ).length;
@@ -284,7 +296,7 @@ export default function RecipeDebug() {
                 </p>
               </CardHeader>
               <CardContent>
-                {/* Banner per righe senza nome: non recuperabili, solo eliminabili */}
+                {/* Banner per righe senza nome: recuperabili dal blob o eliminabili */}
                 {unnamedCount > 0 && (
                   <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3 flex-wrap">
                     <AlertTriangle className="h-5 w-5 text-yellow-700 shrink-0 mt-0.5" />
@@ -293,10 +305,19 @@ export default function RecipeDebug() {
                         {unnamedCount} righe senza nome rilevate
                       </p>
                       <p className="text-xs text-yellow-800 mt-0.5">
-                        Queste righe sono state salvate con nome vuoto (probabile import mal formato)
-                        e non sono recuperabili. Puoi eliminarle tutte insieme.
+                        Prova prima "Recupera nomi" per ripristinare i nomi originali dal blob.
+                        Se non funziona, eliminale tutte e reimporta.
                       </p>
                     </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={recoverNamesMutation.isPending}
+                      onClick={() => recoverNamesMutation.mutate()}
+                    >
+                      <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                      {recoverNamesMutation.isPending ? "Recupero..." : "Recupera nomi"}
+                    </Button>
                     <Button
                       variant="destructive"
                       size="sm"

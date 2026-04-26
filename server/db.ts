@@ -1995,3 +1995,115 @@ export async function deleteUnnamedComponents(): Promise<{ deletedSemi: number; 
 
   return { deletedSemi, deletedFinal };
 }
+
+/**
+ * Recupera i nomi originali dal blob JSON per le righe "(senza nome)" nella
+ * tabella relazionale. Il blob `semi_finished_recipes.components` contiene i
+ * ComponentInput originali (incluso il nome TSV) anche quando non fu scritto
+ * in tabella relazionale; usiamo sortOrder come chiave di allineamento.
+ */
+export async function recoverComponentNames(): Promise<{ recovered: number }> {
+  const db = await getDb();
+  if (!db) return { recovered: 0 };
+
+  const isPlaceholder = (n: string | null | undefined) =>
+    !n || n.trim() === "" || n === "(senza nome)" || n === "Sconosciuto";
+
+  let recovered = 0;
+
+  // ── Semi-finished ──────────────────────────────────────────────────────────
+  try {
+    const sfRecipes = await db
+      .select({ id: semiFinishedRecipes.id, components: semiFinishedRecipes.components })
+      .from(semiFinishedRecipes);
+
+    for (const recipe of sfRecipes) {
+      if (!recipe.components) continue;
+      const raw = recipe.components;
+      const blob: Array<{ componentId?: string; componentName?: string }> =
+        Array.isArray(raw) ? raw : (() => { try { return JSON.parse(raw as string); } catch { return []; } })();
+      if (!Array.isArray(blob) || blob.length === 0) continue;
+
+      const relRows = await db
+        .select({
+          id: semiFinishedComponents.id,
+          sortOrder: semiFinishedComponents.sortOrder,
+          componentName: semiFinishedComponents.componentName,
+        })
+        .from(semiFinishedComponents)
+        .where(
+          and(
+            eq(semiFinishedComponents.semiFinishedRecipeId, recipe.id),
+            isNull(semiFinishedComponents.ingredientId),
+            isNull(semiFinishedComponents.childSemiFinishedId),
+            isNull(semiFinishedComponents.operationId)
+          )
+        );
+
+      for (const row of relRows) {
+        if (!isPlaceholder(row.componentName)) continue;
+        const blobEntry = blob[row.sortOrder ?? 0];
+        if (!blobEntry) continue;
+        const blobName = blobEntry.componentName;
+        if (!isPlaceholder(blobName) && blobName) {
+          await db
+            .update(semiFinishedComponents)
+            .set({ componentName: blobName })
+            .where(eq(semiFinishedComponents.id, row.id));
+          recovered++;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("[recoverComponentNames] semi_finished_components:", e);
+  }
+
+  // ── Final recipes ──────────────────────────────────────────────────────────
+  try {
+    const frRecipes = await db
+      .select({ id: finalRecipes.id, components: finalRecipes.components })
+      .from(finalRecipes);
+
+    for (const recipe of frRecipes) {
+      if (!recipe.components) continue;
+      const raw = recipe.components;
+      const blob: Array<{ componentId?: string; componentName?: string }> =
+        Array.isArray(raw) ? raw : (() => { try { return JSON.parse(raw as string); } catch { return []; } })();
+      if (!Array.isArray(blob) || blob.length === 0) continue;
+
+      const relRows = await db
+        .select({
+          id: recipeComponents.id,
+          sortOrder: recipeComponents.sortOrder,
+          componentName: recipeComponents.componentName,
+        })
+        .from(recipeComponents)
+        .where(
+          and(
+            eq(recipeComponents.recipeId, recipe.id),
+            isNull(recipeComponents.ingredientId),
+            isNull(recipeComponents.semiFinishedId),
+            isNull(recipeComponents.operationId)
+          )
+        );
+
+      for (const row of relRows) {
+        if (!isPlaceholder(row.componentName)) continue;
+        const blobEntry = blob[row.sortOrder ?? 0];
+        if (!blobEntry) continue;
+        const blobName = blobEntry.componentName;
+        if (!isPlaceholder(blobName) && blobName) {
+          await db
+            .update(recipeComponents)
+            .set({ componentName: blobName })
+            .where(eq(recipeComponents.id, row.id));
+          recovered++;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("[recoverComponentNames] recipe_components:", e);
+  }
+
+  return { recovered };
+}

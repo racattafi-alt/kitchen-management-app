@@ -1793,6 +1793,13 @@ const recipeDebugRouter = router({
       }
       return db.deleteUnnamedComponents();
     }),
+  recoverNames: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      return db.recoverComponentNames();
+    }),
 });
 
 export const appRouter = router({
