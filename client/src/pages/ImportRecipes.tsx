@@ -17,8 +17,9 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { AlertTriangle, Trash2, Upload, CheckCircle, XCircle, AlertCircle, FileSpreadsheet, Zap } from "lucide-react";
+import { AlertTriangle, Trash2, Upload, CheckCircle, XCircle, AlertCircle, FileSpreadsheet, Zap, Layers } from "lucide-react";
 import { REC_FINALE_ROWS, REC_FINALE_METADATA } from "@/data/rec-finale-seed";
+import { REC_SEMILAVORATI_ROWS, REC_SEMILAVORATI_METADATA } from "@/data/rec-semilavorati-seed";
 
 // ─── Tipi ────────────────────────────────────────────────────────────────────
 
@@ -197,6 +198,13 @@ export default function ImportRecipes() {
     });
   }
 
+  function handleSemilavoratiImport() {
+    importMutation.mutate({
+      rows: REC_SEMILAVORATI_ROWS,
+      metadata: REC_SEMILAVORATI_METADATA,
+    });
+  }
+
   function handleRecFinalePreview() {
     setParsedRows(REC_FINALE_ROWS);
     previewMutation.mutate({ rows: REC_FINALE_ROWS });
@@ -230,50 +238,85 @@ export default function ImportRecipes() {
           </p>
         </div>
 
-        {/* Quick Import REC_FINALE */}
+        {/* Quick Import — Menu 2026 (due step ordinati) */}
         <Card className="border-blue-200 bg-blue-50/40">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-blue-800 text-base">
               <Zap className="h-5 w-5" />
-              Importazione rapida — Menu 2026 (REC_FINALE)
+              Importazione rapida — Menu 2026
             </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Importa <strong>prima i semilavorati base</strong> (spezie/salse), poi le ricette REC_FINALE.
+              In quest'ordine i riferimenti incrociati (es. "Spezie pulled", "Salsa bbqribs") vengono
+              agganciati correttamente invece di restare non collegati.
+            </p>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
-              {[
-                { label: "Pane", items: ["Bun", "Brioche 5.0", "Wild", "Semi 5.0"] },
-                { label: "Salse", items: ["TFS", "Avocado", "Nutty", "Tzatziki", "Ketchup", "Memphis", "Cajun", "Senape Dijon", "Maionese", "Cheddar", "Nduja"] },
-                { label: "Verdure", items: ["Cipolla Caramellata", "Aglio Arrosto", "Coleslaw"] },
-                { label: "Carne", items: ["Pulled Pork", "Ribs", "Sovracosce", "Tenders"] },
-              ].map(({ label, items }) => (
-                <div key={label}>
-                  <p className="font-medium text-blue-900 mb-1">{label} ({items.length})</p>
-                  <ul className="text-xs text-muted-foreground space-y-0.5">
-                    {items.map((i) => <li key={i}>• {i}</li>)}
-                  </ul>
-                </div>
-              ))}
+          <CardContent className="space-y-4">
+            {/* STEP A — Semilavorati base */}
+            <div className="rounded-lg border border-blue-200 bg-white/60 p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-blue-700 text-white flex items-center justify-center text-xs font-bold">A</span>
+                <span className="font-semibold text-blue-900 flex items-center gap-1">
+                  <Layers className="h-4 w-4" /> Semilavorati base (REC_semilavorati) — 10 voci
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs text-muted-foreground pl-8">
+                {["Spezia Bacon", "Spezia Pulled", "Spezia Ribs", "Spezia Tenders", "Ketchup",
+                  "Salsa BBQ", "Salsa BBQ Ribs", "Salsa Memphis", "Senape", "Spezia Sovracosce"].map((i) => (
+                  <span key={i}>• {i}</span>
+                ))}
+              </div>
+              <div className="pl-8 pt-1">
+                <Button
+                  onClick={handleSemilavoratiImport}
+                  disabled={importMutation.isPending || previewMutation.isPending}
+                  className="bg-blue-700 hover:bg-blue-800"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  {importMutation.isPending ? "Importazione in corso..." : "Step A — Importa 10 semilavorati base"}
+                </Button>
+              </div>
             </div>
-            <div className="flex flex-wrap items-center gap-3 pt-1">
-              <Button
-                onClick={handleRecFinaleImport}
-                disabled={importMutation.isPending || previewMutation.isPending}
-                className="bg-blue-700 hover:bg-blue-800"
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                {importMutation.isPending ? "Importazione in corso..." : "Importa ora (22 ricette)"}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleRecFinalePreview}
-                disabled={previewMutation.isPending || importMutation.isPending}
-              >
-                <FileSpreadsheet className="h-4 w-4 mr-2" />
-                {previewMutation.isPending ? "Analisi..." : "Anteprima prima"}
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                Nomi e shelf-life precompilati. Cross-referenze (cipolla, aglio, maionese, ketchup) risolte automaticamente.
-              </p>
+
+            {/* STEP B — REC_FINALE */}
+            <div className="rounded-lg border border-blue-200 bg-white/60 p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-blue-700 text-white flex items-center justify-center text-xs font-bold">B</span>
+                <span className="font-semibold text-blue-900">Ricette composte (REC_FINALE) — 22 voci</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm pl-8">
+                {[
+                  { label: "Pane", items: ["Bun", "Brioche 5.0", "Wild", "Semi 5.0"] },
+                  { label: "Salse", items: ["TFS", "Avocado", "Nutty", "Tzatziki", "Ketchup", "Memphis", "Cajun", "Senape Dijon", "Maionese", "Cheddar", "Nduja"] },
+                  { label: "Verdure", items: ["Cipolla Caramellata", "Aglio Arrosto", "Coleslaw"] },
+                  { label: "Carne", items: ["Pulled Pork", "Ribs", "Sovracosce", "Tenders"] },
+                ].map(({ label, items }) => (
+                  <div key={label}>
+                    <p className="font-medium text-blue-900 mb-1">{label} ({items.length})</p>
+                    <ul className="text-xs text-muted-foreground space-y-0.5">
+                      {items.map((i) => <li key={i}>• {i}</li>)}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-wrap items-center gap-3 pl-8 pt-1">
+                <Button
+                  onClick={handleRecFinaleImport}
+                  disabled={importMutation.isPending || previewMutation.isPending}
+                  className="bg-blue-700 hover:bg-blue-800"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  {importMutation.isPending ? "Importazione in corso..." : "Step B — Importa 22 ricette"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleRecFinalePreview}
+                  disabled={previewMutation.isPending || importMutation.isPending}
+                >
+                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  {previewMutation.isPending ? "Analisi..." : "Anteprima prima"}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

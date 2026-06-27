@@ -1331,6 +1331,28 @@ function fuzzyMatchCandidate(
   return null;
 }
 
+/**
+ * Risolve un componente cercando il match migliore tra ingredienti e semilavorati.
+ * Priorità: un match ESATTO (su qualsiasi pool) vince sempre su uno PARZIALE.
+ * Questo evita che p.es. "Spezie tenders" venga agganciato per inclusione
+ * all'ingrediente "Tenders" quando esiste il semilavorato esatto "Spezie tenders".
+ * A parità di confidenza, gli ingredienti hanno la precedenza sui semilavorati.
+ */
+function matchComponentAcrossPools(
+  search: string,
+  ingredientsPool: Array<{ id: string; name: string }>,
+  semisPool: Array<{ id: string; name: string }>
+): { id: string; name: string; confidence: "exact" | "partial"; pool: "ingredient" | "semi_finished" } | null {
+  const ing = fuzzyMatchCandidate(search, ingredientsPool);
+  if (ing?.confidence === "exact") return { ...ing, pool: "ingredient" };
+  const semi = fuzzyMatchCandidate(search, semisPool);
+  if (semi?.confidence === "exact") return { ...semi, pool: "semi_finished" };
+  // nessun esatto: ripiega sui parziali, ingredienti prima
+  if (ing) return { ...ing, pool: "ingredient" };
+  if (semi) return { ...semi, pool: "semi_finished" };
+  return null;
+}
+
 /** Analizza le righe senza toccare il DB — ritorna preview del matching con prezzi live. */
 export async function previewSemiFinishedImport(rows: ImportRow[]): Promise<SlPreviewResult[]> {
   const db = await getDb();
@@ -1380,16 +1402,16 @@ export async function previewSemiFinishedImport(rows: ImportRow[]): Promise<SlPr
         tsvPricePerUnit,
       };
 
-      const ingMatch = fuzzyMatchCandidate(row.ingrediente_nome, allIngredients);
-      if (ingMatch) {
-        const livePrice = ingById.get(ingMatch.id)?.price ?? 0;
+      const match = matchComponentAcrossPools(row.ingrediente_nome, allIngredients, allSemis);
+      if (match?.pool === "ingredient") {
+        const livePrice = ingById.get(match.id)?.price ?? 0;
         const liveCost = qtyConverted * livePrice;
         totalCostDb += liveCost;
         components.push({
           ...base,
-          matchType: ingMatch.confidence === "exact" ? "ingredient_exact" : "ingredient_partial",
-          matchId: ingMatch.id,
-          matchName: ingMatch.name,
+          matchType: match.confidence === "exact" ? "ingredient_exact" : "ingredient_partial",
+          matchId: match.id,
+          matchName: match.name,
           matchedType: "ingredient",
           livePricePerUnit: livePrice,
           liveCost,
@@ -1397,16 +1419,15 @@ export async function previewSemiFinishedImport(rows: ImportRow[]): Promise<SlPr
         continue;
       }
 
-      const semiMatch = fuzzyMatchCandidate(row.ingrediente_nome, allSemis);
-      if (semiMatch) {
-        const livePrice = semiById.get(semiMatch.id)?.price ?? 0;
+      if (match?.pool === "semi_finished") {
+        const livePrice = semiById.get(match.id)?.price ?? 0;
         const liveCost = qtyConverted * livePrice;
         totalCostDb += liveCost;
         components.push({
           ...base,
-          matchType: semiMatch.confidence === "exact" ? "semi_exact" : "semi_partial",
-          matchId: semiMatch.id,
-          matchName: semiMatch.name,
+          matchType: match.confidence === "exact" ? "semi_exact" : "semi_partial",
+          matchId: match.id,
+          matchName: match.name,
           matchedType: "semi_finished",
           livePricePerUnit: livePrice,
           liveCost,
@@ -1520,24 +1541,23 @@ export async function importSemiFinishedBulk(
         const unit = row.um === 1 ? "unità" : "kg";
         if (row.um === 1000) totalQtyKg += qtyConverted;
 
-        const ingMatch = fuzzyMatchCandidate(row.ingrediente_nome, allIngredients);
-        if (ingMatch) {
+        const match = matchComponentAcrossPools(row.ingrediente_nome, allIngredients, allSemis);
+        if (match?.pool === "ingredient") {
           // Prezzo DB è la fonte di verità; se a 0 fallback al prezzo implicito TSV
-          const livePrice = ingPriceById.get(ingMatch.id) ?? 0;
+          const livePrice = ingPriceById.get(match.id) ?? 0;
           const tsvPrice = qtyConverted > 0 ? row.eur_riga / qtyConverted : 0;
           const pricePerUnit = livePrice > 0 ? livePrice : tsvPrice;
           totalCost += qtyConverted * pricePerUnit;
-          comps.push({ type: "ingredient", componentId: ingMatch.id, componentName: ingMatch.name, quantity: qtyConverted, unit, pricePerUnit });
+          comps.push({ type: "ingredient", componentId: match.id, componentName: match.name, quantity: qtyConverted, unit, pricePerUnit });
           continue;
         }
 
-        const semiMatch = fuzzyMatchCandidate(row.ingrediente_nome, allSemis);
-        if (semiMatch) {
-          const livePrice = semiPriceById.get(semiMatch.id) ?? 0;
+        if (match?.pool === "semi_finished") {
+          const livePrice = semiPriceById.get(match.id) ?? 0;
           const tsvPrice = qtyConverted > 0 ? row.eur_riga / qtyConverted : 0;
           const pricePerUnit = livePrice > 0 ? livePrice : tsvPrice;
           totalCost += qtyConverted * pricePerUnit;
-          comps.push({ type: "semi_finished", componentId: semiMatch.id, componentName: semiMatch.name, quantity: qtyConverted, unit: "kg", pricePerUnit });
+          comps.push({ type: "semi_finished", componentId: match.id, componentName: match.name, quantity: qtyConverted, unit: "kg", pricePerUnit });
           continue;
         }
 
