@@ -105,3 +105,6 @@ temp/
 *.db
 *.sqlite
 *.sqlite3
+
+# Local npm artifact (project uses pnpm)
+package-lock.json
