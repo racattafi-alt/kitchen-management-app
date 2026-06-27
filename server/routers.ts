@@ -1734,6 +1734,36 @@ const adminImportRouter = router({
         ctx.currentStoreId
       );
     }),
+
+  importFinalRecipes: protectedProcedure
+    .input(z.object({
+      rows: z.array(z.object({
+        sl_id: z.string(),
+        ingrediente_nome: z.string(),
+        qty: z.number(),
+        um: z.number(),
+        eur_riga: z.number(),
+      })),
+      metadata: z.record(
+        z.string(),
+        z.object({
+          name: z.string().optional(),
+          category: z.enum(["SPEZIE", "SALSE", "VERDURA", "CARNE", "ALTRO"]).optional(),
+          shelfLifeDays: z.number().optional(),
+          storageMethod: z.string().optional(),
+        })
+      ).optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      return db.importFinalRecipesBulk(
+        input.rows,
+        input.metadata ?? {},
+        ctx.currentStoreId
+      );
+    }),
 });
 
 const recipeDebugRouter = router({

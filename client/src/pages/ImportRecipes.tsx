@@ -136,6 +136,8 @@ export default function ImportRecipes() {
   const [preview, setPreview] = useState<SlPreview[] | null>(null);
   const [metadata, setMetadata] = useState<Record<string, SlMetadata>>({});
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  // Cosa verrà importato dalla preview di step 3: semilavorati o ricette finali.
+  const [importKind, setImportKind] = useState<"semi" | "final">("semi");
 
   const utils = trpc.useUtils();
 
@@ -176,6 +178,18 @@ export default function ImportRecipes() {
     onError: (e) => toast.error("Errore import: " + e.message),
   });
 
+  const importFinalMutation = trpc.adminImport.importFinalRecipes.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Importate ${result.created.length} ricette finali!`);
+      if (result.unmatched.length > 0) {
+        toast.warning(`${result.unmatched.length} componenti non collegati (es. riferimenti tra ricette finali). Risolvili in /recipe-debug.`);
+      }
+      utils.finalRecipes.list.invalidate();
+      setStep(4);
+    },
+    onError: (e) => toast.error("Errore import ricette: " + e.message),
+  });
+
   function handleParse() {
     const { rows, skipped } = parseTSV(tsvText);
     if (rows.length === 0) {
@@ -185,17 +199,20 @@ export default function ImportRecipes() {
     if (skipped > 0) {
       toast.warning(`${skipped} righe scartate (nome ingrediente mancante o colonne insufficienti).`);
     }
+    setImportKind("semi");
     setParsedRows(rows);
     previewMutation.mutate({ rows });
   }
 
   function handleImport() {
-    importMutation.mutate({
+    const payload = {
       rows: parsedRows,
       metadata: Object.fromEntries(
         Object.entries(metadata).map(([k, v]) => [k, v])
       ),
-    });
+    };
+    if (importKind === "final") importFinalMutation.mutate(payload);
+    else importMutation.mutate(payload);
   }
 
   function handleSemilavoratiImport() {
@@ -206,12 +223,14 @@ export default function ImportRecipes() {
   }
 
   function handleRecFinalePreview() {
+    setImportKind("final");
     setParsedRows(REC_FINALE_ROWS);
+    setMetadata(REC_FINALE_METADATA);
     previewMutation.mutate({ rows: REC_FINALE_ROWS });
   }
 
   function handleRecFinaleImport() {
-    importMutation.mutate({
+    importFinalMutation.mutate({
       rows: REC_FINALE_ROWS,
       metadata: REC_FINALE_METADATA,
     });
@@ -246,9 +265,10 @@ export default function ImportRecipes() {
               Importazione rapida — Menu 2026
             </CardTitle>
             <p className="text-xs text-muted-foreground">
-              Importa <strong>prima i semilavorati base</strong> (spezie/salse), poi le ricette REC_FINALE.
-              In quest'ordine i riferimenti incrociati (es. "Spezie pulled", "Salsa bbqribs") vengono
-              agganciati correttamente invece di restare non collegati.
+              <strong>Step A</strong>: importa i semilavorati base (REC_semilavorati) come <strong>semilavorati</strong>.
+              <strong> Step B</strong>: importa REC_FINALE come <strong>ricette finali</strong>.
+              In quest'ordine i riferimenti incrociati (es. "Spezie pulled", "Salsa bbqribs") si
+              agganciano ai semilavorati invece di restare scollegati.
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -282,7 +302,7 @@ export default function ImportRecipes() {
             <div className="rounded-lg border border-blue-200 bg-white/60 p-3 space-y-2">
               <div className="flex items-center gap-2">
                 <span className="w-6 h-6 rounded-full bg-blue-700 text-white flex items-center justify-center text-xs font-bold">B</span>
-                <span className="font-semibold text-blue-900">Ricette composte (REC_FINALE) — 22 voci</span>
+                <span className="font-semibold text-blue-900">Ricette finali (REC_FINALE) — 22 voci</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm pl-8">
                 {[
@@ -302,19 +322,19 @@ export default function ImportRecipes() {
               <div className="flex flex-wrap items-center gap-3 pl-8 pt-1">
                 <Button
                   onClick={handleRecFinaleImport}
-                  disabled={importMutation.isPending || previewMutation.isPending}
+                  disabled={importFinalMutation.isPending || importMutation.isPending || previewMutation.isPending}
                   className="bg-blue-700 hover:bg-blue-800"
                 >
                   <Upload className="h-4 w-4 mr-2" />
-                  {importMutation.isPending ? "Importazione in corso..." : "Step B — Importa 22 ricette"}
+                  {importFinalMutation.isPending ? "Importazione in corso..." : "Step B — Importa 22 ricette finali"}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={handleRecFinalePreview}
-                  disabled={previewMutation.isPending || importMutation.isPending}
+                  disabled={previewMutation.isPending || importMutation.isPending || importFinalMutation.isPending}
                 >
                   <FileSpreadsheet className="h-4 w-4 mr-2" />
-                  {previewMutation.isPending ? "Analisi..." : "Anteprima prima"}
+                  {previewMutation.isPending ? "Analisi..." : "Anteprima abbinamenti"}
                 </Button>
               </div>
             </div>
@@ -598,10 +618,12 @@ export default function ImportRecipes() {
               </Button>
               <Button
                 onClick={handleImport}
-                disabled={importMutation.isPending}
+                disabled={importMutation.isPending || importFinalMutation.isPending}
               >
                 <Upload className="h-4 w-4 mr-2" />
-                {importMutation.isPending ? "Importazione in corso..." : `Importa ${preview.length} semilavorati`}
+                {(importMutation.isPending || importFinalMutation.isPending)
+                  ? "Importazione in corso..."
+                  : `Importa ${preview.length} ${importKind === "final" ? "ricette finali" : "semilavorati"}`}
               </Button>
             </div>
           </div>
@@ -613,10 +635,13 @@ export default function ImportRecipes() {
             <CardContent className="pt-6">
               <div className="flex flex-col items-center gap-4 text-center py-8">
                 <CheckCircle className="h-16 w-16 text-green-500" />
-                <h2 className="text-2xl font-bold text-green-700">Semilavorati importati!</h2>
+                <h2 className="text-2xl font-bold text-green-700">
+                  {importKind === "final" ? "Ricette finali importate!" : "Semilavorati importati!"}
+                </h2>
                 <p className="text-muted-foreground max-w-md">
-                  Puoi ora verificare i semilavorati nella sezione Ricette Finali
-                  e procedere con l'importazione delle ricette finali.
+                  {importKind === "final"
+                    ? "Le ricette REC_FINALE sono state create come ricette finali. Controlla eventuali componenti non collegati in /recipe-debug."
+                    : "Semilavorati importati. Ora puoi procedere con lo Step B per importare le ricette finali REC_FINALE."}
                 </p>
                 <div className="flex gap-3">
                   <Button variant="outline" onClick={() => { setStep(2); setPreview(null); setParsedRows([]); setTsvText(""); }}>

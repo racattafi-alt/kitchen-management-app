@@ -1595,6 +1595,123 @@ export async function importSemiFinishedBulk(
   return { created, unmatched };
 }
 
+/** Mappa la categoria del seed (SPEZIE/SALSE/...) all'enum delle ricette finali. */
+function mapFinalRecipeCategory(
+  metaCategory: string | undefined,
+  code: string
+): "Pane" | "Carne" | "Salse" | "Verdure" | "Formaggi" | "Altro" {
+  if (/^PANE/i.test(code)) return "Pane";
+  switch ((metaCategory || "").toUpperCase()) {
+    case "SALSE": return "Salse";
+    case "VERDURA": return "Verdure";
+    case "CARNE": return "Carne";
+    case "FORMAGGI": return "Formaggi";
+    default: return "Altro";
+  }
+}
+
+/**
+ * Importa ricette FINALI (tabella final_recipes) dalle righe TSV/seed.
+ * I componenti vengono risolti contro ingredienti e semilavorati esistenti
+ * (una sola passata: una ricetta finale non può contenere un'altra ricetta
+ * finale, quindi non servono cross-riferimenti tra ricette). I componenti non
+ * risolti vengono salvati con il solo nome, visibili in /recipe-debug.
+ */
+export async function importFinalRecipesBulk(
+  rows: ImportRow[],
+  metadata: Record<string, SlMetadata>,
+  storeId: string
+): Promise<{ created: string[]; unmatched: { sl_id: string; ingrediente_nome: string }[] }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  rows = rows.filter((r) => r.ingrediente_nome && r.ingrediente_nome.trim() !== "");
+
+  const allIngredients = await db
+    .select({ id: ingredients.id, name: ingredients.name, price: ingredients.pricePerKgOrUnit })
+    .from(ingredients);
+  const ingPriceById = new Map<string, number>();
+  for (const i of allIngredients) ingPriceById.set(i.id, parseFloat(i.price || "0"));
+
+  const allSemis = await db
+    .select({ id: semiFinishedRecipes.id, name: semiFinishedRecipes.name, price: semiFinishedRecipes.finalPricePerKg })
+    .from(semiFinishedRecipes);
+  const semiPriceById = new Map<string, number>();
+  for (const s of allSemis) semiPriceById.set(s.id, parseFloat(s.price || "0"));
+
+  const grouped = new Map<string, ImportRow[]>();
+  for (const row of rows) {
+    if (!grouped.has(row.sl_id)) grouped.set(row.sl_id, []);
+    grouped.get(row.sl_id)!.push(row);
+  }
+
+  const created: string[] = [];
+  const unmatched: { sl_id: string; ingrediente_nome: string }[] = [];
+
+  for (const [rc_id, rcRows] of grouped) {
+    const meta = metadata[rc_id] || {};
+    const displayName = meta.name || SL_DEFAULT_NAMES[rc_id] || rc_id;
+    const category = mapFinalRecipeCategory(meta.category, rc_id);
+    const shelfLifeDays = meta.shelfLifeDays ?? 30;
+    const storageMethod = meta.storageMethod ?? "Refrigerato";
+
+    let totalCost = 0;
+    let totalQtyKg = 0;
+    const comps: ComponentInput[] = [];
+
+    for (const row of rcRows) {
+      const qtyConverted = row.um === 1 ? row.qty : row.qty / 1000;
+      const unit = row.um === 1 ? "unità" : "kg";
+      if (row.um === 1000) totalQtyKg += qtyConverted;
+
+      const match = matchComponentAcrossPools(row.ingrediente_nome, allIngredients, allSemis);
+      if (match?.pool === "ingredient") {
+        const livePrice = ingPriceById.get(match.id) ?? 0;
+        const tsvPrice = qtyConverted > 0 ? row.eur_riga / qtyConverted : 0;
+        const pricePerUnit = livePrice > 0 ? livePrice : tsvPrice;
+        totalCost += qtyConverted * pricePerUnit;
+        comps.push({ type: "ingredient", componentId: match.id, componentName: match.name, quantity: qtyConverted, unit, pricePerUnit });
+        continue;
+      }
+      if (match?.pool === "semi_finished") {
+        const livePrice = semiPriceById.get(match.id) ?? 0;
+        const tsvPrice = qtyConverted > 0 ? row.eur_riga / qtyConverted : 0;
+        const pricePerUnit = livePrice > 0 ? livePrice : tsvPrice;
+        totalCost += qtyConverted * pricePerUnit;
+        comps.push({ type: "semi_finished", componentId: match.id, componentName: match.name, quantity: qtyConverted, unit: "kg", pricePerUnit });
+        continue;
+      }
+
+      unmatched.push({ sl_id: rc_id, ingrediente_nome: row.ingrediente_nome });
+      totalCost += row.eur_riga;
+      const tsvPrice = qtyConverted > 0 ? row.eur_riga / qtyConverted : 0;
+      comps.push({ type: "ingredient", componentId: "", componentName: row.ingrediente_nome, quantity: qtyConverted, unit, pricePerUnit: tsvPrice });
+    }
+
+    const id = crypto.randomUUID();
+    await db.insert(finalRecipes).values({
+      id, storeId, code: rc_id, name: displayName, category,
+      yieldPercentage: "100",
+      totalCost: String(totalCost.toFixed(2)),
+      conservationMethod: storageMethod,
+      maxConservationTime: `${shelfLifeDays} giorni`,
+      unitType: "k",
+      measurementType: "weight_only",
+      producedQuantity: String(totalQtyKg.toFixed(3)),
+      isSemiFinished: false,
+      isSellable: true,
+      isActive: true,
+      components: JSON.stringify(comps),
+    } as any);
+
+    if (comps.length > 0) await setRecipeComponents(id, comps);
+
+    created.push(rc_id);
+  }
+
+  return { created, unmatched };
+}
+
 // ============ DEBUG RICETTE ============
 // Funzioni per la pagina /recipe-debug: mostra e permette di risolvere
 // componenti con tutti gli ID a NULL (unmatched), prezzi 0 e riferimenti orfani.
