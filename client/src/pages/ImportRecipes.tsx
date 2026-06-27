@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { AlertTriangle, Trash2, Upload, CheckCircle, XCircle, AlertCircle, FileSpreadsheet } from "lucide-react";
+import { AlertTriangle, Trash2, Upload, CheckCircle, XCircle, AlertCircle, FileSpreadsheet, Zap } from "lucide-react";
+import { REC_FINALE_ROWS, REC_FINALE_METADATA } from "@/data/rec-finale-seed";
 
 // ─── Tipi ────────────────────────────────────────────────────────────────────
 
@@ -151,10 +152,10 @@ export default function ImportRecipes() {
   const previewMutation = trpc.adminImport.previewSemiFinished.useMutation({
     onSuccess: (data) => {
       setPreview(data);
-      // Inizializza metadata con defaults per ogni SL trovato
+      // REC_FINALE_METADATA takes priority, then existing state, then defaults
       const newMeta: Record<string, SlMetadata> = {};
       for (const sl of data) {
-        newMeta[sl.sl_id] = metadata[sl.sl_id] ?? defaultMeta(sl.sl_id);
+        newMeta[sl.sl_id] = REC_FINALE_METADATA[sl.sl_id] ?? metadata[sl.sl_id] ?? defaultMeta(sl.sl_id);
       }
       setMetadata(newMeta);
       setStep(3);
@@ -196,6 +197,11 @@ export default function ImportRecipes() {
     });
   }
 
+  function handleRecFinalePreview() {
+    setParsedRows(REC_FINALE_ROWS);
+    previewMutation.mutate({ rows: REC_FINALE_ROWS });
+  }
+
   function updateMeta(sl_id: string, field: keyof SlMetadata, value: string | number) {
     setMetadata((prev) => ({
       ...prev,
@@ -216,6 +222,46 @@ export default function ImportRecipes() {
             Elimina le ricette esistenti e importa i semilavorati dalla tabella TSV.
           </p>
         </div>
+
+        {/* Quick Import REC_FINALE */}
+        <Card className="border-blue-200 bg-blue-50/40">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-blue-800 text-base">
+              <Zap className="h-5 w-5" />
+              Importazione rapida — Menu 2026 (REC_FINALE)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
+              {[
+                { label: "Pane", items: ["Bun", "Brioche 5.0", "Wild", "Semi 5.0"] },
+                { label: "Salse", items: ["TFS", "Avocado", "Nutty", "Tzatziki", "Ketchup", "Memphis", "Cajun", "Senape Dijon", "Maionese", "Cheddar", "Nduja"] },
+                { label: "Verdure", items: ["Cipolla Caramellata", "Aglio Arrosto", "Coleslaw"] },
+                { label: "Carne", items: ["Pulled Pork", "Ribs", "Sovracosce", "Tenders"] },
+              ].map(({ label, items }) => (
+                <div key={label}>
+                  <p className="font-medium text-blue-900 mb-1">{label} ({items.length})</p>
+                  <ul className="text-xs text-muted-foreground space-y-0.5">
+                    {items.map((i) => <li key={i}>• {i}</li>)}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-3 pt-1">
+              <Button
+                onClick={handleRecFinalePreview}
+                disabled={previewMutation.isPending}
+                className="bg-blue-700 hover:bg-blue-800"
+              >
+                <Zap className="h-4 w-4 mr-2" />
+                {previewMutation.isPending ? "Analisi in corso..." : "Anteprima e importa 22 ricette"}
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                Metadata (nomi, categorie, shelf life) precompilati. Nomi semilavorati crociati risolti automaticamente.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Step indicator */}
         <div className="flex gap-2 items-center text-sm">
