@@ -1484,6 +1484,40 @@ export async function deleteAllRecipes(): Promise<void> {
   await db.delete(semiFinishedRecipes);
 }
 
+/**
+ * Rende l'import idempotente: rimuove un semilavorato già esistente con lo stesso
+ * (storeId, code) e i suoi componenti, così un re-import non fallisce sul vincolo
+ * univoco `code+storeId`. Restituisce true se ha rimosso un record preesistente.
+ */
+async function removeExistingSemiFinishedByCode(storeId: string, code: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const existing = await db
+    .select({ id: semiFinishedRecipes.id })
+    .from(semiFinishedRecipes)
+    .where(and(eq(semiFinishedRecipes.storeId, storeId), eq(semiFinishedRecipes.code, code)));
+  for (const e of existing) {
+    await db.delete(semiFinishedComponents).where(eq(semiFinishedComponents.semiFinishedRecipeId, e.id));
+    await db.delete(semiFinishedRecipes).where(eq(semiFinishedRecipes.id, e.id));
+  }
+  return existing.length > 0;
+}
+
+/** Idem per le ricette finali (vincolo univoco code+storeId su final_recipes). */
+async function removeExistingFinalRecipeByCode(storeId: string, code: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const existing = await db
+    .select({ id: finalRecipes.id })
+    .from(finalRecipes)
+    .where(and(eq(finalRecipes.storeId, storeId), eq(finalRecipes.code, code)));
+  for (const e of existing) {
+    await db.delete(recipeComponents).where(eq(recipeComponents.recipeId, e.id));
+    await db.delete(finalRecipes).where(eq(finalRecipes.id, e.id));
+  }
+  return existing.length > 0;
+}
+
 /** Importa semilavorati da tabella TSV in due passate (gestisce cross-riferimenti). */
 export async function importSemiFinishedBulk(
   rows: ImportRow[],
@@ -1573,6 +1607,9 @@ export async function importSemiFinishedBulk(
 
       const finalPricePerKg = totalQtyKg > 0 ? totalCost / totalQtyKg : totalCost;
       const id = crypto.randomUUID();
+
+      // Re-import sicuro: rimuove un eventuale semilavorato con lo stesso codice.
+      await removeExistingSemiFinishedByCode(storeId, sl_id);
 
       await db.insert(semiFinishedRecipes).values({
         id, storeId, code: sl_id, name: displayName, category,
@@ -1689,6 +1726,9 @@ export async function importFinalRecipesBulk(
     }
 
     const id = crypto.randomUUID();
+    // Re-import sicuro: rimuove un'eventuale ricetta finale con lo stesso codice.
+    await removeExistingFinalRecipeByCode(storeId, rc_id);
+
     await db.insert(finalRecipes).values({
       id, storeId, code: rc_id, name: displayName, category,
       yieldPercentage: "100",
