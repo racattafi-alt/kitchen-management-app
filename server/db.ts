@@ -1467,10 +1467,11 @@ export async function deleteAllRecipes(): Promise<void> {
 export async function importSemiFinishedBulk(
   rows: ImportRow[],
   metadata: Record<string, SlMetadata>,
-  storeId: string
+  storeId: string | null
 ): Promise<{ created: string[]; unmatched: { sl_id: string; ingrediente_nome: string }[] }> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  if (!storeId) throw new Error("Nessun locale selezionato. Imposta il locale preferito nel profilo prima di importare.");
 
   // Scarta righe con nome ingrediente vuoto: altrimenti finirebbero in DB come
   // "(senza nome)" e non sarebbero più risolvibili dalla pagina debug.

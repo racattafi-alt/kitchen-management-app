@@ -202,6 +202,13 @@ export default function ImportRecipes() {
     previewMutation.mutate({ rows: REC_FINALE_ROWS });
   }
 
+  function handleRecFinaleImport() {
+    importMutation.mutate({
+      rows: REC_FINALE_ROWS,
+      metadata: REC_FINALE_METADATA,
+    });
+  }
+
   function updateMeta(sl_id: string, field: keyof SlMetadata, value: string | number) {
     setMetadata((prev) => ({
       ...prev,
@@ -247,17 +254,25 @@ export default function ImportRecipes() {
                 </div>
               ))}
             </div>
-            <div className="flex items-center gap-3 pt-1">
+            <div className="flex flex-wrap items-center gap-3 pt-1">
               <Button
-                onClick={handleRecFinalePreview}
-                disabled={previewMutation.isPending}
+                onClick={handleRecFinaleImport}
+                disabled={importMutation.isPending || previewMutation.isPending}
                 className="bg-blue-700 hover:bg-blue-800"
               >
-                <Zap className="h-4 w-4 mr-2" />
-                {previewMutation.isPending ? "Analisi in corso..." : "Anteprima e importa 22 ricette"}
+                <Upload className="h-4 w-4 mr-2" />
+                {importMutation.isPending ? "Importazione in corso..." : "Importa ora (22 ricette)"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleRecFinalePreview}
+                disabled={previewMutation.isPending || importMutation.isPending}
+              >
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                {previewMutation.isPending ? "Analisi..." : "Anteprima prima"}
               </Button>
               <p className="text-xs text-muted-foreground">
-                Metadata (nomi, categorie, shelf life) precompilati. Nomi semilavorati crociati risolti automaticamente.
+                Nomi e shelf-life precompilati. Cross-referenze (cipolla, aglio, maionese, ketchup) risolte automaticamente.
               </p>
             </div>
           </CardContent>
