@@ -218,6 +218,27 @@ const ingredientsRouter = router({
       throw new Error(`Errore creazione Excel: ${error.message}`);
     }
   }),
+  // ---- ESPORTA SOLO I PRODOTTI SALA (reparto = Sala), con prezzi dal DB ----
+  exportSalaToExcel: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+      throw new Error("Unauthorized");
+    }
+    const { exportIngredientsToExcel } = await import('./exportExcel.js');
+    const all = await db.getIngredients();
+    const sala = all.filter((i: any) => String(i.department ?? "").toLowerCase() === "sala");
+
+    try {
+      const buffer = await exportIngredientsToExcel(sala);
+      return {
+        filename: `prodotti_sala_${new Date().toISOString().split('T')[0]}.xlsx`,
+        data: buffer.toString('base64'),
+        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        count: sala.length,
+      };
+    } catch (error: any) {
+      throw new Error(`Errore creazione Excel Sala: ${error.message}`);
+    }
+  }),
   // ---- SCARICA TEMPLATE MASTER per importazione di tutti i dati ----
   downloadImportTemplate: protectedProcedure.query(async ({ ctx }) => {
     if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager" && ctx.user?.role !== "superadmin") {

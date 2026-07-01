@@ -147,6 +147,10 @@ export default function Ingredients() {
     enabled: false,
   });
 
+  const exportSalaQuery = trpc.ingredients.exportSalaToExcel.useQuery(undefined, {
+    enabled: false,
+  });
+
   const importMutation = trpc.ingredients.importFromExcel.useMutation({
     onSuccess: (result) => {
       utils.ingredients.list.invalidate();
@@ -179,6 +183,25 @@ export default function Ingredients() {
       toast.success("File Excel esportato con successo");
     } else if (result.error) {
       toast.error(`Errore export: ${result.error.message}`);
+    }
+  };
+
+  const handleExportSala = async () => {
+    const result = await exportSalaQuery.refetch();
+    if (result.data) {
+      const data = result.data;
+      const blob = new Blob([Uint8Array.from(atob(data.data), c => c.charCodeAt(0))], { type: data.mimeType });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = data.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast.success(`Esportati ${data.count} prodotti sala`);
+    } else if (result.error) {
+      toast.error(`Errore export Sala: ${result.error.message}`);
     }
   };
 
@@ -445,13 +468,22 @@ export default function Ingredients() {
                   <Upload className="h-4 w-4 mr-2" />
                   {isImportingSala ? 'Importazione...' : 'Importa Dati Sala'}
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={handleExportExcel}
                   disabled={exportQuery.isFetching}
                 >
                   <Download className="h-4 w-4 mr-2" />
                   {exportQuery.isFetching ? 'Esportazione...' : 'Esporta Excel'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleExportSala}
+                  disabled={exportSalaQuery.isFetching}
+                  className="bg-purple-50 hover:bg-purple-100 border-purple-200"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  {exportSalaQuery.isFetching ? 'Esportazione...' : 'Esporta prodotti Sala'}
                 </Button>
                 <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
                   <DialogTrigger asChild>
