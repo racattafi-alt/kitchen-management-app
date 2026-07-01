@@ -3,6 +3,7 @@ import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
+import * as storesDb from "../storesDb";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
 
@@ -22,6 +23,17 @@ async function verifyPassword(stored: string, supplied: string): Promise<boolean
 }
 
 export function registerLocalAuthRoutes(app: Express) {
+  // Endpoint pubblico (no auth) per elencare i locali disponibili durante la registrazione
+  app.get("/api/auth/stores", async (_req: Request, res: Response) => {
+    try {
+      const allStores = await storesDb.getAllStores();
+      res.json(allStores.map((s) => ({ id: s.id, name: s.name })));
+    } catch (error) {
+      console.error("[LocalAuth] Failed to list stores", error);
+      res.status(500).json({ error: "Failed to list stores" });
+    }
+  });
+
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     const { email, password } = req.body ?? {};
 
@@ -60,7 +72,7 @@ export function registerLocalAuthRoutes(app: Express) {
   });
 
   app.post("/api/auth/register", async (req: Request, res: Response) => {
-    const { email, password, name } = req.body ?? {};
+    const { email, password, name, storeId } = req.body ?? {};
 
     if (!email || !password || !name) {
       res.status(400).json({ error: "email, password, and name are required" });
@@ -74,6 +86,17 @@ export function registerLocalAuthRoutes(app: Express) {
         return;
       }
 
+      // Valida lo store se fornito
+      let resolvedStoreId: string | null = null;
+      if (storeId) {
+        const store = await storesDb.getStoreById(storeId);
+        if (!store || !store.isActive) {
+          res.status(400).json({ error: "Locale non valido" });
+          return;
+        }
+        resolvedStoreId = storeId;
+      }
+
       const userCount = await db.countUsers();
       const role = userCount === 0 ? "admin" : "user";
       const openId = `local:${email}`;
@@ -85,6 +108,7 @@ export function registerLocalAuthRoutes(app: Express) {
         loginMethod: "local",
         role,
         lastSignedIn: new Date(),
+        preferredStoreId: resolvedStoreId ?? undefined,
       });
 
       const newUser = await db.getUserByEmail(email);
@@ -95,6 +119,11 @@ export function registerLocalAuthRoutes(app: Express) {
 
       const hash = await hashPassword(password);
       await db.updateUserPasswordHash(newUser.id, hash);
+
+      // Assegna l'utente al locale scelto
+      if (resolvedStoreId) {
+        await storesDb.addUserToStore(newUser.id, resolvedStoreId, "user");
+      }
 
       const sessionToken = await sdk.createSessionToken(openId, {
         name,

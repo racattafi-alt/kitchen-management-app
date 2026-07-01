@@ -15,6 +15,18 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { validateRecipe } from "../shared/recipeValidation";
+import {
+  updateIngredientAcrossStores,
+  updateSupplierAcrossStores,
+  updateRecipeAcrossStores,
+} from "./multiStoreEditorDb.js";
+import { getAllStores, isStoreGlobal } from "./storesDb.js";
+import { logAction, AuditActions, EntityTypes } from "./auditLogHelper";
+
+async function getAllActiveStoreIds(): Promise<string[]> {
+  const stores = await getAllStores();
+  return stores.map(s => s.id);
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -41,6 +53,7 @@ const ingredientsRouter = router({
         id: z.string(),
         name: z.string(),
         supplierId: z.string().optional(),
+        supplier: z.string().optional(),
         category: z.enum(["Additivi", "Alcolici", "Bevande", "Birra", "Caffè", "Carni", "Farine", "Latticini", "Non Food", "Packaging", "Spezie", "Verdura", "Altro"]),
         unitType: z.enum(["u", "k"]),
         packageType: z.enum(["Sacco", "Busta", "Brick", "Cartone", "Scatola", "Bottiglia", "Barattolo", "Lattina", "Sfuso", "Fusto"]).optional(),
@@ -53,25 +66,57 @@ const ingredientsRouter = router({
         brand: z.string().optional(),
         notes: z.string().optional(),
         isFood: z.boolean().optional(),
+        isSoldByPackage: z.boolean().optional(),
+        piecesPerBox: z.number().int().optional().nullable(),
         allergens: z.array(z.string()).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+      const role = ctx.user?.role;
+      if (role !== "admin" && role !== "manager" && role !== "superadmin") {
         throw new Error("Unauthorized");
       }
-      return db.createIngredient({
-        ...input,
-        storeId: ctx.currentStoreId || 'default-store',
+      const ingredientData = {
+        id: input.id,
+        name: input.name,
+        supplierId: input.supplierId,
+        supplier: input.supplier,
+        category: input.category,
+        unitType: input.unitType,
+        packageType: input.packageType,
+        department: input.department,
         packageQuantity: input.packageQuantity.toString(),
         packagePrice: input.packagePrice.toString(),
         pricePerKgOrUnit: input.pricePerKgOrUnit.toString(),
         minOrderQuantity: input.minOrderQuantity?.toString() || null,
         packageSize: input.packageSize?.toString() || null,
+        brand: input.brand,
+        notes: input.notes,
         isActive: true,
         isFood: input.isFood ?? true,
+        isSoldByPackage: input.isSoldByPackage ?? false,
+        ...(input.piecesPerBox != null ? { piecesPerBox: input.piecesPerBox } : {}),
         allergens: input.allergens || [],
-      } as any);
+      };
+      // Crea l'ingrediente globale e attivalo negli store appropriati
+      try {
+        if (await isStoreGlobal(ctx.currentStoreId)) {
+          const storeIds = await getAllActiveStoreIds();
+          const created = await db.createIngredient(ingredientData as any, null);
+          for (const sid of storeIds) {
+            try {
+              await db.activateIngredientInStore(created.id, sid);
+            } catch (storeErr: any) {
+              console.warn(`[ingredients.create] activateIngredientInStore failed for store ${sid}:`, storeErr?.message);
+            }
+          }
+          return { ...ingredientData, id: created.id, storeId: "all" };
+        }
+        return db.createIngredient(ingredientData as any, ctx.currentStoreId || 'default-store-001');
+      } catch (err: any) {
+        const msg = err?.message || String(err);
+        throw new Error(`Salvataggio fallito: ${msg}`);
+      }
     }),
   update: protectedProcedure
     .input(
@@ -92,14 +137,17 @@ const ingredientsRouter = router({
         brand: z.string().optional(),
         notes: z.string().optional(),
         isFood: z.boolean().optional(),
+        isSoldByPackage: z.boolean().optional(),
+        piecesPerBox: z.number().int().optional().nullable(),
         allergens: z.array(z.string()).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+      const role = ctx.user?.role;
+      if (role !== "admin" && role !== "manager" && role !== "superadmin") {
         throw new Error("Unauthorized");
       }
-      
+
       // Get current ingredient data for recalculation
       const currentIngredient = await db.getIngredientById(input.id);
       if (!currentIngredient) {
@@ -131,15 +179,23 @@ const ingredientsRouter = router({
       if (input.brand !== undefined) updateData.brand = input.brand;
       if (input.notes !== undefined) updateData.notes = input.notes;
       if (input.isFood !== undefined) updateData.isFood = input.isFood;
+      if (input.isSoldByPackage !== undefined) updateData.isSoldByPackage = input.isSoldByPackage;
+      if (input.piecesPerBox !== undefined && input.piecesPerBox !== null) updateData.piecesPerBox = input.piecesPerBox;
       if (input.allergens !== undefined) updateData.allergens = input.allergens;
+      // Ingredienti globali: l'aggiornamento si applica all'unico record globale
       return db.updateIngredient(input.id, updateData);
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager" && ctx.user?.role !== "superadmin") {
         throw new Error("Unauthorized");
       }
+      // Disattiva l'ingrediente dallo store corrente (non cancellazione globale)
+      if (ctx.currentStoreId) {
+        return db.deactivateIngredientInStore(input.id, ctx.currentStoreId);
+      }
+      // Se non c'è store corrente, disattiva globalmente
       return db.deleteIngredient(input.id);
     }),
   exportToExcel: protectedProcedure.query(async ({ ctx }) => {
@@ -148,11 +204,11 @@ const ingredientsRouter = router({
     }
     const { exportIngredientsToExcel } = await import('./exportExcel.js');
     const ingredients = await db.getIngredients();
-    
+
     try {
       const buffer = await exportIngredientsToExcel(ingredients);
       const base64 = buffer.toString('base64');
-      
+
       return {
         filename: `ingredienti_${new Date().toISOString().split('T')[0]}.xlsx`,
         data: base64,
@@ -162,34 +218,140 @@ const ingredientsRouter = router({
       throw new Error(`Errore creazione Excel: ${error.message}`);
     }
   }),
-  importFromExcel: protectedProcedure
+  // ---- ESPORTA SOLO I PRODOTTI SALA (reparto = Sala), con prezzi dal DB ----
+  exportSalaToExcel: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+      throw new Error("Unauthorized");
+    }
+    const { exportIngredientsToExcel } = await import('./exportExcel.js');
+    const all = await db.getIngredients();
+    const sala = all.filter((i: any) => String(i.department ?? "").toLowerCase() === "sala");
+
+    try {
+      const buffer = await exportIngredientsToExcel(sala);
+      return {
+        filename: `prodotti_sala_${new Date().toISOString().split('T')[0]}.xlsx`,
+        data: buffer.toString('base64'),
+        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        count: sala.length,
+      };
+    } catch (error: any) {
+      throw new Error(`Errore creazione Excel Sala: ${error.message}`);
+    }
+  }),
+  // ---- SCARICA TEMPLATE MASTER per importazione di tutti i dati ----
+  downloadImportTemplate: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager" && ctx.user?.role !== "superadmin") {
+      throw new Error("Unauthorized");
+    }
+    const { generateMasterImportTemplate } = await import('./exportExcel.js');
+    try {
+      const buffer = await generateMasterImportTemplate();
+      return {
+        filename: `template_importazione_${new Date().toISOString().split('T')[0]}.xlsx`,
+        data: buffer.toString('base64'),
+        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      };
+    } catch (error: any) {
+      throw new Error(`Errore generazione template: ${error.message}`);
+    }
+  }),
+  // ---- ANTEPRIMA IMPORT con fuzzy matching fornitori/ingredienti ----
+  previewImport: protectedProcedure
     .input(z.object({
       fileData: z.string(), // base64
-      filename: z.string()
+      filename: z.string(),
     }))
     .mutation(async ({ input, ctx }) => {
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
-      
+
       const { importIngredientsFromExcel } = await import('./exportExcel.js');
-      
+      const { analyzeSupplierMatches, analyzeIngredientMatches } = await import('./fuzzyMatch.js');
+
+      const buffer = Buffer.from(input.fileData, 'base64');
+      const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+      const parsedData = await importIngredientsFromExcel(arrayBuffer);
+
+      // Carica dati esistenti per matching
+      const existingIngredients = (await db.getIngredients(ctx.currentStoreId))
+        .map((i: any) => ({ id: i.id, name: i.name }));
+      const existingSuppliers = (await db.getSuppliers(ctx.currentStoreId))
+        .map((s: any) => ({ id: s.id, name: s.name }));
+
+      // Analisi matching ingredienti
+      const ingredientMatches = analyzeIngredientMatches(parsedData, existingIngredients);
+
+      // Analisi matching fornitori (solo righe con fornitore compilato)
+      const supplierMatches = analyzeSupplierMatches(parsedData, existingSuppliers);
+
+      return {
+        totalRows: parsedData.length,
+        rows: parsedData.map((row: any, idx: number) => ({
+          ...row,
+          _ingredientMatch: ingredientMatches[idx],
+        })),
+        supplierMismatches: supplierMatches,
+        summary: {
+          exactMatches: ingredientMatches.filter(m => m.level === 'exact').length,
+          newIngredients: ingredientMatches.filter(m => m.level === 'none').length,
+          supplierWarnings: supplierMatches.filter(m => m.level === 'none' || m.level === 'medium').length,
+        },
+      };
+    }),
+
+  importFromExcel: protectedProcedure
+    .input(z.object({
+      fileData: z.string(), // base64
+      filename: z.string(),
+      // Override manuali per fornitori non matchati (key=nomeFornitoreImportato, value=supplierId nel DB)
+      supplierOverrides: z.record(z.string(), z.string()).optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+
+      const { importIngredientsFromExcel } = await import('./exportExcel.js');
+      const { findBestMatch } = await import('./fuzzyMatch.js');
+
       try {
         // Decodifica file Excel
         const buffer = Buffer.from(input.fileData, 'base64');
         const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
         const parsedData = await importIngredientsFromExcel(arrayBuffer);
-        
+
+        // Carica fornitori esistenti per fuzzy matching
+        const existingSuppliers = (await db.getSuppliers(ctx.currentStoreId))
+          .map((s: any) => ({ id: s.id, name: s.name }));
+
         // Valida e importa dati
         let imported = 0;
+        let updated = 0;
         let errors: string[] = [];
-        
+
         for (const row of parsedData) {
           try {
-            // Cerca ingrediente esistente per nome
-            const existing = await db.getIngredients();
+            // Risolvi supplierId: prima controlla override manuale, poi fuzzy match automatico
+            let resolvedSupplierId: string | null = null;
+            if (row.supplier) {
+              const overrideId = input.supplierOverrides?.[row.supplier];
+              if (overrideId) {
+                resolvedSupplierId = overrideId ?? null;
+              } else {
+                const match = findBestMatch(row.supplier, existingSuppliers);
+                if (match.level === 'exact' || match.level === 'high') {
+                  resolvedSupplierId = match.matchedId;
+                }
+                // level 'medium' e 'none': supplierId rimane null (nome testuale salvato in supplier)
+              }
+            }
+
+            // Cerca ingrediente esistente per nome (case-insensitive)
+            const existing = await db.getIngredients(ctx.currentStoreId);
             const match = existing.find((i: any) => i.name.toLowerCase() === row.name.toLowerCase());
-            
+
             if (match) {
               // Aggiorna esistente
               const updateData: any = {
@@ -197,56 +359,119 @@ const ingredientsRouter = router({
                 packagePrice: row.packagePrice.toString(),
                 pricePerKgOrUnit: row.pricePerKgOrUnit.toString(),
                 category: row.category,
-                isFood: row.isFood
+                department: row.department || 'Cucina',
+                isFood: row.isFood,
+                isOrderable: row.isOrderable,
               };
+              if (row.supplier) updateData.supplier = row.supplier;
+              if (resolvedSupplierId) updateData.supplierId = resolvedSupplierId;
               if (row.brand) updateData.brand = row.brand;
               if (row.notes) updateData.notes = row.notes;
-              
+              if (row.packageType) updateData.packageType = row.packageType;
+              if (row.minOrderQuantity) updateData.minOrderQuantity = row.minOrderQuantity.toString();
+              if (row.allergens?.length) updateData.allergens = row.allergens;
+
               await db.updateIngredient(match.id, updateData);
-              imported++;
+              updated++;
             } else {
-              // Crea nuovo
+              // Crea nuovo ingrediente globale e attivalo nello store corrente
               await db.createIngredient({
-                id: crypto.randomBytes(16).toString('hex'),
-                storeId: ctx.currentStoreId || 'default-store',
+                id: crypto.randomUUID(),
                 name: row.name,
-                supplierId: null,
-                supplier: row.supplier || 'Non specificato',
+                supplierId: resolvedSupplierId,
+                supplier: row.supplier || '',
                 category: row.category,
                 unitType: row.unit === 'kg' ? 'k' : 'u',
-                packageType: null,
-                department: 'Cucina',
+                packageType: row.packageType || null,
+                department: row.department || 'Cucina',
                 packageQuantity: row.packageQuantity.toString(),
                 packagePrice: row.packagePrice.toString(),
                 pricePerKgOrUnit: row.pricePerKgOrUnit.toString(),
-                minOrderQuantity: null,
+                minOrderQuantity: row.minOrderQuantity?.toString() || null,
                 packageSize: null,
                 brand: row.brand || '',
                 notes: row.notes || '',
                 isFood: row.isFood,
                 isActive: true,
-                isOrderable: true,
+                isOrderable: row.isOrderable,
                 isSellable: true,
-                isSalaItem: false,
+                isSalaItem: row.department === 'Sala',
+                isSoldByPackage: false,
                 subcategory: null,
-                allergens: row.allergens || []
-              });
+                allergens: row.allergens || [],
+              } as any, ctx.currentStoreId || 'default-store-001');
               imported++;
             }
           } catch (err: any) {
-            errors.push(`Errore riga ${row.name}: ${err.message}`);
+            errors.push(`Errore riga "${row.name}": ${err.message}`);
           }
         }
-        
+
         return {
           success: true,
           imported,
-          errors: errors.length > 0 ? errors : undefined
+          updated,
+          errors: errors.length > 0 ? errors : undefined,
         };
       } catch (error: any) {
         console.error('Errore import Excel:', error);
         throw new Error(`Errore durante import Excel: ${error.message}`);
       }
+    }),
+
+  bulkUpdatePrices: protectedProcedure
+    .input(
+      z.array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+          packagePrice: z.number(),
+          packageQuantity: z.number(),
+          pricePerKgOrUnit: z.number(),
+        })
+      )
+    )
+    .mutation(async ({ input, ctx }) => {
+      const role = ctx.user?.role;
+      if (role !== "admin" && role !== "manager" && role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      // Ingredienti globali: aggiornamento diretto sull'unico record
+      for (const item of input) {
+        await db.updateIngredient(item.id, {
+          packagePrice: item.packagePrice.toString(),
+          packageQuantity: item.packageQuantity.toString(),
+          pricePerKgOrUnit: item.pricePerKgOrUnit.toString(),
+        } as any);
+      }
+      return { success: true, updated: input.length };
+    }),
+
+  // ---- Gestione visibilità per store (junction ingredient_stores) ----
+  activateInStore: protectedProcedure
+    .input(z.object({ id: z.string(), storeId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const role = ctx.user?.role;
+      if (role !== "admin" && role !== "manager" && role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      return db.activateIngredientInStore(input.id, input.storeId);
+    }),
+
+  deactivateInStore: protectedProcedure
+    .input(z.object({ id: z.string(), storeId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const role = ctx.user?.role;
+      if (role !== "admin" && role !== "manager" && role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      return db.deactivateIngredientInStore(input.id, input.storeId);
+    }),
+
+  listStores: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input }) => {
+      return db.getIngredientStores(input.id);
     }),
 });
 
@@ -259,6 +484,14 @@ const semiFinishedRouter = router({
     .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
       return db.getSemiFinishedById(input.id);
+    }),
+  getDetails: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input }) => {
+      const semi = await db.getSemiFinishedById(input.id);
+      if (!semi) return null;
+      const components = await db.getSemiFinishedComponentsRelational(input.id);
+      return { ...semi, components };
     }),
   create: protectedProcedure
     .input(
@@ -280,12 +513,17 @@ const semiFinishedRouter = router({
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
-      return db.createSemiFinished({
+      await db.createSemiFinished({
         ...input,
+        storeId: ctx.currentStoreId || 'default-store-001',
         finalPricePerKg: input.finalPricePerKg.toString(),
         yieldPercentage: input.yieldPercentage.toString(),
         totalQuantityProduced: input.totalQuantityProduced?.toString() || null,
       } as any);
+      if (Array.isArray(input.components) && input.components.length > 0) {
+        await db.setSemiFinishedComponents(input.id, input.components);
+      }
+      return { id: input.id };
     }),
   update: protectedProcedure
     .input(
@@ -312,7 +550,21 @@ const semiFinishedRouter = router({
       if (input.totalQuantityProduced !== undefined) updateData.totalQuantityProduced = input.totalQuantityProduced.toString();
       if (input.components !== undefined) updateData.components = input.components;
       if (input.productionSteps !== undefined) updateData.productionSteps = input.productionSteps;
-      return db.updateSemiFinished(input.id, updateData);
+      await db.updateSemiFinished(input.id, updateData);
+      if (Array.isArray(input.components)) {
+        await db.setSemiFinishedComponents(input.id, input.components);
+      }
+      return;
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+        throw new Error("Unauthorized");
+      }
+      await db.deleteSemiFinished(input.id);
+      return { success: true };
     }),
 });
 
@@ -418,7 +670,7 @@ const productionRouter = router({
       }
       const result = await db.createWeeklyProduction({
         id: crypto.randomUUID(),
-        storeId: ctx.currentStoreId || 'default-store',
+        storeId: ctx.currentStoreId || 'default-store-001',
         recipeFinalId: input.recipeFinalId || null,
         semiFinishedId: input.semiFinishedId || null,
         productionType: input.productionType,
@@ -430,7 +682,14 @@ const productionRouter = router({
       if (input.recipeFinalId) {
         await db.updateProducedQuantity(input.recipeFinalId);
       }
-      
+      await logAction({
+        storeId: ctx.currentStoreId || 'default-store-001',
+        userId: ctx.user!.openId,
+        action: AuditActions.PRODUCTION_CREATED,
+        entityType: EntityTypes.PRODUCTION,
+        entityId: String(result?.insertId || ''),
+        details: { recipeFinalId: input.recipeFinalId, quantity: input.quantity, weekStartDate: input.weekStartDate },
+      });
       return result;
     }),
 
@@ -441,12 +700,18 @@ const productionRouter = router({
         throw new Error("Unauthorized");
       }
       const result = await db.deleteWeeklyProduction(input.id);
-      
+
       // Aggiorna la quantità totale prodotta nella ricetta
       if (result.recipeFinalId) {
         await db.updateProducedQuantity(result.recipeFinalId);
       }
-      
+      await logAction({
+        storeId: ctx.currentStoreId || 'default-store-001',
+        userId: ctx.user!.openId,
+        action: AuditActions.PRODUCTION_DELETED,
+        entityType: EntityTypes.PRODUCTION,
+        entityId: input.id,
+      });
       return result;
     }),
 
@@ -487,7 +752,7 @@ const productionRouter = router({
         const productionId = crypto.randomUUID();
         const result = await db.createWeeklyProduction({
           id: productionId,
-          storeId: ctx.currentStoreId || 'default-store',
+          storeId: ctx.currentStoreId || 'default-store-001',
           recipeFinalId: prod.recipeFinalId,
           semiFinishedId: null,
           productionType: "final",
@@ -536,35 +801,20 @@ const productionRouter = router({
 
       // Calcola quantità necessarie dalle produzioni
       for (const prod of productions) {
-        let recipe = null;
-        let quantity = parseFloat(prod.quantity);
+        if (!prod.recipeFinalId) continue;
+        const quantity = parseFloat(prod.quantity as any);
 
-        if (prod.recipeFinalId) {
-          recipe = await db.getFinalRecipeById(prod.recipeFinalId);
-        }
-
+        const recipe = await db.getFinalRecipeById(prod.recipeFinalId);
         if (!recipe) continue;
 
-        let components: any[] = [];
-        if (typeof recipe.components === 'string') {
-          try {
-            components = JSON.parse(recipe.components);
-          } catch (e) {
-            console.error('[generateShoppingList] JSON parse error:', e);
-            components = [];
-          }
-        } else if (Array.isArray(recipe.components)) {
-          components = recipe.components;
-        }
+        const unitWeight = parseFloat((recipe.unitWeight as any) || '1');
+        // Carica componenti dalla tabella relazionale (una sola JOIN)
+        const components = await db.getRecipeComponents(prod.recipeFinalId);
 
-        // Normalizza le quantità dei componenti per il peso unitario della ricetta
-        const unitWeight = parseFloat(recipe.unitWeight || '1');
-        
         for (const comp of components) {
-          // comp.quantity è per unitWeight kg di output, quindi normalizziamo
           const quantityPerKg = comp.quantity / unitWeight;
           const totalNeeded = quantityPerKg * quantity;
-          
+
           if (comp.type === 'ingredient') {
             const current = ingredientNeeds.get(comp.componentId) || 0;
             ingredientNeeds.set(comp.componentId, current + totalNeeded);
@@ -594,6 +844,7 @@ const productionRouter = router({
           packageType: ing.packageType || null,
           department: ing.department || 'Cucina',
           packageQuantity: ing.packageQuantity ? parseFloat(ing.packageQuantity) : null,
+          isSoldByPackage: ing.isSoldByPackage ?? false,
           totalCost: 0,
           minOrderQuantity: ing.minOrderQuantity ? parseFloat(ing.minOrderQuantity) : null,
         });
@@ -643,7 +894,7 @@ const menuRouter = router({
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
-      return db.createMenuType(input as any);
+      return db.createMenuType({ ...input, storeId: ctx.currentStoreId || 'default-store-001' } as any);
     }),
   createItem: protectedProcedure
     .input(
@@ -661,6 +912,7 @@ const menuRouter = router({
       }
       return db.createMenuItem({
         ...input,
+        storeId: ctx.currentStoreId || 'default-store-001',
         estimatedPortions: input.estimatedPortions.toString(),
       } as any);
     }),
@@ -686,7 +938,6 @@ const finalRecipesRouter = router({
         code: z.string(),
         category: z.enum(["Pane", "Carne", "Salse", "Verdure", "Formaggi", "Altro"]),
         yieldPercentage: z.number(),
-        serviceWastePercentage: z.number(),
         conservationMethod: z.string(),
         maxConservationTime: z.string(),
         isSellable: z.boolean().optional(),
@@ -705,8 +956,8 @@ const finalRecipesRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      // Solo admin può creare ricette
-      if (ctx.user?.role !== "admin") {
+      // Solo admin e superadmin possono creare ricette
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
         throw new Error("Unauthorized: Only admins can create recipes");
       }
 
@@ -717,7 +968,6 @@ const finalRecipesRouter = router({
           code: input.code,
           category: input.category,
           yieldPercentage: input.yieldPercentage,
-          serviceWastePercentage: input.serviceWastePercentage,
           conservationMethod: input.conservationMethod,
           maxConservationTime: input.maxConservationTime,
           isSellable: input.isSellable ?? true,
@@ -739,8 +989,8 @@ const finalRecipesRouter = router({
         throw new Error(validation.error || 'Dati ricetta non validi');
       }
 
-      // Verifica unicità codice
-      const existing = await db.getFinalRecipeByCode(input.code);
+      // Verifica unicità codice nello stesso store
+      const existing = await db.getFinalRecipeByCode(input.code, ctx.currentStoreId);
       if (existing) {
         throw new Error("Codice ricetta già esistente");
       }
@@ -751,15 +1001,52 @@ const finalRecipesRouter = router({
         return sum + (comp.quantity * price);
       }, 0);
 
+      // serviceWastePercentage non calcolabile alla creazione (unitWeight è null)
+      const serviceWastePercentage = "0";
+
       const newId = crypto.randomUUID();
-      return db.createFinalRecipe({
-        id: newId,
-        storeId: ctx.currentStoreId || 'default-store',
+      const recipeData = {
         name: input.name,
         code: input.code,
         category: input.category,
         yieldPercentage: input.yieldPercentage.toString(),
-        serviceWastePercentage: input.serviceWastePercentage.toString(),
+        serviceWastePercentage,
+        conservationMethod: input.conservationMethod,
+        maxConservationTime: input.maxConservationTime,
+        totalCost: totalCost.toFixed(2),
+        components: JSON.stringify(input.components),
+        unitType: "k",
+        unitWeight: null,
+        producedQuantity: null,
+        measurementType: "weight_only",
+        pieceWeight: null,
+        productionOperations: null,
+        serviceWastePerIngredient: null,
+        isSemiFinished: input.isSemiFinished ?? false,
+        isSellable: input.isSellable ?? true,
+        isActive: true,
+        sellingPrice: null,
+      };
+      if (await isStoreGlobal(ctx.currentStoreId)) {
+        const storeIds = await getAllActiveStoreIds();
+        await updateRecipeAcrossStores(input.name, recipeData as any, storeIds);
+        // Popola componenti relazionali per ogni store
+        const allRecipes = await Promise.all(
+          storeIds.map((sid) => db.getFinalRecipeByCode(input.code, sid))
+        );
+        for (const r of allRecipes) {
+          if (r) await db.setRecipeComponents(r.id, input.components);
+        }
+        return { ...recipeData, id: newId, storeId: "all" };
+      }
+      await db.createFinalRecipe({
+        id: newId,
+        storeId: ctx.currentStoreId || 'default-store-001',
+        name: input.name,
+        code: input.code,
+        category: input.category,
+        yieldPercentage: input.yieldPercentage.toString(),
+        serviceWastePercentage,
         conservationMethod: input.conservationMethod,
         maxConservationTime: input.maxConservationTime,
         totalCost: totalCost.toFixed(2),
@@ -776,6 +1063,16 @@ const finalRecipesRouter = router({
         isActive: true,
         sellingPrice: null,
       } as any);
+      await db.setRecipeComponents(newId, input.components);
+      await logAction({
+        storeId: ctx.currentStoreId || 'default-store-001',
+        userId: ctx.user!.openId,
+        action: AuditActions.RECIPE_CREATED,
+        entityType: EntityTypes.RECIPE,
+        entityId: newId,
+        details: { name: input.name, code: input.code },
+      });
+      return { id: newId };
     }),
 
   update: protectedProcedure
@@ -785,7 +1082,6 @@ const finalRecipesRouter = router({
         name: z.string().optional(),
         category: z.enum(["Pane", "Carne", "Salse", "Verdure", "Formaggi", "Altro"]).optional(),
         yieldPercentage: z.number().optional(),
-        serviceWastePercentage: z.number().optional(),
         unitWeight: z.number().optional(),
         producedQuantity: z.number().optional(),
         measurementType: z.enum(["weight_only", "unit_only", "both"]).optional(),
@@ -807,43 +1103,10 @@ const finalRecipesRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      // Solo admin può modificare ricette
-      if (ctx.user?.role !== "admin") {
+      const role = ctx.user?.role;
+      // Solo admin e superadmin possono modificare ricette
+      if (role !== "admin" && role !== "superadmin") {
         throw new Error("Unauthorized: Only admins can update recipes");
-      }
-
-      // Validazione dati ricetta (se forniti componenti)
-      if (input.components && input.components.length > 0) {
-        const currentRecipe = await db.getFinalRecipeById(input.id);
-        if (currentRecipe) {
-          const validation = validateRecipe(
-            {
-              name: input.name || currentRecipe.name,
-              code: currentRecipe.code, // Il codice non si modifica
-              category: (input.category || currentRecipe.category) as any,
-              yieldPercentage: input.yieldPercentage ?? parseFloat(currentRecipe.yieldPercentage || '0'),
-              serviceWastePercentage: input.serviceWastePercentage ?? parseFloat(currentRecipe.serviceWastePercentage || '0'),
-              conservationMethod: currentRecipe.conservationMethod,
-              maxConservationTime: currentRecipe.maxConservationTime,
-              isSellable: input.isSellable ?? currentRecipe.isSellable,
-              isSemiFinished: input.isSemiFinished ?? currentRecipe.isSemiFinished,
-            },
-            input.components.map(c => ({
-              type: c.type,
-              componentId: c.componentId,
-              componentName: c.componentName,
-              quantity: c.quantity,
-              unit: c.unit,
-              name: c.componentName,
-              pricePerUnit: c.pricePerUnit || 0,
-              costType: c.costType,
-            }))
-          );
-
-          if (!validation.valid) {
-            throw new Error(validation.error || 'Dati ricetta non validi');
-          }
-        }
       }
 
       // Salva versione corrente prima di modificare
@@ -864,19 +1127,36 @@ const finalRecipesRouter = router({
         });
       }
 
-      const updateData: any = {
-        name: input.name,
-        category: input.category,
-        yieldPercentage: input.yieldPercentage?.toString(),
-        serviceWastePercentage: input.serviceWastePercentage?.toString(),
-        unitWeight: input.unitWeight,
-        producedQuantity: input.producedQuantity,
-        measurementType: input.measurementType,
-        pieceWeight: input.pieceWeight,
-        isSemiFinished: input.isSemiFinished,
-        isSellable: input.isSellable,
-        sellingPrice: input.sellingPrice?.toString(),
-      };
+      // Determina i componenti effettivi (input o quelli salvati)
+      const componentsForCalc = input.components ?? (
+        currentRecipe?.components ? (
+          typeof currentRecipe.components === 'string'
+            ? JSON.parse(currentRecipe.components)
+            : currentRecipe.components
+        ) : []
+      );
+      const unitWeightForCalc = input.unitWeight ?? parseFloat(currentRecipe?.unitWeight ?? '0') ?? 0;
+
+      // Calcola serviceWastePercentage: (somma ingredienti kg - peso finale) / somma ingredienti kg * 100
+      const totalInputWeight = (componentsForCalc as any[])
+        .filter((c: any) => c.type !== 'operation' && c.unit === 'kg')
+        .reduce((sum: number, c: any) => sum + (parseFloat(String(c.quantity)) || 0), 0);
+      const calculatedServiceWaste = totalInputWeight > 0 && unitWeightForCalc > 0
+        ? Math.max(0, (totalInputWeight - unitWeightForCalc) / totalInputWeight * 100).toFixed(3)
+        : "0";
+
+      // Costruisce updateData escludendo i campi undefined per non sovrascrivere dati validi nel DB
+      const updateData: any = { serviceWastePercentage: calculatedServiceWaste };
+      if (input.name !== undefined) updateData.name = input.name;
+      if (input.category !== undefined) updateData.category = input.category;
+      if (input.yieldPercentage !== undefined) updateData.yieldPercentage = input.yieldPercentage.toString();
+      if (input.unitWeight !== undefined) updateData.unitWeight = input.unitWeight;
+      if (input.producedQuantity !== undefined) updateData.producedQuantity = input.producedQuantity;
+      if (input.measurementType !== undefined) updateData.measurementType = input.measurementType;
+      if (input.pieceWeight !== undefined) updateData.pieceWeight = input.pieceWeight;
+      if (input.isSemiFinished !== undefined) updateData.isSemiFinished = input.isSemiFinished;
+      if (input.isSellable !== undefined) updateData.isSellable = input.isSellable;
+      if (input.sellingPrice !== undefined) updateData.sellingPrice = input.sellingPrice.toString();
 
       // Se ci sono componenti, ricalcola totalCost
       if (input.components) {
@@ -888,7 +1168,32 @@ const finalRecipesRouter = router({
         updateData.components = JSON.stringify(input.components);
       }
 
-      return db.updateFinalRecipe(input.id, updateData);
+      if (currentRecipe && await isStoreGlobal(ctx.currentStoreId)) {
+        const storeIds = await getAllActiveStoreIds();
+        await updateRecipeAcrossStores(currentRecipe.name, updateData, storeIds);
+        if (input.components) {
+          const allRecipes = await Promise.all(
+            storeIds.map((sid) => db.getFinalRecipeByCode(currentRecipe.code, sid))
+          );
+          for (const r of allRecipes) {
+            if (r) await db.setRecipeComponents(r.id, input.components);
+          }
+        }
+        return;
+      }
+      await db.updateFinalRecipe(input.id, updateData);
+      if (input.components) {
+        await db.setRecipeComponents(input.id, input.components);
+      }
+      await logAction({
+        storeId: ctx.currentStoreId || 'default-store-001',
+        userId: ctx.user!.openId,
+        action: AuditActions.RECIPE_UPDATED,
+        entityType: EntityTypes.RECIPE,
+        entityId: input.id,
+        details: { updatedFields: Object.keys(updateData) },
+      });
+      return;
     }),
 
   getDetails: protectedProcedure
@@ -897,53 +1202,8 @@ const finalRecipesRouter = router({
       const recipe = await db.getFinalRecipeById(input.id);
       if (!recipe) return null;
 
-      // Parse JSON se necessario
-      let parsedComponents = recipe.components;
-      if (typeof recipe.components === 'string') {
-        try {
-          parsedComponents = JSON.parse(recipe.components);
-        } catch (e) {
-          console.error('[getDetails] JSON parse error:', e);
-          parsedComponents = [];
-        }
-      }
-
-      console.log('[getDetails] Recipe:', recipe.name);
-      console.log('[getDetails] Parsed components length:', Array.isArray(parsedComponents) ? parsedComponents.length : 'N/A');
-
-      // Espandi i componenti con dettagli ingredienti/semilavorati
-      const components = Array.isArray(parsedComponents) ? parsedComponents : [];
-      const componentsWithDetails = await Promise.all(
-        components.map(async (comp: any) => {
-          if (comp.type === 'ingredient') {
-            const ingredient = await db.getIngredientById(comp.componentId);
-            return {
-              ...comp,
-              name: ingredient?.name || 'Sconosciuto',
-              unit: comp.unit || (ingredient?.unitType === 'u' ? 'unità' : 'kg'),
-              pricePerUnit: ingredient?.pricePerKgOrUnit || 0,
-            };
-          } else if (comp.type === 'semi_finished') {
-            const semiFinished = await db.getSemiFinishedById(comp.componentId);
-            return {
-              ...comp,
-              name: semiFinished?.name || 'Sconosciuto',
-              unit: comp.unit || 'kg',
-              pricePerUnit: semiFinished?.finalPricePerKg || 0,
-            };
-          } else if (comp.type === 'operation') {
-            const operation = await db.getOperationByName(comp.componentName || '');
-            return {
-              ...comp,
-              name: operation?.name || comp.componentName || 'Sconosciuto',
-              unit: comp.unit || 'ore',
-              pricePerUnit: operation?.hourlyRate ? parseFloat(operation.hourlyRate) : 0,
-              costType: operation?.costType || comp.costType || 'LAVORO',
-            };
-          }
-          return comp;
-        })
-      );
+      // Usa tabelle relazionali: una sola JOIN invece di N query separate
+      const componentsWithDetails = await db.getRecipeComponents(input.id);
 
       return {
         ...recipe,
@@ -1021,7 +1281,15 @@ const finalRecipesRouter = router({
       if (ctx.user?.role !== "admin") {
         throw new Error("Unauthorized: Only admins can delete recipes");
       }
-      return db.deleteFinalRecipe(input.id);
+      const result = await db.deleteFinalRecipe(input.id);
+      await logAction({
+        storeId: ctx.currentStoreId || 'default-store-001',
+        userId: ctx.user!.openId,
+        action: AuditActions.RECIPE_DELETED,
+        entityType: EntityTypes.RECIPE,
+        entityId: input.id,
+      });
+      return result;
     }),
 
   toggleActive: protectedProcedure
@@ -1071,6 +1339,7 @@ const wasteRouter = router({
       }
       return db.createWasteRecord({
         ...input,
+        storeId: ctx.currentStoreId || 'default-store-001',
         quantity: input.quantity.toString(),
       } as any);
     }),
@@ -1102,6 +1371,7 @@ const haccpRouter = router({
       }
       return db.createProductionBatch({
         ...input,
+        storeId: ctx.currentStoreId || 'default-store-001',
         quantityProduced: input.quantityProduced.toString(),
       } as any);
     }),
@@ -1121,7 +1391,7 @@ const haccpRouter = router({
       if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
         throw new Error("Unauthorized");
       }
-      return db.createHACCPRecord(input as any);
+      return db.createHACCPRecord({ ...input, storeId: ctx.currentStoreId || 'default-store-001' } as any);
     }),
 });
 
@@ -1156,10 +1426,10 @@ const storageRouter = router({
     }),
 });
 
-// ============ PROCEDURE FORNITORI ============
+// ============ PROCEDURE FORNITORI — database globale ============
 const suppliersRouter = router({
-  list: protectedProcedure.query(async ({ ctx }) => {
-    return db.getSuppliers(ctx.currentStoreId);
+  list: protectedProcedure.query(async () => {
+    return db.getSuppliers();
   }),
   create: protectedProcedure
     .input(
@@ -1174,10 +1444,11 @@ const suppliersRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+      const role = ctx.user?.role;
+      if (role !== "admin" && role !== "manager" && role !== "superadmin") {
         throw new Error("Unauthorized");
       }
-      return db.createSupplier({ ...input, storeId: ctx.currentStoreId || 'default-store' } as any);
+      return db.createSupplier(input as any);
     }),
   update: protectedProcedure
     .input(
@@ -1192,7 +1463,8 @@ const suppliersRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+      const role = ctx.user?.role;
+      if (role !== "admin" && role !== "manager" && role !== "superadmin") {
         throw new Error("Unauthorized");
       }
       const { id, ...updateData } = input;
@@ -1201,7 +1473,7 @@ const suppliersRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager") {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "manager" && ctx.user?.role !== "superadmin") {
         throw new Error("Unauthorized");
       }
       return db.deleteSupplier(input.id);
@@ -1244,7 +1516,7 @@ const ordersRouter = router({
       }
       return db.createOrder({
         ...input,
-        storeId: ctx.currentStoreId || 'default-store',
+        storeId: ctx.currentStoreId || 'default-store-001',
         totalAmount: input.totalAmount.toString(),
       } as any);
     }),
@@ -1293,7 +1565,7 @@ const systemRouter = router({
 
 // ============ PROCEDURE GESTIONE UTENTI ============
 const usersRouter = router({  list: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user?.role !== "admin") {
+    if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
       throw new Error("Unauthorized: Only admins can view users");
     }
     return db.getAllUsers();
@@ -1302,18 +1574,284 @@ const usersRouter = router({  list: protectedProcedure.query(async ({ ctx }) => 
   updateRole: protectedProcedure
     .input(z.object({
       userId: z.number(),
-      role: z.enum(["user", "admin", "manager", "cook"])
+      role: z.enum(["user", "admin", "manager", "cook", "superadmin"])
     }))
     .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin") {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
         throw new Error("Unauthorized: Only admins can change user roles");
       }
       return db.updateUserRole(input.userId, input.role);
+    }),
+
+  updateStore: protectedProcedure
+    .input(z.object({
+      userId: z.number(),
+      storeId: z.string(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized: Only superadmin can change user store");
+      }
+      const { addUserToStore, removeUserFromStore, setUserPreferredStore, getUserStores } = await import("./storesDb.js");
+      // Rimuovi utente da tutti gli store esistenti
+      const currentStores = await getUserStores(input.userId);
+      for (const s of currentStores) {
+        await removeUserFromStore(input.userId, s.storeId);
+      }
+      // Aggiungi al nuovo store
+      await addUserToStore(input.userId, input.storeId, "user");
+      await setUserPreferredStore(input.userId, input.storeId);
+      return { success: true };
+    }),
+
+  deduplicateIngredients: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      if (ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized: Only superadmin can deduplicate ingredients");
+      }
+      return db.deduplicateIngredients();
+    }),
+
+  getUserStores: protectedProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      const { getUserStores } = await import("./storesDb.js");
+      return getUserStores(input.userId);
+    }),
+
+  addUserToStore: protectedProcedure
+    .input(z.object({
+      userId: z.number(),
+      storeId: z.string(),
+      role: z.enum(["admin", "manager", "user"]),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized: Only admin can manage user store assignments");
+      }
+      const { addUserToStore, userHasAccessToStore } = await import("./storesDb.js");
+      const alreadyIn = await userHasAccessToStore(input.userId, input.storeId);
+      if (alreadyIn) throw new Error("L'utente è già assegnato a questo locale");
+      await addUserToStore(input.userId, input.storeId, input.role);
+      return { success: true };
+    }),
+
+  removeUserFromStore: protectedProcedure
+    .input(z.object({ userId: z.number(), storeId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized: Only admin can manage user store assignments");
+      }
+      const { removeUserFromStore } = await import("./storesDb.js");
+      await removeUserFromStore(input.userId, input.storeId);
+      return { success: true };
+    }),
+
+  updateUserStoreRole: protectedProcedure
+    .input(z.object({
+      userId: z.number(),
+      storeId: z.string(),
+      role: z.enum(["admin", "manager", "user"]),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized: Only admin can manage user store assignments");
+      }
+      const { updateUserStoreRole } = await import("./storesDb.js");
+      await updateUserStoreRole(input.userId, input.storeId, input.role);
+      return { success: true };
+    }),
+
+  setPreferredStore: protectedProcedure
+    .input(z.object({ userId: z.number(), storeId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized: Only admin can manage user store assignments");
+      }
+      const { setUserPreferredStore } = await import("./storesDb.js");
+      await setUserPreferredStore(input.userId, input.storeId);
+      return { success: true };
+    }),
+
+  getUserActivity: protectedProcedure
+    .input(z.object({ userId: z.number(), limit: z.number().optional() }))
+    .query(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      const { getAuditLogsByUser } = await import("./auditLogDb.js");
+      const { getAllUserOrderHistory } = await import("./orderSessionsDb.js");
+      const openId = await db.getUserOpenIdById(input.userId);
+      const limit = input.limit ?? 20;
+      const [logs, orders] = await Promise.all([
+        openId ? getAuditLogsByUser(openId, limit) : [],
+        getAllUserOrderHistory(input.userId, 10),
+      ]);
+      return { auditLogs: logs, orders };
     }),
 });
 
 import { auditLogRouter } from "./auditLogRouter";
 import { multiStoreEditorRouter } from "./multiStoreEditorRouter";
+import { foodMatrixV2Router } from "./foodMatrixV2Router";
+
+// ============ ADMIN IMPORT ROUTER ============
+const adminImportRouter = router({
+  deleteAllRecipes: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      await db.deleteAllRecipes();
+      return { success: true };
+    }),
+
+  previewSemiFinished: protectedProcedure
+    .input(z.object({
+      rows: z.array(z.object({
+        sl_id: z.string(),
+        ingrediente_nome: z.string(),
+        qty: z.number(),
+        um: z.number(),
+        eur_riga: z.number(),
+      })),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      return db.previewSemiFinishedImport(input.rows);
+    }),
+
+  importSemiFinished: protectedProcedure
+    .input(z.object({
+      rows: z.array(z.object({
+        sl_id: z.string(),
+        ingrediente_nome: z.string(),
+        qty: z.number(),
+        um: z.number(),
+        eur_riga: z.number(),
+      })),
+      metadata: z.record(
+        z.string(),
+        z.object({
+          name: z.string().optional(),
+          category: z.enum(["SPEZIE", "SALSE", "VERDURA", "CARNE", "ALTRO"]).optional(),
+          shelfLifeDays: z.number().optional(),
+          storageMethod: z.string().optional(),
+        })
+      ).optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      return db.importSemiFinishedBulk(
+        input.rows,
+        input.metadata ?? {},
+        ctx.currentStoreId
+      );
+    }),
+
+  importFinalRecipes: protectedProcedure
+    .input(z.object({
+      rows: z.array(z.object({
+        sl_id: z.string(),
+        ingrediente_nome: z.string(),
+        qty: z.number(),
+        um: z.number(),
+        eur_riga: z.number(),
+      })),
+      metadata: z.record(
+        z.string(),
+        z.object({
+          name: z.string().optional(),
+          category: z.enum(["SPEZIE", "SALSE", "VERDURA", "CARNE", "ALTRO"]).optional(),
+          shelfLifeDays: z.number().optional(),
+          storageMethod: z.string().optional(),
+        })
+      ).optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      return db.importFinalRecipesBulk(
+        input.rows,
+        input.metadata ?? {},
+        ctx.currentStoreId
+      );
+    }),
+});
+
+const recipeDebugRouter = router({
+  listUnmatched: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+      throw new Error("Unauthorized");
+    }
+    return db.listUnmatchedComponents();
+  }),
+
+  listZeroPrice: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+      throw new Error("Unauthorized");
+    }
+    return db.listZeroPriceItems();
+  }),
+
+  listOrphaned: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+      throw new Error("Unauthorized");
+    }
+    return db.listOrphanedComponents();
+  }),
+
+  resolve: protectedProcedure
+    .input(z.object({
+      componentRow: z.enum(["semi_finished_components", "recipe_components"]),
+      componentId: z.string(),
+      targetType: z.enum(["ingredient", "semi_finished"]),
+      targetId: z.string(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      await db.resolveComponent(input);
+      return { success: true };
+    }),
+
+  deleteComponent: protectedProcedure
+    .input(z.object({
+      componentRow: z.enum(["semi_finished_components", "recipe_components"]),
+      componentId: z.string(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      await db.deleteComponentRow(input);
+      return { success: true };
+    }),
+
+  deleteUnnamed: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      return db.deleteUnnamedComponents();
+    }),
+  recoverNames: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      if (ctx.user?.role !== "admin" && ctx.user?.role !== "superadmin") {
+        throw new Error("Unauthorized");
+      }
+      return db.recoverComponentNames();
+    }),
+});
 
 export const appRouter = router({
   auth: authRouter,
@@ -1339,7 +1877,10 @@ export const appRouter = router({
   orderSessions: orderSessionsRouter,
   auditLog: auditLogRouter,
   multiStoreEditor: multiStoreEditorRouter,
+  foodMatrixV2: foodMatrixV2Router,
   system: systemRouter,
+  adminImport: adminImportRouter,
+  recipeDebug: recipeDebugRouter,
 });
 
 export type AppRouter = typeof appRouter;

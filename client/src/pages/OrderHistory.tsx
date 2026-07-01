@@ -1,160 +1,192 @@
+import { useState } from "react";
 import { trpc } from "../lib/trpc";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { ArrowLeft, FileText, Calendar, User } from "lucide-react";
-import { useLocation } from "wouter";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { Badge } from "../components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
+import { ArrowLeft, FileText, Calendar, User, Package, ChevronRight } from "lucide-react";
 
 export default function OrderHistory() {
-  const [, setLocation] = useLocation();
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const { data: orders = [], isLoading } = trpc.orderSessions.getAllHistory.useQuery();
 
-  // Admin vede tutti gli ordini, utenti normali solo i propri
-  const { data: allOrders = [], isLoading: isLoadingAll } = trpc.orderSessions.getAllHistory.useQuery(
-    undefined,
-    { enabled: isAdmin }
-  );
-  const { data: myOrders = [], isLoading: isLoadingMy } = trpc.orderSessions.getMyHistory.useQuery(
-    undefined,
-    { enabled: !isAdmin }
-  );
-  
-  const orders = isAdmin ? allOrders : myOrders;
-  const isLoading = isAdmin ? isLoadingAll : isLoadingMy;
+  const parseOrderData = (order: any) => {
+    try {
+      return typeof order.orderData === "string" ? JSON.parse(order.orderData) : order.orderData;
+    } catch {
+      return { items: [] };
+    }
+  };
 
   if (isLoading) {
     return (
-      <div className="container py-8">
-        <p>Caricamento...</p>
-      </div>
+      <div className="container py-8 text-center text-muted-foreground">Caricamento...</div>
     );
   }
+
+  const selectedOrderData = selectedOrder ? parseOrderData(selectedOrder) : null;
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white border-b shadow-sm">
-        <div className="container py-3 md:py-4">
-          <div className="flex items-center gap-2 md:gap-4">
+        <div className="container py-3">
+          <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => window.history.back()}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl md:text-2xl font-bold truncate">Storico Ordini</h1>
-              <p className="text-xs md:text-sm text-gray-600 truncate">
-                {orders.length} ordini inviati
-              </p>
+              <h1 className="text-xl font-bold">Storico Ordini</h1>
+              <p className="text-xs text-muted-foreground">{orders.length} ordini inviati</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container py-6">
+      <div className="container py-4 max-w-2xl">
         {orders.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center text-gray-500">
-              <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <p>Nessun ordine inviato</p>
-            </CardContent>
-          </Card>
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-3">
+            <FileText className="h-12 w-12 text-gray-300" />
+            <p>Nessun ordine inviato</p>
+          </div>
         ) : (
-          <div className="space-y-3 md:space-y-4">
+          <div className="bg-white rounded-lg border divide-y">
             {orders.map((order) => {
-              const orderData = typeof order.orderData === "string" 
-                ? JSON.parse(order.orderData) 
-                : order.orderData;
-              
+              const orderData = parseOrderData(order);
+              const date = new Date(order.createdAt).toLocaleDateString("it-IT", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+
               return (
-                <Card key={order.id}>
-                  <CardHeader className="pb-3 md:pb-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="text-base md:text-lg truncate">
-                          Ordine #{order.id.slice(0, 8)}
-                        </CardTitle>
-                        <div className="flex items-center gap-1 md:gap-2 text-xs md:text-sm text-gray-600 mt-1">
-                          <Calendar className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
-                          <span className="truncate">
-                            {new Date(order.createdAt).toLocaleDateString("it-IT", {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
-                        </div>
-                        {order.userName && (
-                          <p className="text-xs md:text-sm text-gray-500 mt-1 truncate">
-                            Da: <span className="font-medium">{order.userName}</span>
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-xl md:text-2xl font-bold text-green-600">
-                          {order.totalItems}
-                        </p>
-                        <p className="text-xs text-gray-600">articoli</p>
-                      </div>
+                <button
+                  key={order.id}
+                  onClick={() => setSelectedOrder(order)}
+                  className="w-full text-left flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                >
+                  {/* Icona */}
+                  <div className="shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Package className="h-5 w-5 text-primary" />
+                  </div>
+
+                  {/* Info principali */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {order.userName ? (
+                        <span className="font-medium text-sm truncate">{order.userName}</span>
+                      ) : (
+                        <span className="text-sm text-muted-foreground italic">Anonimo</span>
+                      )}
+                      <Badge variant="secondary" className="text-xs shrink-0">
+                        {order.totalItems} articoli
+                      </Badge>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Note */}
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                      <Calendar className="h-3 w-3" />
+                      <span>{date}</span>
+                    </div>
                     {order.notes && (
-                      <div className="mb-3 md:mb-4 p-2 md:p-3 bg-yellow-50 border border-yellow-200 rounded">
-                        <p className="text-xs md:text-sm">
-                          <strong>Note:</strong> {order.notes}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Lista articoli */}
-                    <div className="space-y-2">
-                      <p className="font-semibold text-xs md:text-sm text-gray-700 mb-2">
-                        Articoli ordinati:
+                      <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                        📝 {order.notes}
                       </p>
-                      {orderData.items?.map((item: any, idx: number) => (
-                        <div
-                          key={idx}
-                          className="flex items-center justify-between gap-2 py-2 px-2 md:px-3 bg-gray-50 rounded"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm md:text-base font-medium truncate">{item.name}</p>
-                            <p className="text-xs text-gray-600 truncate">
-                              {item.category} {item.supplier && `• ${item.supplier}`}
-                            </p>
-                          </div>
-                          <div className="text-right flex-shrink-0">
-                            <p className="text-sm md:text-base font-semibold">
-                              {item.quantity} {item.unit === "k" ? "kg" : "pz"}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* PDF Link (se disponibile) */}
-                    {order.pdfUrl && (
-                      <div className="mt-3 md:mt-4 pt-3 md:pt-4 border-t">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => window.open(order.pdfUrl!, "_blank")}
-                          className="w-full sm:w-auto"
-                        >
-                          <FileText className="h-4 w-4" />
-                          <span className="ml-2">Scarica PDF</span>
-                        </Button>
-                      </div>
                     )}
-                  </CardContent>
-                </Card>
+                  </div>
+
+                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                </button>
               );
             })}
           </div>
         )}
       </div>
+
+      {/* Dialog dettagli ordine */}
+      <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
+        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Package className="h-5 w-5" />
+              Dettaglio Ordine
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedOrder && (
+            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+              {/* Meta */}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Calendar className="h-4 w-4 shrink-0" />
+                  <span>
+                    {new Date(selectedOrder.createdAt).toLocaleDateString("it-IT", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+                {selectedOrder.userName && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <User className="h-4 w-4 shrink-0" />
+                    <span className="font-medium text-foreground">{selectedOrder.userName}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Note */}
+              {selectedOrder.notes && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm">
+                  <strong>Note:</strong> {selectedOrder.notes}
+                </div>
+              )}
+
+              {/* Articoli */}
+              <div>
+                <p className="text-sm font-semibold mb-2">
+                  Articoli ({selectedOrder.totalItems})
+                </p>
+                <div className="space-y-1">
+                  {selectedOrderData?.items?.map((item: any, idx: number) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between gap-2 py-2 px-3 bg-gray-50 rounded text-sm"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{item.name}</p>
+                        {item.supplier && (
+                          <p className="text-xs text-muted-foreground">{item.supplier}</p>
+                        )}
+                      </div>
+                      <span className="font-semibold shrink-0">
+                        {item.quantity} {item.unit === "k" ? "kg" : "pz"}
+                      </span>
+                    </div>
+                  ))}
+                  {(!selectedOrderData?.items || selectedOrderData.items.length === 0) && (
+                    <p className="text-sm text-muted-foreground text-center py-4">Nessun articolo</p>
+                  )}
+                </div>
+              </div>
+
+              {/* PDF */}
+              {selectedOrder.pdfUrl && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => window.open(selectedOrder.pdfUrl, "_blank")}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Scarica PDF
+                </Button>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -28,6 +28,8 @@ export default function ShoppingList() {
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
   const [selectedWeekGroup, setSelectedWeekGroup] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'supplier' | 'name' | 'category'>('supplier');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 30;
   const [orderQuantities, setOrderQuantities] = useState<Record<string, number>>({});
   const [orderPackages, setOrderPackages] = useState<Record<string, number>>({});
   const [extraItems, setExtraItems] = useState<Array<{
@@ -119,6 +121,16 @@ export default function ShoppingList() {
     }
   });
 
+  // Reset pagina quando cambiano i filtri
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedSupplier, selectedDepartment, selectedWeekGroup, sortBy]);
+
+  // Paginazione
+  const totalPages = Math.ceil((filteredList?.length || 0) / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedList = filteredList?.slice(startIndex, startIndex + itemsPerPage);
+
   // Fornitori unici
   const suppliers = Array.from(new Set(shoppingList?.map((item: any) => item.supplier) || []));
 
@@ -144,16 +156,26 @@ export default function ShoppingList() {
     return packages * packageQuantity;
   };
 
+  // Determina se un articolo va ordinato in confezioni (ha isSoldByPackage o packageQuantity > 1)
+  const isPkgMode = (item: any): boolean =>
+    item.isSoldByPackage === true || (item.packageQuantity && item.packageQuantity > 1);
+
+  // Restituisce la packageQuantity effettiva: se isSoldByPackage ma pkgQty mancante, usa 1
+  const effPkgQty = (item: any): number => {
+    if (item.packageQuantity && item.packageQuantity > 0) return item.packageQuantity;
+    return item.isSoldByPackage ? 1 : 0;
+  };
+
   // Aggiorna quantità da ordinare (deprecato, ora usiamo confezioni)
   const handleQuantityChange = (itemId: string, value: number) => {
     setOrderQuantities(prev => ({ ...prev, [itemId]: value }));
   };
-  
+
   // Aggiorna confezioni da ordinare
   const handlePackagesChange = (itemId: string, packages: number, item: any) => {
     setOrderPackages(prev => ({ ...prev, [itemId]: packages }));
     // Calcola quantità totale basata su confezioni
-    const totalQty = calculateTotalQuantity(packages, item.packageQuantity);
+    const totalQty = packages * effPkgQty(item);
     setOrderQuantities(prev => ({ ...prev, [itemId]: totalQty }));
   };
   
@@ -192,12 +214,16 @@ export default function ShoppingList() {
       const packages = orderPackages[item.id];
       const totalQty = orderQuantities[item.id] || 0;
       const unit = item.unitType === 'k' ? 'kg' : 'pz';
-      
-      // Mostra confezioni se disponibili, altrimenti quantità
-      if (packages && item.packageQuantity && item.packageQuantity > 0) {
+      const pkgQty = effPkgQty(item);
+
+      if (packages && isPkgMode(item)) {
+        const pkgLabel = item.packageType?.toLowerCase() || 'conf.';
+        const qtyDetail = pkgQty > 1
+          ? ` (${pkgQty.toFixed(2)} ${unit}/conf) = ${totalQty.toFixed(2)} ${unit}`
+          : '';
         supplierGroups[supplier].push({
           name: item.itemName,
-          qty: `${packages} conf. (${item.packageQuantity.toFixed(2)} ${unit}/conf) = ${totalQty.toFixed(2)} ${unit}`,
+          qty: `${packages} ${pkgLabel}${qtyDetail}`,
           unit: '',
         });
       } else {
@@ -208,7 +234,7 @@ export default function ShoppingList() {
         });
       }
     });
-    
+
     // Aggiungi articoli extra
     validExtraItems.forEach(item => {
       const supplier = item.supplier || 'Senza Fornitore';
@@ -268,41 +294,56 @@ export default function ShoppingList() {
   
   // Copia testo ordine
   const handleCopyText = async () => {
-    await navigator.clipboard.writeText(orderText);
-    await saveOrder();
-    // Cancella sessione e quantità
-    await clearSessionMutation.mutateAsync();
+    try {
+      await navigator.clipboard.writeText(orderText);
+    } catch (error) {
+      console.error("Errore copia testo:", error);
+    }
+    try {
+      await saveOrder();
+      await clearSessionMutation.mutateAsync();
+    } catch (error) {
+      console.error("Errore salvataggio ordine:", error);
+    }
     setOrderQuantities({});
     setOrderPackages({});
     toast.success("Testo copiato e ordine salvato!");
     setShowOrderDialog(false);
   };
-  
+
   // Apri WhatsApp
   const handleWhatsApp = async () => {
     const whatsappMessage = encodeURIComponent(orderText);
     const whatsappUrl = `https://wa.me/?text=${whatsappMessage}`;
-    await saveOrder();
-    // Cancella sessione e quantità
-    await clearSessionMutation.mutateAsync();
+    // Open before awaits to avoid browser popup blocker
+    window.open(whatsappUrl, '_blank');
+    try {
+      await saveOrder();
+      await clearSessionMutation.mutateAsync();
+    } catch (error) {
+      console.error("Errore salvataggio ordine:", error);
+    }
     setOrderQuantities({});
     setOrderPackages({});
-    window.open(whatsappUrl, '_blank');
     toast.success("Ordine inviato su WhatsApp!");
     setShowOrderDialog(false);
   };
-  
+
   // Apri Email
   const handleEmail = async () => {
     const subject = encodeURIComponent(`Ordine Settimanale - ${selectedWeekGroup || 'Tutte'}`);
     const body = encodeURIComponent(orderText);
     const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
-    await saveOrder();
-    // Cancella sessione e quantità
-    await clearSessionMutation.mutateAsync();
+    // Navigate before awaits to avoid browser popup blocker
+    window.location.href = mailtoLink;
+    try {
+      await saveOrder();
+      await clearSessionMutation.mutateAsync();
+    } catch (error) {
+      console.error("Errore salvataggio ordine:", error);
+    }
     setOrderQuantities({});
     setOrderPackages({});
-    window.location.href = mailtoLink;
     toast.success("Email preparata e ordine salvato!");
     setShowOrderDialog(false);
   };
@@ -370,11 +411,16 @@ export default function ShoppingList() {
     URL.revokeObjectURL(url);
     
     // Salva ordine e cancella sessione
-    await saveOrder();
-    await clearSessionMutation.mutateAsync();
+    try {
+      await saveOrder();
+      await clearSessionMutation.mutateAsync();
+    } catch (error) {
+      console.error("Errore salvataggio ordine:", error);
+    }
     setOrderQuantities({});
     setOrderPackages({});
     toast.success("Ordine esportato e salvato!");
+    setShowOrderDialog(false);
   };
 
   // Esporta ordine per email (senza prezzi)
@@ -387,13 +433,12 @@ export default function ShoppingList() {
     
     filteredList.forEach((item: any) => {
       if (item.quantityNeeded > 0 && !orderQuantities[item.id]) {
-        // Calcola confezioni necessarie
-        if (item.packageQuantity && item.packageQuantity > 0) {
-          const packages = calculatePackages(item.quantityNeeded, item.packageQuantity);
+        if (isPkgMode(item)) {
+          const pkgQty = effPkgQty(item);
+          const packages = pkgQty > 0 ? Math.ceil(item.quantityNeeded / pkgQty) : 1;
           newPackages[item.id] = packages;
-          newQuantities[item.id] = calculateTotalQuantity(packages, item.packageQuantity);
+          newQuantities[item.id] = packages * pkgQty;
         } else {
-          // Fallback: usa quantità necessaria
           newQuantities[item.id] = item.quantityNeeded;
         }
         count++;
@@ -424,11 +469,16 @@ export default function ShoppingList() {
       const packages = orderPackages[item.id];
       const totalQty = orderQuantities[item.id] || 0;
       const unit = item.unitType === 'k' ? 'kg' : 'pz';
-      
-      if (packages && item.packageQuantity && item.packageQuantity > 0) {
+      const pkgQty = effPkgQty(item);
+
+      if (packages && isPkgMode(item)) {
+        const pkgLabel = item.packageType?.toLowerCase() || 'conf.';
+        const qtyDetail = pkgQty > 1
+          ? ` (${pkgQty.toFixed(2)} ${unit}/conf) = ${totalQty.toFixed(2)} ${unit}`
+          : '';
         supplierGroups[supplier].push({
           name: item.itemName,
-          qty: `${packages} conf. (${item.packageQuantity.toFixed(2)} ${unit}/conf) = ${totalQty.toFixed(2)} ${unit}`,
+          qty: `${packages} ${pkgLabel}${qtyDetail}`,
           unit: '',
         });
       } else {
@@ -710,10 +760,10 @@ export default function ShoppingList() {
               <>
                 {/* Layout Mobile: Card */}
                 <div className="block md:hidden space-y-3">
-                  {filteredList.reduce((acc: any[], item: any, index: number) => {
+                  {paginatedList!.reduce((acc: any[], item: any, index: number) => {
                     const orderQty = orderQuantities[item.id] || 0;
                     const orderCost = orderQty * item.pricePerUnit;
-                    const prevItem = index > 0 ? filteredList[index - 1] : null;
+                    const prevItem = index > 0 ? paginatedList![index - 1] : null;
                     const showSupplierHeader = !prevItem || prevItem.supplier !== item.supplier;
                     
                     if (showSupplierHeader) {
@@ -753,7 +803,7 @@ export default function ShoppingList() {
                               </div>
                             </div>
                             <div className="flex flex-row md:flex-col items-center md:items-end gap-3 md:gap-2 w-full md:w-auto">
-                              {item.packageQuantity && item.packageQuantity > 1 ? (
+                              {isPkgMode(item) ? (
                                 <>
                                   <div className="text-xs text-muted-foreground text-right">
                                     Confezioni:
@@ -766,9 +816,9 @@ export default function ShoppingList() {
                                     placeholder="0"
                                     onFocus={(e) => {
                                       e.target.select();
-                                      // Auto-calcola se vuoto
                                       if (!orderPackages[item.id] && item.quantityNeeded > 0) {
-                                        const packages = calculatePackages(item.quantityNeeded, item.packageQuantity);
+                                        const pkgQty = effPkgQty(item);
+                                        const packages = pkgQty > 0 ? Math.ceil(item.quantityNeeded / pkgQty) : 1;
                                         handlePackagesChange(item.id, packages, item);
                                       }
                                     }}
@@ -777,7 +827,9 @@ export default function ShoppingList() {
                                   />
                                   {orderPackages[item.id] > 0 && (
                                     <div className="text-xs text-muted-foreground text-right">
-                                      {orderPackages[item.id]} {item.packageType?.toLowerCase() || 'conf.'} × {item.packageQuantity.toFixed(2)} {item.unitType === 'k' ? 'kg' : 'pz'} = {orderQty.toFixed(2)} {item.unitType === 'k' ? 'kg' : 'pz'}
+                                      {effPkgQty(item) > 1
+                                        ? `${orderPackages[item.id]} ${item.packageType?.toLowerCase() || 'conf.'} × ${effPkgQty(item).toFixed(2)} ${item.unitType === 'k' ? 'kg' : 'pz'} = ${orderQty.toFixed(2)} ${item.unitType === 'k' ? 'kg' : 'pz'}`
+                                        : `${orderPackages[item.id]} ${item.packageType?.toLowerCase() || 'confezioni'}`}
                                     </div>
                                   )}
                                 </>
@@ -835,7 +887,7 @@ export default function ShoppingList() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredList.map((item: any) => {
+                    {paginatedList!.map((item: any) => {
                       const orderQty = orderQuantities[item.id] || 0;
                       const orderCost = orderQty * item.pricePerUnit;
                       
@@ -875,7 +927,7 @@ export default function ShoppingList() {
                             )}
                           </TableCell>
                           <TableCell className="text-right">
-                            {item.packageQuantity && item.packageQuantity > 1 ? (
+                            {isPkgMode(item) ? (
                               <div className="flex flex-col items-end gap-1">
                                 <Input
                                   type="number"
@@ -886,16 +938,17 @@ export default function ShoppingList() {
                                   onFocus={(e) => {
                                     e.target.select();
                                     if (!orderPackages[item.id] && item.quantityNeeded > 0) {
-                                      const packages = calculatePackages(item.quantityNeeded, item.packageQuantity);
+                                      const pkgQty = effPkgQty(item);
+                                      const packages = pkgQty > 0 ? Math.ceil(item.quantityNeeded / pkgQty) : 1;
                                       handlePackagesChange(item.id, packages, item);
                                     }
                                   }}
                                   onChange={(e) => handlePackagesChange(item.id, parseInt(e.target.value) || 0, item)}
                                   className="w-20 text-right"
                                 />
-                                {orderPackages[item.id] > 0 && (
+                                {orderPackages[item.id] > 0 && effPkgQty(item) > 1 && (
                                   <span className="text-xs text-muted-foreground">
-                                    {item.packageQuantity.toFixed(2)} {item.unitType === 'k' ? 'kg' : 'pz'}/{item.packageType?.toLowerCase() || 'conf.'}
+                                    {effPkgQty(item).toFixed(2)} {item.unitType === 'k' ? 'kg' : 'pz'}/{item.packageType?.toLowerCase() || 'conf.'}
                                   </span>
                                 )}
                               </div>
@@ -943,6 +996,55 @@ export default function ShoppingList() {
                   </TableBody>
                 </Table>
                 </div>
+
+                {/* Paginazione */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                    <div className="text-sm text-muted-foreground">
+                      Mostrando {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredList!.length)} di {filteredList!.length} articoli
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(1)}
+                        disabled={currentPage === 1}
+                      >
+                        Prima
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        Precedente
+                      </Button>
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm font-medium px-3 py-1 bg-primary text-primary-foreground rounded">
+                          {currentPage}
+                        </span>
+                        <span className="text-sm text-muted-foreground">di {totalPages}</span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                      >
+                        Successiva
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(totalPages)}
+                        disabled={currentPage === totalPages}
+                      >
+                        Ultima
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </CardContent>

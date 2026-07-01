@@ -31,6 +31,9 @@ import DocumentArchive from "./pages/DocumentArchive";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import MultiStoreEditor from "./pages/MultiStoreEditor";
 import LocalLogin from "./pages/LocalLogin";
+import PriceUpdate from "./pages/PriceUpdate";
+import ImportRecipes from "./pages/ImportRecipes";
+import RecipeDebug from "./pages/RecipeDebug";
 
 function Router() {
   return (
@@ -41,6 +44,7 @@ function Router() {
       <Route path={"/dashboard"} component={Dashboard} />
       <Route path={"/super-admin"} component={SuperAdminDashboard} />
       <Route path={"/multi-store-editor"} component={MultiStoreEditor} />
+      <Route path={"/price-update"} component={PriceUpdate} />
       <Route path={"/404"} component={NotFound} />
       <Route path={"/ingredients"} component={Ingredients} />
 
@@ -63,6 +67,8 @@ function Router() {
       <Route path={"/invoices"} component={Invoices} />
       <Route path={"/fridges"} component={Fridges} />
       <Route path={"/documents"} component={DocumentArchive} />
+      <Route path={"/import-recipes"} component={ImportRecipes} />
+      <Route path={"/recipe-debug"} component={RecipeDebug} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

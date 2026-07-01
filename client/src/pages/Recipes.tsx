@@ -5,10 +5,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, ChefHat, Plus } from "lucide-react";
+import { Search, ChefHat, Plus, ArrowLeft } from "lucide-react";
+import { useLocation } from "wouter";
 import RecipeDetailDialog from "@/components/RecipeDetailDialog";
 
 export default function Recipes() {
+  const [, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
   const [selectedRecipeType, setSelectedRecipeType] = useState<'final' | 'semi' | null>(null);
@@ -55,17 +57,22 @@ export default function Recipes() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Ricette</h1>
-            <p className="text-muted-foreground mt-2">
-              Gestisci ricette finali e semilavorati con ingredienti e procedura
-            </p>
-          </div>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Nuova Ricetta
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => window.history.back()} className="shrink-0 md:hidden">
+            <ArrowLeft className="h-5 w-5" />
           </Button>
+          <div className="flex-1 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Ricette</h1>
+              <p className="text-muted-foreground mt-2">
+                Gestisci ricette finali e semilavorati con ingredienti e procedura
+              </p>
+            </div>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Nuova Ricetta
+            </Button>
+          </div>
         </div>
 
         {/* Barra Ricerca */}
@@ -164,6 +171,7 @@ export default function Recipes() {
         recipeType={selectedRecipeType}
         open={isDetailOpen}
         onOpenChange={setIsDetailOpen}
+        onEdit={() => navigate("/final-recipes")}
       />
     </DashboardLayout>
   );

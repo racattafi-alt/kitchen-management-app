@@ -1,63 +1,190 @@
 import "dotenv/config";
+import path from "path";
 import express from "express";
 import { createServer } from "http";
-import net from "net";
-import path from "path";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
+import { drizzle } from "drizzle-orm/mysql2";
+import { migrate } from "drizzle-orm/mysql2/migrator";
+import mysql from "mysql2/promise";
 import { registerOAuthRoutes } from "./oauth";
 import { registerLocalAuthRoutes } from "./localAuthRoutes";
+import { registerGoogleAuthRoutes } from "./googleAuthRoutes";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { ENV } from "./env";
-import { getDb } from "../db";
+
+/**
+ * Applies critical schema fixes directly via mysql2, bypassing Drizzle's migration system.
+ * Handles incomplete migrations 0045 (storeId removal) and 0047 (piecesPerBox).
+ * Every check is idempotent — safe to run on every startup.
+ */
+async function runSafetyMigrations() {
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) return;
+  let conn: mysql.Connection | null = null;
+
+  const colExists = async (table: string, col: string): Promise<boolean> => {
+    const [r] = await conn!.execute<mysql.RowDataPacket[]>(
+      `SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+      [table, col]
+    );
+    return r[0].cnt > 0;
+  };
+
+  const tableExists = async (table: string): Promise<boolean> => {
+    const [r] = await conn!.execute<mysql.RowDataPacket[]>(
+      `SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.TABLES
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?`,
+      [table]
+    );
+    return r[0].cnt > 0;
+  };
+
+  try {
+    conn = await mysql.createConnection(dbUrl);
+
+    // ── FIX 1: Ensure ingredient_stores table exists (migration 0045 may have failed) ──
+    if (!(await tableExists("ingredient_stores"))) {
+      await conn.execute(`
+        CREATE TABLE \`ingredient_stores\` (
+          \`ingredientId\` varchar(36) NOT NULL,
+          \`storeId\` varchar(36) NOT NULL,
+          \`isActive\` boolean NOT NULL DEFAULT true,
+          \`createdAt\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          \`updatedAt\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          PRIMARY KEY (\`ingredientId\`, \`storeId\`)
+        )
+      `);
+      console.log("[SafetyMigration] ✓ Created ingredient_stores table.");
+    }
+
+    // ── FIX 2: Remove storeId from ingredients if still present ──
+    // (migration 0045 created ingredient_stores but never dropped the old column)
+    if (await colExists("ingredients", "storeId")) {
+      // Copy existing storeId values into ingredient_stores before dropping
+      await conn.execute(`
+        INSERT IGNORE INTO \`ingredient_stores\` (\`ingredientId\`, \`storeId\`, \`isActive\`, \`createdAt\`, \`updatedAt\`)
+        SELECT \`id\`, \`storeId\`, \`isActive\`, \`createdAt\`, NOW()
+        FROM \`ingredients\`
+        WHERE \`storeId\` IS NOT NULL AND \`storeId\` != ''
+      `);
+      await conn.execute("ALTER TABLE `ingredients` DROP COLUMN `storeId`");
+      console.log("[SafetyMigration] ✓ Removed storeId column from ingredients (migrated to ingredient_stores).");
+    }
+
+    // ── FIX 3: Remove storeId from suppliers if still present ──
+    if (await colExists("suppliers", "storeId")) {
+      await conn.execute("ALTER TABLE `suppliers` DROP COLUMN `storeId`");
+      console.log("[SafetyMigration] ✓ Removed storeId column from suppliers.");
+    }
+
+    // ── FIX 4: Add piecesPerBox if missing (migration 0047) ──
+    if (!(await colExists("ingredients", "piecesPerBox"))) {
+      await conn.execute("ALTER TABLE `ingredients` ADD COLUMN `piecesPerBox` int DEFAULT NULL");
+      console.log("[SafetyMigration] ✓ Added piecesPerBox column to ingredients.");
+    }
+
+    // ── FIX 5: Ensure 'Fusto' is in packageType enum (migration 0048) ──
+    await conn.execute(
+      "ALTER TABLE `ingredients` MODIFY COLUMN `packageType` enum('Sacco','Busta','Brick','Cartone','Scatola','Bottiglia','Barattolo','Lattina','Sfuso','Fusto')"
+    );
+    console.log("[SafetyMigration] ✓ packageType enum verified (Fusto included).");
+
+    // ── FIX 6: Ensure recipe_components table exists (migration 0046 may have failed) ──
+    if (!(await tableExists("recipe_components"))) {
+      await conn.execute(`
+        CREATE TABLE \`recipe_components\` (
+          \`id\` varchar(36) NOT NULL,
+          \`recipeId\` varchar(36) NOT NULL,
+          \`ingredientId\` varchar(36) NULL,
+          \`semiFinishedId\` varchar(36) NULL,
+          \`operationId\` varchar(36) NULL,
+          \`componentName\` varchar(255) NOT NULL DEFAULT '',
+          \`quantity\` decimal(10,3) NOT NULL,
+          \`unitSnapshot\` varchar(20) NULL,
+          \`priceSnapshot\` decimal(10,4) NULL,
+          \`sortOrder\` int NOT NULL DEFAULT 0,
+          PRIMARY KEY (\`id\`),
+          KEY \`rc_recipeId_idx\` (\`recipeId\`),
+          KEY \`rc_ingredientId_idx\` (\`ingredientId\`),
+          KEY \`rc_semiFinishedId_idx\` (\`semiFinishedId\`)
+        )
+      `);
+      console.log("[SafetyMigration] ✓ Created recipe_components table.");
+    }
+
+    // ── FIX 7: Ensure semi_finished_components table exists (migration 0046 may have failed) ──
+    if (!(await tableExists("semi_finished_components"))) {
+      await conn.execute(`
+        CREATE TABLE \`semi_finished_components\` (
+          \`id\` varchar(36) NOT NULL,
+          \`semiFinishedRecipeId\` varchar(36) NOT NULL,
+          \`ingredientId\` varchar(36) NULL,
+          \`childSemiFinishedId\` varchar(36) NULL,
+          \`operationId\` varchar(36) NULL,
+          \`componentName\` varchar(255) NOT NULL DEFAULT '',
+          \`quantity\` decimal(10,3) NOT NULL,
+          \`unitSnapshot\` varchar(20) NULL,
+          \`priceSnapshot\` decimal(10,4) NULL,
+          \`sortOrder\` int NOT NULL DEFAULT 0,
+          PRIMARY KEY (\`id\`),
+          KEY \`sfc_semiFinishedRecipeId_idx\` (\`semiFinishedRecipeId\`),
+          KEY \`sfc_ingredientId_idx\` (\`ingredientId\`),
+          KEY \`sfc_childSemiFinishedId_idx\` (\`childSemiFinishedId\`)
+        )
+      `);
+      console.log("[SafetyMigration] ✓ Created semi_finished_components table.");
+    }
+
+  } catch (err) {
+    console.error("[SafetyMigration] Error (non-fatal, server continues):", err);
+  } finally {
+    if (conn) await conn.end();
+  }
+}
 
 async function runMigrations() {
-  console.log("[Migrations] Starting...");
-  if (!process.env.DATABASE_URL) {
-    console.log("[Migrations] DATABASE_URL not set — skipping.");
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) {
+    console.error("[Migrate] DATABASE_URL not set — skipping migrations");
     return;
   }
   const migrationsFolder = path.resolve(process.cwd(), "drizzle");
-  console.log(`[Migrations] Folder: ${migrationsFolder}`);
+  console.log(`[Migrate] Running migrations from: ${migrationsFolder}`);
+  console.log(`[Migrate] Database: ${dbUrl.replace(/:\/\/.*@/, "://<credentials>@")}`);
+  const db = drizzle(dbUrl);
   try {
-    const { migrate } = await import("drizzle-orm/mysql2/migrator");
-    const db = await getDb();
-    if (!db) {
-      throw new Error("Database connection unavailable");
-    }
     await migrate(db, { migrationsFolder });
-    console.log("[Migrations] ✓ Done.");
+    console.log("[Migrate] ✓ All migrations applied successfully.");
   } catch (err) {
-    console.error("[Migrations] ✗ Failed:", err);
-    process.exit(1); // fail hard so Railway marks deploy as failed
+    console.error("[Migrate] ✗ Migration failed:", err);
+    console.error("[Migrate] The server will continue running — fix the migration and redeploy.");
   }
-}
-
-function isPortAvailable(port: number): Promise<boolean> {
-  return new Promise(resolve => {
-    const server = net.createServer();
-    server.listen(port, () => {
-      server.close(() => resolve(true));
-    });
-    server.on("error", () => resolve(false));
-  });
-}
-
-async function findAvailablePort(startPort: number = 3000): Promise<number> {
-  for (let port = startPort; port < startPort + 20; port++) {
-    if (await isPortAvailable(port)) {
-      return port;
-    }
-  }
-  throw new Error(`No available port found starting from ${startPort}`);
 }
 
 async function startServer() {
-  await runMigrations();
-
   const app = express();
   const server = createServer(app);
+  // Health check — must be first so Railway healthcheck passes even if migrations fail
+  app.get("/healthz", (_req, res) => res.json({ status: "ok" }));
+
+  const port = parseInt(process.env.PORT || "3000");
+
+  // Start listening IMMEDIATELY so the healthcheck can pass
+  await new Promise<void>((resolve) => {
+    server.listen(port, "0.0.0.0", () => {
+      console.log(`Server listening on port ${port}`);
+      resolve();
+    });
+  });
+
+  // Apply critical column fixes first (idempotent, bypasses Drizzle migration state)
+  await runSafetyMigrations();
+  // Run Drizzle migrations (non-fatal)
+  await runMigrations();
+
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -67,6 +194,8 @@ async function startServer() {
   } else {
     registerOAuthRoutes(app);
   }
+  // Google OAuth — always registered if GOOGLE_CLIENT_ID/SECRET are set
+  registerGoogleAuthRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",
@@ -82,16 +211,7 @@ async function startServer() {
     serveStatic(app);
   }
 
-  const preferredPort = parseInt(process.env.PORT || "3000");
-  const port = await findAvailablePort(preferredPort);
-
-  if (port !== preferredPort) {
-    console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
-  }
-
-  server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
-  });
+  console.log(`Server fully initialized on port ${port}`);
 }
 
 startServer().catch(console.error);

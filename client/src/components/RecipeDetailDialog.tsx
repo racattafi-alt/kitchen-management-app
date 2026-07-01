@@ -21,12 +21,14 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChefHat, Package, Calculator, Printer, Edit } from "lucide-react";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
 
 interface RecipeDetailDialogProps {
   recipeId: string | null;
   recipeType: 'final' | 'semi' | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onEdit?: () => void;
 }
 
 export default function RecipeDetailDialog({
@@ -34,8 +36,10 @@ export default function RecipeDetailDialog({
   recipeType,
   open,
   onOpenChange,
+  onEdit,
 }: RecipeDetailDialogProps) {
   const [multiplier, setMultiplier] = useState(1);
+  const [, navigate] = useLocation();
 
   // Carica dettagli ricetta finale
   const { data: finalRecipe, isLoading: loadingFinal } = trpc.finalRecipes.getDetails.useQuery(
@@ -43,27 +47,58 @@ export default function RecipeDetailDialog({
     { enabled: open && recipeType === 'final' && !!recipeId }
   );
 
-  // Carica dettagli semilavorato
-  const { data: semiRecipe, isLoading: loadingSemi } = trpc.semiFinished.getById.useQuery(
+  // Carica dettagli semilavorato (con componenti relazionali + fallback JSON blob)
+  const { data: semiRecipe, isLoading: loadingSemi } = trpc.semiFinished.getDetails.useQuery(
     { id: recipeId || "" },
     { enabled: open && recipeType === 'semi' && !!recipeId }
   );
+
+  // Liste locali per arricchire nomi/prezzi client-side quando il server li perde
+  const { data: ingredientsList } = trpc.ingredients.list.useQuery();
+  const { data: semiList } = trpc.semiFinished.list.useQuery();
+  const { data: operationsList } = trpc.operations.list.useQuery();
+  const { data: finalsList } = trpc.finalRecipes.list.useQuery();
 
   const recipe = recipeType === 'final' ? finalRecipe : semiRecipe;
   const isLoading = loadingFinal || loadingSemi;
 
   if (!open || !recipe) return null;
 
-  const components = recipeType === 'final' 
-    ? (recipe as any).componentsWithDetails || []
-    : (recipe as any).components || [];
+  const rawComponents = (recipe as any).components;
+  const rawArr: any[] = Array.isArray(rawComponents)
+    ? rawComponents
+    : (typeof rawComponents === 'string' ? (() => { try { return JSON.parse(rawComponents); } catch { return []; } })() : []);
+
+  // Arricchimento client-side: cerca nome e prezzo live dalle liste locali
+  const components: any[] = rawArr.map((c: any) => {
+    const lookupId = c.componentId || c.ingredientId || c.semiFinishedId || c.operationId || c.id;
+    const ing = c.type === 'ingredient' ? ingredientsList?.find((i: any) => i.id === lookupId) : null;
+    const semi = c.type === 'semi_finished' ? (semiList?.find((s: any) => s.id === lookupId) || finalsList?.find((r: any) => r.id === lookupId)) : null;
+    const op = c.type === 'operation' ? operationsList?.find((o: any) => o.id === lookupId || o.name === c.componentName) : null;
+    const displayName = ing?.name || semi?.name || op?.name || c.componentName || c.name || 'Sconosciuto';
+    const livePrice = ing ? parseFloat(ing.pricePerKgOrUnit || '0')
+      : semi ? parseFloat(semi.finalPricePerKg || semi.totalCost || '0')
+      : op ? parseFloat(op.hourlyRate || '0')
+      : parseFloat(String(c.pricePerUnit || 0));
+    return {
+      ...c,
+      componentName: displayName,
+      name: displayName,
+      pricePerUnit: livePrice,
+    };
+  });
 
   const handlePrint = () => {
     toast.info("Funzionalità stampa in arrivo");
   };
 
   const handleEdit = () => {
-    toast.info("Funzionalità modifica in arrivo");
+    onOpenChange(false);
+    if (onEdit) {
+      onEdit();
+    } else {
+      navigate("/final-recipes");
+    }
   };
 
   return (
@@ -160,11 +195,15 @@ export default function RecipeDetailDialog({
                         return (
                           <TableRow key={idx}>
                             <TableCell className="font-medium">
-                              {comp.name || 'Sconosciuto'}
+                              {comp.componentName || comp.name || 'Sconosciuto'}
                             </TableCell>
                             <TableCell>
-                              <Badge variant={comp.type === 'ingredient' ? 'default' : 'secondary'}>
-                                {comp.type === 'ingredient' ? 'Ingrediente' : 'Semilavorato'}
+                              <Badge variant={
+                                comp.type === 'ingredient' ? 'default' :
+                                comp.type === 'operation' ? 'outline' : 'secondary'
+                              }>
+                                {comp.type === 'ingredient' ? 'Ingrediente' :
+                                 comp.type === 'operation' ? 'Operazione' : 'Semilavorato'}
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right">

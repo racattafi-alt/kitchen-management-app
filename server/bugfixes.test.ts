@@ -2,6 +2,17 @@ import { describe, expect, it, vi } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 
+// Mock stores DB so store-aware procedures work without a real DB
+vi.mock("./storesDb", () => ({
+  getUserPreferredStore: vi.fn(async () => "test-store"),
+  getUserStores: vi.fn(async () => [{ storeId: "test-store" }]),
+  userHasAccessToStore: vi.fn(async () => true),
+  getUserStoreRole: vi.fn(async () => "admin"),
+  getAllStores: vi.fn(async () => []),
+  getStoreById: vi.fn(async () => null),
+  isStoreGlobal: vi.fn(async () => false),
+}));
+
 // Mock order-session DB so order-history tests don't need a real DB
 vi.mock("./orderSessionsDb", () => ({
   getUserOrderSession: vi.fn(async () => []),
